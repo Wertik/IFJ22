@@ -1,0 +1,119 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include "token.h"
+#include "array.h"
+
+token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value)
+{
+    token_ptr token = (token_ptr)malloc(sizeof(struct token_t));
+
+    if (token == NULL)
+    {
+        // TODO: Handle better?
+        return NULL;
+    }
+
+    // TODO: What if we enter a value that's incompatible with given value type?
+    // We could map each type into an exact value type and force it.
+
+    token->type = type;
+    token->value_type = value_type;
+    token->value = value;
+
+    return token;
+}
+
+void token_dispose(token_ptr token)
+{
+    // free string values
+    if (token->value_type == STRING) {
+        free(token->value.string);
+    }
+
+    free(token);
+}
+
+// Parse type name to string for pretty print
+char *type_to_name(token_type_t type)
+{
+    switch (type)
+    {
+    case TOKEN_CONST_INT:
+        return "CONST_INT";
+    case TOKEN_L_PAREN:
+        return "L_PAREN";
+    case TOKEN_R_PAREN:
+        return "R_PAREN";
+    case TOKEN_STRING_LIT:
+        return "TOKEN_STRING_LIT";
+    default:
+    {
+        char *s = malloc(sizeof(char));
+        sprintf(s, "%d", type);
+        return s;
+    }
+    }
+}
+
+// Parse value type name to string for pretty print
+char *value_type_to_name(token_value_type_t value_type)
+{
+    switch (value_type)
+    {
+    case NONE:
+        return "CONST_INT";
+    case STRING:
+        return "STRING";
+    case INTEGER:
+        return "INTEGER";
+    default:
+    {
+        char *s = malloc(sizeof(char));
+        sprintf(s, "%d", value_type);
+        return s;
+    }
+    }
+}
+
+// Parse value type to printf format for pretty print
+// Token (<type>, <value type>, <value>)
+char *value_type_to_format(token_value_type_t value_type)
+{
+    switch (value_type)
+    {
+    case NONE:
+        return "Token (%s)";
+    case INTEGER:
+        return "Token (%s, %s, %d)";
+    case STRING:
+        return "Token (%s, %s, %s)";
+    default:
+        // default to whatever and add a note, it might work
+        return "Token (%d, %d, %d, #ivalid-value-type)";
+    }
+}
+
+char *token_to_string(token_ptr token)
+{
+    size_t len = snprintf(NULL, 0, value_type_to_format(token->value_type), type_to_name(token->type), value_type_to_name(token->value_type), token->value);
+    char *s = malloc((sizeof(char) * len) + 1);
+
+    if (s == NULL)
+    {
+        // TODO: Handle better?
+        fprintf(stderr, "malloc fail.\n");
+        exit(1);
+    }
+
+    sprintf(s, value_type_to_format(token->value_type), type_to_name(token->type), value_type_to_name(token->value_type), token->value);
+    return s;
+}
+
+void token_print(token_ptr token)
+{
+    char *s = token_to_string(token);
+    // this actually does string things twice, could be ineffective,
+    // but we should use this for debugging only, so it's fine
+    printf("%s\n", s);
+    free(s);
+}

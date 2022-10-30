@@ -1,5 +1,5 @@
-OBJS=main.o
-HEADER=
+OBJS=main.o token.o scanner.o string.o array.o
+HEADER=scanner.h token.h string.h array.h
 OUT=main
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror
@@ -20,7 +20,7 @@ valgrind: $(OUT)
 	valgrind --leak-check=full ./$(OUT)
 
 %.o: %.c $(HEADER)
-	$(CC) -c -o $@ $< $(LFLAGS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 # Pack for submission
 pack: all
