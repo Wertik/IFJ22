@@ -24,6 +24,28 @@ typedef enum
     TOKEN_R_PAREN,    // Right parenthesses
     TOKEN_CONST_INT,  // Integer constant
     TOKEN_STRING_LIT, // String literal
+    TOKEN_RC_BRACKET,
+    TOKEN_LC_BRACKET,
+    TOKEN_NULLABLE_START,
+    TOKEN_COLON, 
+    TOKEN_DOT,
+    TOKEN_VAR_ID,
+    TOKEN_COMMA,
+    TOKEN_SEMICOLON,
+    TOKEN_PLUS,
+    TOKEN_MINUS,
+    TOKEN_MULTIPLE,
+    TOKEN_DIVIDE,
+    TOKEN_MORE,
+    TOKEN_MORE_EQUAL,
+    TOKEN_LESS,
+    TOKEN_LESS_EQUAL,
+    TOKEN_CONST_DOUBLE,
+    TOKEN_EQUAL,
+    TOKEN_ASIGN,
+    TOKEN_NOT_EQUAL,
+    TOKEN_CONST_EXP,
+
     // TODO: Add token types
 } token_type_t;
 
