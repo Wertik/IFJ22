@@ -30,6 +30,86 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             // create a fresh buffer
             *buffer = string_empty();
         }
+        else if (c == '.')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_DOT, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == ':')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_COLON, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '?')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_NULLABLE_START, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '}')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_RC_BRACKET, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '{')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_LC_BRACKET, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == ',')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_COMMA, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == ';')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_SEMICOLON, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '+')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_PLUS, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '-')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_MINUS, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '*')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_MULTIPLE, NONE, value);
+            array_append(tokens, token);
+        }
+        else if (c == '>')
+        {
+            *scanner_state = SCANNER_MORE_THAN;
+        }
+        else if (c == '<')
+        {
+            *scanner_state = SCANNER_LESS_THAN;
+        }
+        else if (c == '!')
+        {
+            *scanner_state = SCANNER_EXCL_MARK;
+        }
+        else if (c == '=')
+        {
+            *scanner_state = SCANNER_ASIGN;
+        }
+        else if (c == '$')
+        {
+            *scanner_state = SCANNER_VAR_ID_START;
+        }
         break;
     }
     case (SCANNER_STRING):
@@ -49,6 +129,107 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             string_append(*buffer, c);
         }
+        break;
+    }
+    case (SCANNER_MORE_THAN):
+    {
+        if (c == "=")
+        {
+
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_MORE_EQUAL, NONE, value);
+            array_append(tokens, token);
+        }
+        else
+        {
+            //?? what to do with char c?
+            //!! lost c value here
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_MORE, NONE, value);
+            array_append(tokens, token);
+        }
+        break;
+    }
+    case (SCANNER_LESS_THAN):
+    {
+        if (c == "=")
+        {
+
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_LESS_EQUAL, NONE, value);
+            array_append(tokens, token);
+        }
+        else
+        {
+            //?? what to do with char c?
+            //!! lost c value here
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_LESS, NONE, value);
+            array_append(tokens, token);
+        }
+        break;
+    }
+    case (SCANNER_ASIGN):
+    {
+        if (c == "=")
+        {
+
+            *scanner_state = SCANNER_NOT_EQ_START;
+        }
+        else
+        {
+            //?? what to do with char c?
+            //!! lost c value here
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_LESS, NONE, value);
+            array_append(tokens, token);
+        }
+        break;
+    }
+    case (SCANNER_EXCL_MARK):
+    {
+        if (c == "=")
+        {
+
+            *scanner_state = SCANNER_EQ_START;
+        }
+        else
+        {
+            // TODO: error handling
+        }
+        break;
+    }
+    case (SCANNER_DIVIDE):
+    {
+        if (c == '/')
+        {
+            *scanner_state = SCANNER_LINE_COMM;
+        }
+        else if (c == '*')
+        {
+            *scanner_state = SCANNER_BLOCK_COMM;
+        }
+        else
+        {
+              //?? what to do with char c?
+            //!! lost c value here
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_DIVIDE, NONE, value);
+            array_append(tokens, token);
+        }
+
         break;
     }
     default:
