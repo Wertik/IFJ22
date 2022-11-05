@@ -45,6 +45,7 @@ typedef enum
     TOKEN_ASIGN,
     TOKEN_NOT_EQUAL,
     TOKEN_CONST_EXP,
+    TOKEN_ID
 
     // TODO: Add token types
 } token_type_t;
