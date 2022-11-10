@@ -28,7 +28,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             *scanner_state = SCANNER_STRING;
 
             // create a fresh buffer
-            *buffer = string_empty();
+            *buffer = string_fresh(*buffer);
         }
         else if (c == '.')
         {
@@ -95,14 +95,14 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             *scanner_state = SCANNER_NUM_INT;
 
             // create a fresh buffer
-            *buffer = string_empty();
+            *buffer = string_fresh(*buffer);
             string_append(*buffer, c);
         }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
         {
             *scanner_state = SCANNER_ID;
 
-            *buffer = string_empty();
+            *buffer = string_fresh(*buffer);
             string_append(*buffer, c);
         }
         else if (c == '/')
@@ -148,7 +148,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             array_append(tokens, token);
 
             // free the string struct, but keep the data array alive
-            string_destroy(*buffer);
+            string_clean(*buffer);
         }
         else
         {
@@ -258,8 +258,6 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '/')
         {
             *scanner_state = SCANNER_LINE_COMM;
-
-            *buffer = string_empty();
         }
         else if (c == '*')
         {
@@ -322,7 +320,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             array_append(tokens, token);
 
             // free the string struct, but keep the data array alive
-            string_destroy(*buffer);
+            string_clean(*buffer);
 
             parse_character(tokens, buffer, scanner_state, (char)c);
         }
@@ -356,7 +354,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_VAR_ID, STRING, value);
             array_append(tokens, token);
 
-            string_destroy(*buffer);
+            string_clean(*buffer);
         }
         break;
     }
@@ -379,7 +377,7 @@ void tokenize(array_ptr tokens)
     int scanner_state = SCANNER_START;
 
     // Buffer for parses that require multiple char reads
-    string_ptr buffer;
+    string_ptr buffer = NULL;
 
     while (true)
     {

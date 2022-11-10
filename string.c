@@ -27,6 +27,26 @@ string_ptr string_empty()
     return string;
 }
 
+// Ensure a new clean string.
+string_ptr string_fresh(string_ptr str) {
+    if (str == NULL) {
+        return string_empty();
+    }
+
+    // Already clean
+    if (str->size == 0) {
+        return str;
+    }
+
+    // free the data buffer
+    free(str->data);
+    str->data = NULL;
+
+    // Alloc a new data buffer
+    string_clean(str);
+    return str;
+}
+
 string_ptr string_create(char *data)
 {
     string_ptr string = malloc(sizeof(struct string_t));
@@ -63,13 +83,14 @@ void string_print(string_ptr string)
     printf("Buffer (%d): %s\n", string->size, string->data);
 }
 
-void string_destroy(string_ptr string)
+// Create a new data array for the string, don't free the current data buffer.
+void string_clean(string_ptr string)
 {
     string->data = malloc(sizeof(char));
 
     if (string->data == NULL)
     {
-        fprintf(stderr, "string_empty - data: malloc fail.\n");
+        fprintf(stderr, "string_destroy - data: malloc fail.\n");
         exit(1);
     }
 

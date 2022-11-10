@@ -17,7 +17,9 @@ void string_append(string_ptr string, char c);
 
 void string_print(string_ptr string);
 
-void string_destroy(string_ptr string);
+string_ptr string_fresh(string_ptr string);
+
+void string_clean(string_ptr string);
 
 void string_dispose(string_ptr string);
 
