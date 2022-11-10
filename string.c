@@ -65,7 +65,16 @@ void string_print(string_ptr string)
 
 void string_destroy(string_ptr string)
 {
-    free(string);
+    string->data = malloc(sizeof(char));
+
+    if (string->data == NULL)
+    {
+        fprintf(stderr, "string_empty - data: malloc fail.\n");
+        exit(1);
+    }
+
+    string->data[0] = '\0';
+    string->size = 0;
 }
 
 void string_dispose(string_ptr string)
