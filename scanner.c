@@ -398,4 +398,6 @@ void tokenize(array_ptr tokens)
             break;
         }
     }
+
+    string_dispose(buffer);
 }
