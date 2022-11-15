@@ -28,7 +28,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             *scanner_state = SCANNER_STRING;
 
             // create a fresh buffer
-            *buffer = string_empty();
+            *buffer = string_fresh(*buffer);
         }
         else if (c == '.')
         {
@@ -95,14 +95,14 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             *scanner_state = SCANNER_NUM_INT;
 
             // create a fresh buffer
-            *buffer = string_empty();
+            *buffer = string_fresh(*buffer);
             string_append(*buffer, c);
         }
-        else if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == '_')
+        else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
         {
             *scanner_state = SCANNER_ID;
 
-            *buffer = string_empty();
+            *buffer = string_fresh(*buffer);
             string_append(*buffer, c);
         }
         else if (c == '/')
@@ -128,6 +128,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else if (c == '$')
         {
             *scanner_state = SCANNER_VAR_ID_START;
+        } else if (c == ';') {
+            *scanner_state = SCANNER_START;
+
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_SEMICOLON, NONE, value);
+            array_append(tokens, token);
         }
         break;
     }
@@ -142,7 +148,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             array_append(tokens, token);
 
             // free the string struct, but keep the data array alive
-            string_destroy(*buffer);
+            string_clean(*buffer);
         }
         else
         {
@@ -152,7 +158,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     }
     case (SCANNER_MORE_THAN):
     {
-        if (c == "=")
+        if (c == '=')
         {
 
             *scanner_state = SCANNER_START;
@@ -169,13 +175,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_MORE, NONE, value);
             array_append(tokens, token);
 
-            parse_character(tokens, &buffer, &scanner_state, (char)c);
+            parse_character(tokens, buffer, scanner_state, (char)c);
         }
         break;
     }
     case (SCANNER_LESS_THAN):
     {
-        if (c == "=")
+        if (c == '=')
         {
 
             *scanner_state = SCANNER_START;
@@ -192,13 +198,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_LESS, NONE, value);
             array_append(tokens, token);
 
-            parse_character(tokens, &buffer, &scanner_state, (char)c);
+            parse_character(tokens, buffer, scanner_state, (char)c);
         }
         break;
     }
     case (SCANNER_ASIGN):
     {
-        if (c == "=")
+        if (c == '=')
         {
             *scanner_state = SCANNER_EQ_START;
         }
@@ -211,7 +217,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_ASIGN, NONE, value);
             array_append(tokens, token);
 
-            parse_character(tokens, &buffer, &scanner_state, (char)c);
+            parse_character(tokens, buffer, scanner_state, (char)c);
         }
         break;
     }
@@ -229,9 +235,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     }
     case (SCANNER_EXCL_MARK):
     {
-        if (c == "=")
+        if (c == '=')
         {
-
             *scanner_state = SCANNER_NOT_EQ_START;
         }
         break;
@@ -253,8 +258,6 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '/')
         {
             *scanner_state = SCANNER_LINE_COMM;
-
-            *buffer = string_empty();
         }
         else if (c == '*')
         {
@@ -269,7 +272,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_DIVIDE, NONE, value);
             array_append(tokens, token);
 
-            parse_character(tokens, &buffer, &scanner_state, (char)c);
+            parse_character(tokens, buffer, scanner_state, (char)c);
         }
         break;
     }
@@ -304,9 +307,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     }
     case (SCANNER_ID):
     {
-        if (c >= 'A' && c <= 'Z' || c >= 'a' && c <= 'z' || c == '_' || c >= '0' && c <= '9')
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || (c >= '0' && c <= '9'))
         {
-
             string_append(*buffer, c);
         }
         else
@@ -314,13 +316,47 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             *scanner_state = SCANNER_START;
 
             token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
+            token_ptr token = token_create(TOKEN_ID, STRING, value);
             array_append(tokens, token);
 
             // free the string struct, but keep the data array alive
-            string_destroy(*buffer);
-            break;
+            string_clean(*buffer);
+
+            parse_character(tokens, buffer, scanner_state, (char)c);
         }
+        break;
+    }
+    case (SCANNER_VAR_ID_START):
+    {
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
+        {
+            *scanner_state = SCANNER_VAR_ID;
+            string_append(*buffer, c);
+        }
+        else
+        {
+            fprintf(stderr, "Variables have to start with alphanumeric chatacters. (%c)", c);
+            exit(1);
+        }
+        break;
+    }
+    case (SCANNER_VAR_ID):
+    {
+        if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || (c >= '0' && c <= '9'))
+        {
+            string_append(*buffer, c);
+        }
+        else
+        {
+            *scanner_state = SCANNER_START;
+
+            token_value_t value = {.string = (*buffer)->data};
+            token_ptr token = token_create(TOKEN_VAR_ID, STRING, value);
+            array_append(tokens, token);
+
+            string_clean(*buffer);
+        }
+        break;
     }
     default:
         fprintf(stderr, "Unknown scanner state %d.\n", *scanner_state);
@@ -341,7 +377,7 @@ void tokenize(array_ptr tokens)
     int scanner_state = SCANNER_START;
 
     // Buffer for parses that require multiple char reads
-    string_ptr buffer;
+    string_ptr buffer = NULL;
 
     while (true)
     {
@@ -362,4 +398,6 @@ void tokenize(array_ptr tokens)
             break;
         }
     }
+
+    string_dispose(buffer);
 }

@@ -1,0 +1,6 @@
+function helloWorld(int $arg1, float $float1) {
+    $arg1 > $float1;
+    $arg1 >= $float1;
+    $arg1 < $float1;
+    $arg1 <= $float1;
+}

@@ -39,13 +39,57 @@ char *type_to_name(token_type_t type)
     switch (type)
     {
     case TOKEN_CONST_INT:
-        return "CONST_INT";
+        return "TOKEN_CONST_INT";
     case TOKEN_L_PAREN:
-        return "L_PAREN";
+        return "TOKEN_L_PAREN";
     case TOKEN_R_PAREN:
-        return "R_PAREN";
+        return "TOKEN_R_PAREN";
     case TOKEN_STRING_LIT:
         return "TOKEN_STRING_LIT";
+    case TOKEN_RC_BRACKET:
+        return "TOKEN_RC_BRACKET";
+    case TOKEN_LC_BRACKET:
+        return "TOKEN_LC_BRACKET";
+    case TOKEN_NULLABLE_START:
+        return "TOKEN_NULLABLE_START";
+    case TOKEN_COLON:
+        return "TOKEN_COLON";
+    case TOKEN_DOT:
+        return "TOKEN_DOT";
+    case TOKEN_VAR_ID:
+        return "TOKEN_VAR_ID";
+    case TOKEN_COMMA:
+        return "TOKEN_COMMA";
+    case TOKEN_SEMICOLON:
+        return "TOKEN_SEMICOLON";
+    case TOKEN_PLUS:
+        return "TOKEN_PLUS";
+    case TOKEN_MINUS:
+        return "TOKEN_MINUS";
+    case TOKEN_MULTIPLE:
+        return "TOKEN_MULTIPLE";
+    case TOKEN_DIVIDE:
+        return "TOKEN_DIVIDE";
+    case TOKEN_MORE:
+        return "TOKEN_MORE";
+    case TOKEN_MORE_EQUAL:
+        return "TOKEN_MORE_EQUAL";
+    case TOKEN_LESS:
+        return "TOKEN_LESS";
+    case TOKEN_LESS_EQUAL:
+        return "TOKEN_LESS_EQUAL";
+    case TOKEN_CONST_DOUBLE:
+        return "TOKEN_CONST_DOUBLE";
+    case TOKEN_EQUAL:
+        return "TOKEN_EQUAL";
+    case TOKEN_ASIGN:
+        return "TOKEN_ASIGN";
+    case TOKEN_NOT_EQUAL:
+        return "TOKEN_NOT_EQUAL";
+    case TOKEN_CONST_EXP:
+        return "TOKEN_CONST_EXP";
+    case TOKEN_ID:
+        return "TOKEN_ID";
     default:
     {
         char *s = malloc(sizeof(char));
