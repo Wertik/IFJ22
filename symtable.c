@@ -18,8 +18,10 @@ TreeNode *CreateNode(int key, int data)
 
     if (root == NULL)
     {
-        exit(1);
+        fprintf(stderr, "create_node - data: malloc fail.\n");
+        exit(99);
     }
+    return root;
 }
 
 TreeNode *TreeInsert(TreeNode *root, int key, int data)
@@ -44,7 +46,7 @@ TreeNode *TreeInsert(TreeNode *root, int key, int data)
             root->key = key;
         }
     }
-      return root;
+    return root;
 }
 
 TreeNode *TreeMin(TreeNode *root)
@@ -107,7 +109,56 @@ void TreeDispose(TreeNode *root)
     int key = root->key;
     while (root != NULL)
     {
-      root = TreeDelete(root, key);
-      key = root->key;
+        root = TreeDelete(root, key);
+        if (root != NULL)
+        {
+            key = root->key;
+        }
     }
+}
+
+TreeNode *TreeSearch(TreeNode *root, int key)
+{
+
+    if (root == NULL)
+        return NULL;
+
+    if (key < root->key)
+    {
+        return TreeSearch(root->left, key);
+    }
+    else if (key > root->key)
+    {
+        return TreeSearch(root->right, key);
+    }
+    else
+    {
+        return root;
+    }
+}
+
+void TreePrintUtil(TreeNode *root, int space)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+
+    space += SPACE_SIZE;
+
+    TreePrintUtil(root->right, space);
+
+    printf("\n");
+    for (int i = SPACE_SIZE; i < space; i++)
+        printf(" ");
+    printf("%d,%d<", root->key, root->data);
+
+    TreePrintUtil(root->left, space);
+}
+void TreePrint(TreeNode *root)
+{
+    printf("root\n");
+    printf("↓");
+    TreePrintUtil(root, 0);
+    printf("\n ------------------------------------------------------------ \n");
 }
