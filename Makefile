@@ -1,5 +1,5 @@
-OBJS=main.o token.o scanner.o string.o array.o symtable.o
-HEADER=scanner.h token.h string.h array.h symtable.h
+OBJS=main.o token.o scanner.o string.o array.o symtable.o stack.o grammar.o
+HEADER=scanner.h token.h string.h array.h symtable.h grammar.h stack.h
 OUT=main
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror
@@ -11,6 +11,12 @@ LEADER=xdobes02
 all: main
 
 main: $(OBJS)
+	$(CC) -o $@ $^ $(LFLAGS)
+
+btree: btree_test.o symtable.o
+	$(CC) -o $@ $^ $(LFLAGS)
+
+stack: stack_test.o stack.o token.o grammar.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 run: $(OUT)

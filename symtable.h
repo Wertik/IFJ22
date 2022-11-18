@@ -10,60 +10,62 @@ typedef struct node_t
   int data;
   struct node_t *left;
   struct node_t *right;
-} TreeNode;
+} tree_node_t;
+
+typedef tree_node_t *tree_node_ptr;
 
 /*
- * TreeNode * TreeInit() alocates root node of binary tree
+ * tree_node_ptr tree_init() alocates root node of binary tree
  *
- * return TreeNode *root (NULL)
+ * return tree_node_ptr root (NULL)
  */
-TreeNode *TreeInit(void);
+tree_node_ptr tree_init(void);
 
 /*
- *TreeNode * TreeSearch() searches for node with given key
+ *tree_node_ptr  tree_search() searches for node with given key
  *
- *return TreeNode *node or NULL if key does not exist
+ *return tree_node_ptr node or NULL if key does not exist
  */
-TreeNode *TreeSearch(TreeNode *root, int key);
+tree_node_ptr tree_search(tree_node_ptr root, int key);
 
-//! Do NOT use! use TreeInsert instead.
-TreeNode *CreateNode(int key, int data);
+//! Do NOT use! use tree_insert instead.
+tree_node_ptr create_node(int key, int data);
 
 /*
- * TreeNode *TreeInsert instert node into *root tree
+ * tree_node_ptr tree_insert instert node into *root tree
  *
  * newNode->left = NULL; newNode->right = NULL;
- * return TreeNode *root;
- * 
+ * return tree_node_ptr root;
+ *
  * malloc failure will result in exit(99)
  */
-TreeNode *TreeInsert(TreeNode *root, int key, int data);
+tree_node_ptr tree_insert(tree_node_ptr root, int key, int data);
 
 /*
- * TreeNode *TreeMin return *node with smallest key
+ * tree_node_ptr tree_min return *node with smallest key
  *
- * return TreeNode *smallest_key
+ * return tree_node_ptr smallest_key
  */
-TreeNode *TreeMin(TreeNode *root);
+tree_node_ptr tree_min(tree_node_ptr root);
 /*
- * TreeNode *TreeDelete deletes node of given key
+ * tree_node_ptr tree_delete deletes node of given key
  *
- * return TreeNode *root
+ * return tree_node_ptr root
  */
-TreeNode *TreeDelete(TreeNode *root, int key);
+tree_node_ptr tree_delete(tree_node_ptr root, int key);
 
 /*
- * void TreeDispose disposes
+ * void tree_dispose disposes
  *
  * Disposes binary tree and its alocated memory
  */
-void TreeDispose(TreeNode *root);
+void tree_dispose(tree_node_ptr root);
 
 /*
  * void TreePrint prints out the tree in console
  *
  */
-void TreePrint(TreeNode *root);
-void TreePrintUtil(TreeNode *root, int spaces);
+void tree_print(tree_node_ptr root);
+void tree_print_util(tree_node_ptr root, int spaces);
 
 #endif

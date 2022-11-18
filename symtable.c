@@ -2,14 +2,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-TreeNode *Treeinit()
+tree_node_ptr tree_init()
 {
     return NULL;
 }
 
-TreeNode *CreateNode(int key, int data)
+tree_node_ptr create_node(int key, int data)
 {
-    TreeNode *root = (TreeNode *)malloc(sizeof(TreeNode));
+    tree_node_ptr root = (tree_node_ptr)malloc(sizeof(tree_node_t));
 
     root->data = data;
     root->key = key;
@@ -24,21 +24,21 @@ TreeNode *CreateNode(int key, int data)
     return root;
 }
 
-TreeNode *TreeInsert(TreeNode *root, int key, int data)
+tree_node_ptr tree_insert(tree_node_ptr root, int key, int data)
 {
     if (root == NULL)
     {
-        return CreateNode(key, data);
+        return create_node(key, data);
     }
     else
     {
         if (key < root->key)
         {
-            root->left = TreeInsert(root->left, key, data);
+            root->left = tree_insert(root->left, key, data);
         }
         else if (key > root->key)
         {
-            root->right = TreeInsert(root->right, key, data);
+            root->right = tree_insert(root->right, key, data);
         }
         else
         {
@@ -49,17 +49,17 @@ TreeNode *TreeInsert(TreeNode *root, int key, int data)
     return root;
 }
 
-TreeNode *TreeMin(TreeNode *root)
+tree_node_ptr tree_min(tree_node_ptr root)
 {
 
     if (root == NULL)
     {
         return NULL;
     }
-    return (root->left == NULL) ? root : TreeMin(root->left);
+    return (root->left == NULL) ? root : tree_min(root->left);
 }
 
-TreeNode *TreeDelete(TreeNode *root, int key)
+tree_node_ptr tree_delete(tree_node_ptr root, int key)
 {
     if (root == NULL)
     {
@@ -69,12 +69,12 @@ TreeNode *TreeDelete(TreeNode *root, int key)
     {
         if (key < root->key)
         {
-            root->left = TreeDelete(root->left, key);
+            root->left = tree_delete(root->left, key);
             return root;
         }
         else if (key > root->key)
         {
-            root->right = TreeDelete(root->right, key);
+            root->right = tree_delete(root->right, key);
             return root;
         }
         else
@@ -87,16 +87,16 @@ TreeNode *TreeDelete(TreeNode *root, int key)
             else if (root->right != NULL && root->left != NULL) // both children
             {
 
-                TreeNode *min = TreeMin(root->right);
+                tree_node_ptr min = tree_min(root->right);
                 root->data = min->data;
                 root->key = min->key;
-                root->right = TreeDelete(root->right, min->key);
+                root->right = tree_delete(root->right, min->key);
                 return root;
             }
             else
             {
 
-                TreeNode *child = (root->left == NULL) ? root->right : root->left;
+                tree_node_ptr child = (root->left == NULL) ? root->right : root->left;
                 free(root);
                 return child;
             }
@@ -104,12 +104,12 @@ TreeNode *TreeDelete(TreeNode *root, int key)
     }
 }
 
-void TreeDispose(TreeNode *root)
+void tree_dispose(tree_node_ptr root)
 {
     int key = root->key;
     while (root != NULL)
     {
-        root = TreeDelete(root, key);
+        root = tree_delete(root, key);
         if (root != NULL)
         {
             key = root->key;
@@ -117,7 +117,7 @@ void TreeDispose(TreeNode *root)
     }
 }
 
-TreeNode *TreeSearch(TreeNode *root, int key)
+tree_node_ptr tree_search(tree_node_ptr root, int key)
 {
 
     if (root == NULL)
@@ -125,11 +125,11 @@ TreeNode *TreeSearch(TreeNode *root, int key)
 
     if (key < root->key)
     {
-        return TreeSearch(root->left, key);
+        return tree_search(root->left, key);
     }
     else if (key > root->key)
     {
-        return TreeSearch(root->right, key);
+        return tree_search(root->right, key);
     }
     else
     {
@@ -137,7 +137,7 @@ TreeNode *TreeSearch(TreeNode *root, int key)
     }
 }
 
-void TreePrintUtil(TreeNode *root, int space)
+void tree_print_util(tree_node_ptr root, int space)
 {
     if (root == NULL)
     {
@@ -146,19 +146,20 @@ void TreePrintUtil(TreeNode *root, int space)
 
     space += SPACE_SIZE;
 
-    TreePrintUtil(root->right, space);
+    tree_print_util(root->right, space);
 
     printf("\n");
     for (int i = SPACE_SIZE; i < space; i++)
         printf(" ");
     printf("%d,%d<", root->key, root->data);
 
-    TreePrintUtil(root->left, space);
+    tree_print_util(root->left, space);
 }
-void TreePrint(TreeNode *root)
+
+void tree_print(tree_node_ptr root)
 {
     printf("root\n");
     printf("↓");
-    TreePrintUtil(root, 0);
+    tree_print_util(root, 0);
     printf("\n ------------------------------------------------------------ \n");
 }

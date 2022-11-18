@@ -3,10 +3,21 @@
 
 /* Token definitions */
 
+typedef enum
+{
+    KEYWORD_FUNCTION,
+    KEYWORD_IF,
+    KEYWORD_ELSE,
+    KEYWORD_WHILE,
+    KEYWORD_FOR,
+    KEYWORD_RETURN,
+} keyword_t;
+
 typedef union
 {
     int integer;
     char *string;
+    keyword_t keyword;
     // TODO: Add other type values
 } token_value_t;
 
@@ -15,6 +26,7 @@ typedef enum
     NONE,
     INTEGER,
     STRING,
+    KEYWORD,
     // TODO: Add decimals and other types
 } token_value_type_t;
 
@@ -27,7 +39,7 @@ typedef enum
     TOKEN_RC_BRACKET,
     TOKEN_LC_BRACKET,
     TOKEN_NULLABLE_START,
-    TOKEN_COLON, 
+    TOKEN_COLON,
     TOKEN_DOT,
     TOKEN_VAR_ID,
     TOKEN_COMMA,
@@ -45,7 +57,8 @@ typedef enum
     TOKEN_ASIGN,
     TOKEN_NOT_EQUAL,
     TOKEN_CONST_EXP,
-    TOKEN_ID
+    TOKEN_ID,
+    TOKEN_KEYWORD,
 
     // TODO: Add token types
 } token_type_t;

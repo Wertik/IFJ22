@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <string.h>
 
 bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, char c)
 {
@@ -128,12 +129,37 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else if (c == '$')
         {
             *scanner_state = SCANNER_VAR_ID_START;
-        } else if (c == ';') {
+        }
+        else if (c == ';')
+        {
             *scanner_state = SCANNER_START;
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_SEMICOLON, NONE, value);
             array_append(tokens, token);
+        }
+        break;
+    }
+    case (SCANNER_NUM_INT):
+    {
+        if (c >= '0' && c <= '9')
+        {
+            string_append(*buffer, c);
+        }
+        else
+        {
+            *scanner_state = SCANNER_START;
+
+            int val = atoi((*buffer)->data);
+
+            token_value_t value = {.integer = val};
+            token_ptr token = token_create(TOKEN_CONST_INT, INTEGER, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_clean(*buffer);
+
+            parse_character(tokens, buffer, scanner_state, c);
         }
         break;
     }
@@ -315,12 +341,44 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_START;
 
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_ID, STRING, value);
-            array_append(tokens, token);
+            if (strcmp((*buffer)->data, "function") == 0)
+            {
+                token_value_t value = {.keyword = KEYWORD_FUNCTION};
 
-            // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
+                array_append(tokens, token);
+            }
+            else if (strcmp((*buffer)->data, "if") == 0)
+            {
+                token_value_t value = {.keyword = KEYWORD_IF};
+
+                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
+                array_append(tokens, token);
+            }
+            else if (strcmp((*buffer)->data, "else") == 0)
+            {
+                token_value_t value = {.keyword = KEYWORD_ELSE};
+
+                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
+                array_append(tokens, token);
+            }
+            else if (strcmp((*buffer)->data, "return") == 0)
+            {
+                token_value_t value = {.keyword = KEYWORD_RETURN};
+
+                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
+                array_append(tokens, token);
+            }
+            else
+            {
+                token_value_t value = {.string = (*buffer)->data};
+
+                token_ptr token = token_create(TOKEN_ID, STRING, value);
+                array_append(tokens, token);
+
+                // free the string struct, but keep the data array alive
+                string_clean(*buffer);
+            }
 
             parse_character(tokens, buffer, scanner_state, (char)c);
         }

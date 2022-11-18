@@ -26,7 +26,8 @@ token_ptr token_create(token_type_t type, token_value_type_t value_type, token_v
 void token_dispose(token_ptr token)
 {
     // free string values
-    if (token->value_type == STRING) {
+    if (token->value_type == STRING)
+    {
         free(token->value.string);
     }
 
@@ -90,6 +91,8 @@ char *type_to_name(token_type_t type)
         return "TOKEN_CONST_EXP";
     case TOKEN_ID:
         return "TOKEN_ID";
+    case TOKEN_KEYWORD:
+        return "TOKEN_KEYWORD";
     default:
     {
         char *s = malloc(sizeof(char));
@@ -110,6 +113,8 @@ char *value_type_to_name(token_value_type_t value_type)
         return "STRING";
     case INTEGER:
         return "INTEGER";
+    case KEYWORD:
+        return "KEYWORD";
     default:
     {
         char *s = malloc(sizeof(char));
@@ -131,6 +136,8 @@ char *value_type_to_format(token_value_type_t value_type)
         return "Token (%s, %s, %d)";
     case STRING:
         return "Token (%s, %s, %s)";
+    case KEYWORD:
+        return "Token (%s, %s, %d)";
     default:
         // default to whatever and add a note, it might work
         return "Token (%d, %d, %d, #ivalid-value-type)";
