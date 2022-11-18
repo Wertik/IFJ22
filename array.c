@@ -49,7 +49,7 @@ element_ptr element_create(token_ptr token)
     {
         // TODO: Handle better?
         fprintf(stderr, "malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     element->next = NULL;
