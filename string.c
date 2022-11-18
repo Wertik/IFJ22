@@ -10,7 +10,7 @@ string_ptr string_empty()
     if (string == NULL)
     {
         fprintf(stderr, "string_empty: malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     string->data = malloc(sizeof(char));
@@ -18,7 +18,7 @@ string_ptr string_empty()
     if (string->data == NULL)
     {
         fprintf(stderr, "string_empty - data: malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     string->data[0] = '\0';
@@ -54,7 +54,7 @@ string_ptr string_create(char *data)
     if (string == NULL)
     {
         fprintf(stderr, "string_create: malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     string->data = data;
@@ -71,7 +71,7 @@ void string_append(string_ptr string, char c)
     if (string->data == NULL)
     {
         fprintf(stderr, "string_append: malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     string->data[string->size - 1] = c;
@@ -91,7 +91,7 @@ void string_clean(string_ptr string)
     if (string->data == NULL)
     {
         fprintf(stderr, "string_destroy - data: malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     string->data[0] = '\0';

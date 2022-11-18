@@ -146,7 +146,7 @@ char *token_to_string(token_ptr token)
     {
         // TODO: Handle better?
         fprintf(stderr, "malloc fail.\n");
-        exit(1);
+        exit(99);
     }
 
     sprintf(s, value_type_to_format(token->value_type), type_to_name(token->type), value_type_to_name(token->value_type), token->value);
