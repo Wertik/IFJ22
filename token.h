@@ -38,7 +38,7 @@ typedef enum
     TOKEN_STRING_LIT, // String literal
     TOKEN_RC_BRACKET,
     TOKEN_LC_BRACKET,
-    TOKEN_NULLABLE_START,
+    TOKEN_NULLABLE,
     TOKEN_COLON,
     TOKEN_DOT,
     TOKEN_VAR_ID,
@@ -54,7 +54,7 @@ typedef enum
     TOKEN_LESS_EQUAL,
     TOKEN_CONST_DOUBLE,
     TOKEN_EQUAL,
-    TOKEN_ASIGN,
+    TOKEN_ASSIGN,
     TOKEN_NOT_EQUAL,
     TOKEN_CONST_EXP,
     TOKEN_ID,
@@ -75,6 +75,7 @@ typedef struct token_t
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value);
 
 char *token_to_string(token_ptr token);
+char *token_type_to_name(token_type_t type);
 
 void token_print(token_ptr token);
 

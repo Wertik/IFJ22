@@ -1,7 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "scanner.h"
+#include "parser.h"
 #include "token.h"
+#include "symtable.h"
 
 int main(int argc, char const *argv[])
 {
@@ -11,8 +13,12 @@ int main(int argc, char const *argv[])
     // Tokenize stdin
     tokenize(tokens);
 
-    // Print the result & exit.
+    // Print tokens
     array_print(tokens);
+
+    // Parse tokens
+    parse(tokens);
+
     array_dispose(tokens);
 
     return 0;

@@ -95,7 +95,7 @@ void array_dispose(array_ptr array)
     {
         element_ptr next = element->next;
 
-        token_dispose(element->token);
+        /* token_dispose(element->token); */
         free(element);
 
         element = next;

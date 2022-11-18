@@ -35,7 +35,7 @@ void token_dispose(token_ptr token)
 }
 
 // Parse type name to string for pretty print
-char *type_to_name(token_type_t type)
+char *token_type_to_name(token_type_t type)
 {
     switch (type)
     {
@@ -51,8 +51,8 @@ char *type_to_name(token_type_t type)
         return "TOKEN_RC_BRACKET";
     case TOKEN_LC_BRACKET:
         return "TOKEN_LC_BRACKET";
-    case TOKEN_NULLABLE_START:
-        return "TOKEN_NULLABLE_START";
+    case TOKEN_NULLABLE:
+        return "TOKEN_NULLABLE";
     case TOKEN_COLON:
         return "TOKEN_COLON";
     case TOKEN_DOT:
@@ -83,8 +83,8 @@ char *type_to_name(token_type_t type)
         return "TOKEN_CONST_DOUBLE";
     case TOKEN_EQUAL:
         return "TOKEN_EQUAL";
-    case TOKEN_ASIGN:
-        return "TOKEN_ASIGN";
+    case TOKEN_ASSIGN:
+        return "TOKEN_ASSIGN";
     case TOKEN_NOT_EQUAL:
         return "TOKEN_NOT_EQUAL";
     case TOKEN_CONST_EXP:
@@ -146,7 +146,7 @@ char *value_type_to_format(token_value_type_t value_type)
 
 char *token_to_string(token_ptr token)
 {
-    size_t len = snprintf(NULL, 0, value_type_to_format(token->value_type), type_to_name(token->type), value_type_to_name(token->value_type), token->value);
+    size_t len = snprintf(NULL, 0, value_type_to_format(token->value_type), token_type_to_name(token->type), value_type_to_name(token->value_type), token->value);
     char *s = malloc((sizeof(char) * len) + 1);
 
     if (s == NULL)
@@ -156,7 +156,7 @@ char *token_to_string(token_ptr token)
         exit(99);
     }
 
-    sprintf(s, value_type_to_format(token->value_type), type_to_name(token->type), value_type_to_name(token->value_type), token->value);
+    sprintf(s, value_type_to_format(token->value_type), token_type_to_name(token->type), value_type_to_name(token->value_type), token->value);
     return s;
 }
 

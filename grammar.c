@@ -25,7 +25,7 @@ symbol_ptr create_terminal(token_ptr token)
 
     if (symbol == NULL)
     {
-        fprintf(stderr, "create_nonterminal: malloc fail\n");
+        fprintf(stderr, "create_terminal: malloc fail\n");
         exit(99);
     }
 
@@ -69,6 +69,7 @@ char *symbol_to_string(symbol_ptr symbol)
         }
 
         sprintf(s, "Symbol (terminal, %s)", token_s);
+        free(token_s);
         return s;
     }
     else
@@ -98,9 +99,5 @@ void symbol_print(symbol_ptr symbol)
 
 void symbol_dispose(symbol_ptr symbol)
 {
-    if (symbol->terminal)
-    {
-        free(symbol->token);
-    }
     free(symbol);
 }

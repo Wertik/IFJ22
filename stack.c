@@ -73,14 +73,7 @@ void stack_print(item_ptr stack)
 item_ptr stack_pop(item_ptr stack)
 {
     item_ptr top = stack->next;
-
-    if (stack->symbol->terminal)
-    {
-        free(stack->symbol->token);
-    }
-    free(stack->symbol);
     free(stack);
-
     return top;
 }
 
@@ -88,6 +81,13 @@ void stack_dispose(item_ptr stack)
 {
     while (stack != NULL)
     {
-        stack = stack_pop(stack);
+        if (stack->symbol->terminal)
+        {
+            free(stack->symbol->token);
+        }
+        free(stack->symbol);
+        item_ptr next = stack->next;
+        free(stack);
+        stack = next;
     }
 }

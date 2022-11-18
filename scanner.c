@@ -46,7 +46,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else if (c == '?')
         {
             token_value_t value;
-            token_ptr token = token_create(TOKEN_NULLABLE_START, NONE, value);
+            token_ptr token = token_create(TOKEN_NULLABLE, NONE, value);
             array_append(tokens, token);
         }
         else if (c == '}')
@@ -157,7 +157,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             array_append(tokens, token);
 
             // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+            string_fresh(*buffer);
 
             parse_character(tokens, buffer, scanner_state, c);
         }
@@ -240,7 +240,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             *scanner_state = SCANNER_START;
 
             token_value_t value;
-            token_ptr token = token_create(TOKEN_ASIGN, NONE, value);
+            token_ptr token = token_create(TOKEN_ASSIGN, NONE, value);
             array_append(tokens, token);
 
             parse_character(tokens, buffer, scanner_state, (char)c);
