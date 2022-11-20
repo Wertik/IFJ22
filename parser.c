@@ -164,14 +164,47 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
         case KEYWORD_WHILE:
             // <statement> -> while (<expression>) {<statement-list>}
             // TODO: Implement
-            fprintf(stderr, "Not implemented.\n");
-            exit(42);
+            assert_next_token(in_stack, TOKEN_L_PAREN);
+
+            int value = parse_expression(in_stack);
+
+            assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+
+            DEBUG_OUTF("while (%d)", value);
+
+            rule_statement_list(in_stack, tree);
+
+            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+
+            DEBUG_OUT("end while");
+
+            //fprintf(stderr, "Not implemented.\n");
+            //exit(42);
             break;
         case KEYWORD_FUNCTION:
             // <statement> -> function id(<argument-list>) {<statement-list>}
             // TODO: Implement
-            fprintf(stderr, "Not implemented.\n");
-            exit(42);
+
+            assert_next_token(in_stack, TOKEN_ID);
+
+            assert_next_token(in_stack, TOKEN_L_PAREN);
+
+            //int value = parse_expression(in_stack);
+            rule_argument_list(in_stack, tree);
+
+            assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+
+            DEBUG_OUTF("function (%d)", value);
+
+            rule_statement_list(in_stack, tree);
+
+            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+
+            DEBUG_OUT("end function");
+
+
+            //fprintf(stderr, "Not implemented.\n");
+            //exit(42);
             break;
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
@@ -209,7 +242,32 @@ void rule_statement_list(item_ptr *in_stack, tree_node_ptr tree)
         // <statement-list> -> eps
     }
 }
+// <argument-list> -> type <expression> <argument-next>
+// <argument-list> -> <expression> <argument-next>
+// <argument-list> -> ε
+void rule_argument_list(item_ptr *in_stack, tree_node_ptr tree)
+{
+    DEBUG_RULE();
 
+    // Decide based on first? There's always at least one statement
+
+    token_ptr next = peek_top(in_stack);
+
+    if (next->type == TOKEN_KEYWORD || next->type == TOKEN_VAR_ID)
+    {
+        // <argument-list> -> type <expression> <argument-next>
+        int value = parse_expression(in_stack);
+         //to do
+        //rule_(in_stack., tree);
+
+        rule_statement_list(in_stack, tree);
+    }
+    //else if ()
+    else
+    {
+        // <statement-list> -> eps
+    }
+}
 // <prog> -> <?php <statement> ?>
 void rule_prog(item_ptr *in_stack, tree_node_ptr tree)
 {
