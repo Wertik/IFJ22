@@ -2,10 +2,16 @@
 #define UTILS_H
 
 // TODO: Remove after generator done. Kept here so we can see some output even with debug disabled.
-#define DEBUG_OUT(fmt, ...)                          \
-    do                                               \
-    {                                                \
-        printf("\nOUTPUT: " #fmt "\n", __VA_ARGS__); \
+#define DEBUG_OUT(str)                 \
+    do                                 \
+    {                                  \
+        printf("OUTPUT: " #str "\n"); \
+    } while (0);
+
+#define DEBUG_OUTF(fmt, ...)                        \
+    do                                              \
+    {                                               \
+        printf("OUTPUT: " #fmt "\n", __VA_ARGS__); \
     } while (0);
 
 #ifdef VERBOSE

@@ -118,7 +118,7 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
 
         // TODO: Create symboltable entry
 
-        DEBUG_OUT("%s <- %d", next->value.string, value);
+        DEBUG_OUTF("%s <- %d", next->value.string, value);
 
         assert_next_token(in_stack, TOKEN_SEMICOLON);
     }
@@ -136,13 +136,16 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
             int value = parse_expression(in_stack);
-            DEBUG_OUT("if (%d)", value);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+
+            DEBUG_OUTF("if (%d)", value);
 
             rule_statement_list(in_stack, tree);
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
+
+            DEBUG_OUT("end if");
 
             // else { <statement-list> }
 
@@ -150,9 +153,13 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
 
             assert_next_token(in_stack, TOKEN_LC_BRACKET);
 
+            DEBUG_OUT("else");
+
             rule_statement_list(in_stack, tree);
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
+
+            DEBUG_OUT("end else");
             break;
         case KEYWORD_WHILE:
             // <statement> -> while (<expression>) {<statement-list>}
