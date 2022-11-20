@@ -1,3 +1,4 @@
+```
 1 <prog> -> <?php declare(strict_types=1); <statement-list> <prog-end>
 2 <prog-end> -> ε
 3 <prog-end> -> ?>
@@ -36,3 +37,4 @@
 33 <argument-next-list> -> ε
 34 <argument-next-list> -> ,<expression> <argument-next-list>
 35 <argument-next-list> -> ,type <expression> <argument-next-list>
+```
