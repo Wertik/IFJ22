@@ -9,7 +9,6 @@ typedef enum
     KEYWORD_IF,
     KEYWORD_ELSE,
     KEYWORD_WHILE,
-    KEYWORD_FOR,
     KEYWORD_RETURN,
 } keyword_t;
 

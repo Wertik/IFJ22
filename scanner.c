@@ -347,6 +347,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
                 token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
                 array_append(tokens, token);
+
+                string_fresh(*buffer);
             }
             else if (strcmp((*buffer)->data, "if") == 0)
             {
@@ -354,6 +356,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
                 token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
                 array_append(tokens, token);
+
+                string_fresh(*buffer);
             }
             else if (strcmp((*buffer)->data, "else") == 0)
             {
@@ -361,6 +365,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
                 token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
                 array_append(tokens, token);
+
+                string_fresh(*buffer);
             }
             else if (strcmp((*buffer)->data, "return") == 0)
             {
@@ -368,6 +374,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
                 token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
                 array_append(tokens, token);
+
+                string_fresh(*buffer);
             }
             else
             {

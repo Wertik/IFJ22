@@ -1,5 +1,5 @@
 OBJS=main.o token.o scanner.o string.o array.o symtable.o stack.o grammar.o parser.o
-HEADER=scanner.h token.h string.h array.h symtable.h grammar.h stack.h parser.h
+HEADER=scanner.h token.h string.h array.h symtable.h grammar.h stack.h parser.h utils.h
 OUT=main
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror

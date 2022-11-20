@@ -4,17 +4,18 @@
 #include "parser.h"
 #include "token.h"
 #include "symtable.h"
+#include "utils.h"
 
 int main(int argc, char const *argv[])
 {
     // Initialize a token array.
     array_ptr tokens = array_create();
-    
+
     // Tokenize stdin
     tokenize(tokens);
 
     // Print tokens
-    array_print(tokens);
+    DEBUG_ARRAY(tokens);
 
     // Parse tokens
     parse(tokens);

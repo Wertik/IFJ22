@@ -25,6 +25,8 @@ typedef struct symbol_t
 symbol_ptr create_nonterminal(nonterminal_t type);
 symbol_ptr create_terminal(token_ptr token);
 
+char *keyword_to_name(keyword_t keyword); 
+
 char *symbol_to_string(symbol_ptr symbol);
 void symbol_print(symbol_ptr symbol);
 char *nonterminal_to_string(nonterminal_t type);

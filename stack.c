@@ -44,8 +44,6 @@ void stack_print(item_ptr stack)
 {
     item_ptr item = stack;
 
-    // TODO prettify
-
     int size = stack_size(stack);
 
     printf("stack(%d) [", size);
