@@ -306,7 +306,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (!(c == EOF || c == '\n'))
         {
-
+            *scanner_state = SCANNER_LINE_COMM;
+        }else if(c == EOF || c == '\n'){
             *scanner_state = SCANNER_START;
         }
         break;

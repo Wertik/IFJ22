@@ -13,28 +13,26 @@
 10 <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
 11 <statement> -> function token_id(<argument-list>) : type {<statement-list>}
 
-12 <expression> -> int
-14 <expression> -> float
-15 <expression> -> string
-16 <expression> -> var_id
-16 <expression> -> (<expression>)
-17 <expression> -> <expression> * <expression>
-19 <expression> -> <expression> / <expression>
-20 <expression> -> <expression> - <expression>
-21 <expression> -> <expression> + <expression>
-22 <expression> -> <expression> . <expression>
-23 <expression> -> <expression> < <expression>
-24 <expression> -> <expression> > <expression>
-25 <expression> -> <expression> <= <expression>
-26 <expression> -> <expression> >= <expression>
-27 <expression> -> <expression> === <expression>
-28 <expression> -> <expression> !== <expression>
-29 <expression> -> token_id(<argument-list>)
+12 <expression> -> var_type
+13 <expression> -> var_id
+14 <expression> -> (<expression>)
+15 <expression> -> <expression> * <expression>
+16 <expression> -> <expression> / <expression>
+17 <expression> -> <expression> - <expression>
+18 <expression> -> <expression> + <expression>
+19 <expression> -> <expression> . <expression>
+21 <expression> -> <expression> < <expression>
+22 <expression> -> <expression> > <expression>
+23 <expression> -> <expression> <= <expression>
+24 <expression> -> <expression> >= <expression>
+25 <expression> -> <expression> === <expression>
+26 <expression> -> <expression> !== <expression>
+27 <expression> -> token_id(<argument-list>)
 
-30 <argument-list> -> <expression> <argument-next-list>
-31 <argument-list> -> type <expression> <argument-next-list>
-32 <argument-list> -> ε
+28 <argument-list> -> <expression> <argument-next-list>
+29 <argument-list> -> type <expression> <argument-next-list>
+30 <argument-list> -> ε
+31 <argument-next-list> -> ,<expression> <argument-next-list>
+32 <argument-next-list> -> ,type <expression> <argument-next-list>
 33 <argument-next-list> -> ε
-34 <argument-next-list> -> ,<expression> <argument-next-list>
-35 <argument-next-list> -> ,type <expression> <argument-next-list>
 ```
