@@ -25,6 +25,7 @@ token_ptr get_next_token(item_ptr *stack)
 
     *stack = stack_pop(*stack);
 
+    DEBUG_TOKEN(token);
     DEBUG_STACK_TOP(*stack, 2);
 
     free(symbol);
@@ -102,7 +103,7 @@ int parse_expression(item_ptr *in_stack)
 // <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
 // <statement> -> while (<expression>) {<statement-list>}
 // <statement> -> function id(<argument-list>) {<statement-list>}
-void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
+void rule_statement(item_ptr *in_stack, table_node_ptr tree)
 {
     DEBUG_RULE();
 
@@ -189,7 +190,7 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
 
 // <statement-list> -> <statement><statement-list>
 // <statement-list> -> eps
-void rule_statement_list(item_ptr *in_stack, tree_node_ptr tree)
+void rule_statement_list(item_ptr *in_stack, table_node_ptr tree)
 {
     DEBUG_RULE();
 
@@ -199,7 +200,7 @@ void rule_statement_list(item_ptr *in_stack, tree_node_ptr tree)
 
     if (next->type == TOKEN_KEYWORD || next->type == TOKEN_VAR_ID)
     {
-        // <statement-list> -> <statement>;<statement-list>
+        // <statement-list> -> <statement><statement-list>
         rule_statement(in_stack, tree);
 
         rule_statement_list(in_stack, tree);
@@ -211,9 +212,11 @@ void rule_statement_list(item_ptr *in_stack, tree_node_ptr tree)
 }
 
 // <prog> -> <?php <statement> ?>
-void rule_prog(item_ptr *in_stack, tree_node_ptr tree)
+void rule_prog(item_ptr *in_stack, table_node_ptr tree)
 {
     DEBUG_RULE();
+
+    // TODO: Declare
 
     assert_n_tokens(in_stack, 3, TOKEN_LESS, TOKEN_NULLABLE, TOKEN_ID);
 
@@ -222,9 +225,9 @@ void rule_prog(item_ptr *in_stack, tree_node_ptr tree)
     assert_n_tokens(in_stack, 2, TOKEN_NULLABLE, TOKEN_MORE);
 }
 
-tree_node_ptr parse(array_ptr tokens)
+table_node_ptr parse(array_ptr tokens)
 {
-    tree_node_ptr tree = tree_init();
+    table_node_ptr tree = sym_init();
 
     item_ptr in_stack = stack_init();
 

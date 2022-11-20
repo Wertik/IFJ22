@@ -1,6 +1,6 @@
 OBJS=main.o token.o scanner.o string.o array.o symtable.o stack.o grammar.o parser.o
 HEADER=scanner.h token.h string.h array.h symtable.h grammar.h stack.h parser.h utils.h
-OUT=main
+OUT=main sym stack
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror
 LFLAGS=-lm
@@ -13,7 +13,7 @@ all: main
 main: $(OBJS)
 	$(CC) -o $@ $^ $(LFLAGS)
 
-btree: btree_test.o symtable.o
+sym: symtable_test.o symtable.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 stack: stack_test.o stack.o token.o grammar.o
@@ -26,7 +26,7 @@ valgrind: $(OUT)
 	valgrind --leak-check=full ./$(OUT)
 
 %.o: %.c $(HEADER)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -c -o $@ $< -DVERBOSE
 
 # Pack for submission
 pack: all
@@ -36,5 +36,7 @@ pack: all
 
 clean:
 	@rm $(OBJS) -rf
+	@rm stack_test.o -rf
+	@rm symtable_test.o -rf
 	@rm $(OUT) -rf
 

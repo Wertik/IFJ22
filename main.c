@@ -22,5 +22,6 @@ int main(int argc, char const *argv[])
 
     array_dispose(tokens);
 
+    printf("Finished without errors!\n");
     return 0;
 }
