@@ -23,6 +23,7 @@ token_ptr assert_next_token_get(item_ptr *stack, token_type_t token_type);
 // -- rule functions
 
 void rule_prog(item_ptr *in_stack, tree_node_ptr tree);
+void rule_prog_end(item_ptr *in_stack, tree_node_ptr tree);
 void rule_statement(item_ptr *in_stack, tree_node_ptr tree);
 void rule_statement_list(item_ptr *in_stack, tree_node_ptr tree);
 
