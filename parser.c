@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <string.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include "parser.h"
@@ -164,47 +165,47 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
         case KEYWORD_WHILE:
             // <statement> -> while (<expression>) {<statement-list>}
             // TODO: Implement
-            assert_next_token(in_stack, TOKEN_L_PAREN);
+           // assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            int value = parse_expression(in_stack);
+           // int value = parse_expression(in_stack);
 
-            assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+           // assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_OUTF("while (%d)", value);
+           // DEBUG_OUTF("while (%d)", value);
 
-            rule_statement_list(in_stack, tree);
+           // rule_statement_list(in_stack, tree);
 
-            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+           // assert_next_token(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_OUT("end while");
+         //   DEBUG_OUT("end while");
 
-            //fprintf(stderr, "Not implemented.\n");
-            //exit(42);
+            fprintf(stderr, "Not implemented.\n");
+            exit(42);
             break;
         case KEYWORD_FUNCTION:
             // <statement> -> function id(<argument-list>) {<statement-list>}
             // TODO: Implement
 
-            assert_next_token(in_stack, TOKEN_ID);
+           // assert_next_token(in_stack, TOKEN_ID);
 
-            assert_next_token(in_stack, TOKEN_L_PAREN);
+            //assert_next_token(in_stack, TOKEN_L_PAREN);
 
             //int value = parse_expression(in_stack);
-            rule_argument_list(in_stack, tree);
+           // rule_argument_list(in_stack, tree);
 
-            assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+           // assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_OUTF("function (%d)", value);
+           // DEBUG_OUTF("function (%d)", value);
 
-            rule_statement_list(in_stack, tree);
+           // rule_statement_list(in_stack, tree);
 
-            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+           // assert_next_token(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_OUT("end function");
+           // DEBUG_OUT("end function");
 
 
-            //fprintf(stderr, "Not implemented.\n");
-            //exit(42);
+            fprintf(stderr, "Not implemented.\n");
+            exit(42);
             break;
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
@@ -245,29 +246,29 @@ void rule_statement_list(item_ptr *in_stack, tree_node_ptr tree)
 // <argument-list> -> type <expression> <argument-next>
 // <argument-list> -> <expression> <argument-next>
 // <argument-list> -> ε
-void rule_argument_list(item_ptr *in_stack, tree_node_ptr tree)
-{
-    DEBUG_RULE();
+//void rule_argument_list(item_ptr *in_stack, tree_node_ptr tree)
+//{
+ //   DEBUG_RULE();
+//
+ //   // Decide based on first? There's always at least one statement
 
-    // Decide based on first? There's always at least one statement
-
-    token_ptr next = peek_top(in_stack);
-
-    if (next->type == TOKEN_KEYWORD || next->type == TOKEN_VAR_ID)
-    {
-        // <argument-list> -> type <expression> <argument-next>
-        int value = parse_expression(in_stack);
-         //to do
-        //rule_(in_stack., tree);
-
-        rule_statement_list(in_stack, tree);
-    }
-    //else if ()
-    else
-    {
-        // <statement-list> -> eps
-    }
-}
+ //   token_ptr next = peek_top(in_stack);
+//
+ //   if (next->type == TOKEN_KEYWORD || next->type == TOKEN_VAR_ID)
+ //   {
+ //       // <argument-list> -> type <expression> <argument-next>
+ //       int value = parse_expression(in_stack);
+ //        //to do
+ //       //rule_(in_stack., tree);
+//
+  //      rule_statement_list(in_stack, tree);
+  //  }
+  //  //else if ()
+  //  else
+  //  {
+  //      // <statement-list> -> eps
+  // }
+//}
 // <prog> -> <?php <statement> ?>
 void rule_prog(item_ptr *in_stack, tree_node_ptr tree)
 {
@@ -305,3 +306,107 @@ tree_node_ptr parse(array_ptr tokens)
 
     return tree;
 }
+
+//// DIFFERNENT QUESTIONABLE ONES
+void error_func(){
+    exit(1);
+}
+
+token_ptr peek_top_(item_ptr *stack)
+{
+    symbol_ptr symbol = stack_top(*stack)->symbol;
+    return symbol->token;
+}
+
+int assert_token_type_(token_ptr token, token_type_t type)
+{
+    DEBUG_ASSERT(type, token->type);
+
+    if (token->type != type)
+    {
+        fprintf(stderr, "%s expected.\n", token_type_to_name(type));
+        return 0;
+    }
+    return 1;
+}
+
+int assert_next_token_(item_ptr *stack, token_type_t token_type)
+{
+    token_ptr token = get_next_token(stack);
+
+    if (assert_token_type_(token, token_type)){
+        return 1;
+    }
+    token_dispose(token);
+    return 0;
+
+}
+token_ptr get_next_token_(item_ptr *stack)
+{
+    symbol_ptr symbol = stack_top(*stack)->symbol;
+    token_ptr token = symbol->token;
+
+    *stack = stack_pop(*stack);
+
+    DEBUG_STACK_TOP(*stack, 2);
+
+    free(symbol);
+    return token;
+}
+int prog_(item_ptr *in_stack, tree_node_ptr tree){
+    if (!assert_next_token_(in_stack, TOKEN_LESS)) error_func();
+    if (!assert_next_token_(in_stack, TOKEN_LESS)) error_func();
+    if (!assert_next_token_(in_stack, TOKEN_NULLABLE)) error_func();
+    // php add somehow
+    if (!assert_next_token_(in_stack, TOKEN_L_PAREN)) error_func();
+    // id for stricttypes=1
+    if (!assert_next_token_(in_stack, TOKEN_R_PAREN)) error_func();
+    if (!assert_next_token_(in_stack, TOKEN_SEMICOLON)) error_func();
+
+    if (!statement_list_(in_stack, tree)) error_func();
+
+    if (!prog_end_(in_stack, tree)) error_func();
+    
+    // php add somehow 
+    return 1;
+
+}
+
+int prog_end_(item_ptr *in_stack, tree_node_ptr tree){
+    token_ptr next = peek_top(in_stack);
+    if (next->type == TOKEN_NULLABLE){
+        if (!assert_next_token_(in_stack, TOKEN_NULLABLE)) error_func();
+        if (!assert_next_token_(in_stack, TOKEN_MORE)) error_func();
+    }
+    return 1;
+}
+int statement_list_(item_ptr *in_stack, tree_node_ptr tree){
+    token_ptr next = peek_top(in_stack);
+    // token id == meno funkcie ?
+    if (((next->type == KEYWORD) || next->type == TOKEN_VAR_ID || next->type == TOKEN_ID)){
+        statement_(in_stack, tree);
+        statement_list_(in_stack, tree);
+    }
+    return 1;
+}
+int statement_(item_ptr *in_stack, tree_node_ptr tree){
+    token_ptr next = get_next_token_(in_stack);
+    if (next->value.keyword == KEYWORD_RETURN) expression_(in_stack, tree);
+    if (next->value.keyword == KEYWORD_WHILE){
+        if (!assert_next_token_(in_stack, TOKEN_L_PAREN)) error_func();
+        expression_(in_stack, tree);
+        // need to call in if depending on what it returns
+        if (!assert_next_token_(in_stack, TOKEN_R_PAREN)) error_func();
+    }
+    if (next->value.keyword == KEYWORD_IF)
+    if (next->value.keyword == KEYWORD_FUNCTION)
+    if (next->type == TOKEN_VAR_ID)
+    if (next->type == TOKEN_ID)
+
+}
+int argument_list_(item_ptr *in_stack, tree_node_ptr tree);
+int argument_next_(item_ptr *in_stack, tree_node_ptr tree);
+int argument_list_typ_(item_ptr *in_stack, tree_node_ptr tree);
+int argument_next_typ(item_ptr *in_stack, tree_node_ptr tree);
+int expression_(item_ptr *in_stack, tree_node_ptr tree);
+int expression_tail(item_ptr *in_stack, tree_node_ptr tree);
