@@ -1,5 +1,6 @@
 #include "symtable.h"
 #include "utils.h"
+#include "token.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,38 +44,6 @@ variable_ptr variable_create(type_t type, bool type_nullable)
     return variable;
 }
 
-char *type_to_name(type_t type)
-{
-    switch (type)
-    {
-    case TYPE_INT:
-        return "TYPE_INT";
-    case TYPE_STRING:
-        return "TYPE_STRING";
-    case TYPE_FLOAT:
-        return "TYPE_FLOAT";
-    default:
-        return "#unknown-type";
-    }
-}
-
-char *return_type_to_name(return_type_t type)
-{
-    switch (type)
-    {
-    case RETURN_TYPE_INT:
-        return "RETURN_TYPE_INT";
-    case RETURN_TYPE_STRING:
-        return "RETURN_TYPE_STRING";
-    case RETURN_TYPE_FLOAT:
-        return "RETURN_TYPE_FLOAT";
-    case RETURN_TYPE_VOID:
-        return "RETURN_TYPE_VOID";
-    default:
-        return "#unknown-return-type";
-    }
-}
-
 char *parameter_to_string(parameter_t parameter)
 {
     size_t len = snprintf(NULL, 0, "%s (%s%s)", parameter.name, parameter.type_nullable == true ? "?" : "", type_to_name(parameter.type));
@@ -113,7 +82,7 @@ char *function_to_string(char *id, function_ptr function)
     size_t len = snprintf(NULL, 0, "%s (%s%s, [%s])",
                           id,
                           function->return_type_nullable ? "?" : "",
-                          return_type_to_name(function->return_type),
+                          type_to_name(function->return_type),
                           str);
 
     char *s = malloc(sizeof(char) * len + 1);
@@ -123,7 +92,7 @@ char *function_to_string(char *id, function_ptr function)
     sprintf(s, "%s (%s%s, [%s])",
             id,
             function->return_type_nullable ? "?" : "",
-            return_type_to_name(function->return_type),
+            type_to_name(function->return_type),
             str);
 
     free(str);
@@ -152,7 +121,7 @@ function_ptr function_create()
         exit(99);
     }
 
-    function->return_type = RETURN_TYPE_VOID;
+    function->return_type = TYPE_VOID;
     function->return_type_nullable = false;
 
     function->parameter_count = 0;

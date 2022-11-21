@@ -34,10 +34,12 @@
 #define SCANNER_PROG_START 27
 #define SCANNER_NULLABLE 28
 
-
-// TODO: States from FSM...
-
 /* Read from stdin, parse into tokens. */
 void tokenize(array_ptr tokens);
+
+void append_token(array_ptr tokens, token_type_t token_type);
+
+void append_keyword(array_ptr tokens, keyword_t keyword);
+void append_type(array_ptr tokens, type_t type);
 
 #endif

@@ -1,4 +1,5 @@
 #include "string.h"
+#include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,11 +89,7 @@ void string_clean(string_ptr string)
 {
     string->data = malloc(sizeof(char));
 
-    if (string->data == NULL)
-    {
-        fprintf(stderr, "string_destroy - data: malloc fail.\n");
-        exit(99);
-    }
+    MALLOC_CHECK(string->data);
 
     string->data[0] = '\0';
     string->size = 0;

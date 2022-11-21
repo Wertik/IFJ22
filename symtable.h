@@ -3,22 +3,8 @@
 
 #define SPACE_SIZE 4
 
+#include "token.h"
 #include <stdbool.h>
-
-typedef enum
-{
-  TYPE_INT,
-  TYPE_FLOAT,
-  TYPE_STRING,
-} type_t;
-
-typedef enum
-{
-  RETURN_TYPE_INT,
-  RETURN_TYPE_FLOAT,
-  RETURN_TYPE_STRING,
-  RETURN_TYPE_VOID,
-} return_type_t;
 
 typedef struct variable_t
 {

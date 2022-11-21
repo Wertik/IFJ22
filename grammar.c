@@ -97,25 +97,6 @@ void symbol_print(symbol_ptr symbol)
     free(s);
 }
 
-char *keyword_to_name(keyword_t keyword)
-{
-    switch (keyword)
-    {
-    case KEYWORD_IF:
-        return "KEYWORD_IF";
-    case KEYWORD_ELSE:
-        return "KEYWORD_ELSE";
-    case KEYWORD_WHILE:
-        return "KEYWORD_WHILE";
-    case KEYWORD_FUNCTION:
-        return "KEYWORD_FUNCTION";
-    case KEYWORD_RETURN:
-        return "KEYWORD_RETURN";
-    default:
-        return "#unknown-keyword";
-    }
-}
-
 void symbol_dispose(symbol_ptr symbol)
 {
     free(symbol);
