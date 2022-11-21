@@ -13,9 +13,6 @@ token_ptr token_create(token_type_t type, token_value_type_t value_type, token_v
         return NULL;
     }
 
-    // TODO: What if we enter a value that's incompatible with given value type?
-    // We could map each type into an exact value type and force it.
-
     token->type = type;
     token->value_type = value_type;
     token->value = value;

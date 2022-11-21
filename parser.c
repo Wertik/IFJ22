@@ -9,13 +9,24 @@
 
 token_ptr peek_top(item_ptr *stack)
 {
-    symbol_ptr symbol = stack_top(*stack)->symbol;
+    item_ptr top = stack_top(*stack);
+
+    if (top == NULL) {
+        return NULL;
+    }
+
+    symbol_ptr symbol = top->symbol;
     return symbol->token;
 }
 
 token_ptr peek_exact_type(item_ptr *stack, token_type_t token_type)
 {
     token_ptr token = peek_top(stack);
+
+    if (token == NULL) {
+        return NULL;
+    }
+
     return token->type == token_type ? token : NULL;
 }
 
@@ -199,6 +210,11 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr tree)
 
     token_ptr next = peek_top(in_stack);
 
+    // Nothing more
+    if (next == NULL) {
+        return;
+    }
+
     if (next->type == TOKEN_KEYWORD || next->type == TOKEN_VAR_ID)
     {
         // <statement-list> -> <statement><statement-list>
@@ -228,9 +244,16 @@ void rule_prog(item_ptr *in_stack, table_node_ptr tree)
         exit(1); // TODO: Correct code.
     }
 
+    token_dispose(php);
+
     rule_statement_list(in_stack, tree);
 
-    assert_next_token(in_stack, TOKEN_CLOSING_TAG);
+    token_ptr closing = peek_top(in_stack);
+
+    // Closing tag optional
+    if (closing != NULL) {
+        assert_next_token(in_stack, TOKEN_CLOSING_TAG);
+    }
 }
 
 table_node_ptr parse(array_ptr tokens)
