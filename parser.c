@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include "parser.h"
 #include "symtable.h"
 #include "stack.h"
@@ -218,7 +219,14 @@ void rule_prog(item_ptr *in_stack, table_node_ptr tree)
 
     // TODO: Declare
 
-    assert_n_tokens(in_stack, 3, TOKEN_LESS, TOKEN_NULLABLE, TOKEN_ID);
+    assert_n_tokens(in_stack, 2, TOKEN_LESS, TOKEN_NULLABLE);
+
+    token_ptr php = assert_next_token_get(in_stack, TOKEN_ID);
+
+    if (strcmp(php->value.string, "php") != 0) {
+        fprintf(stderr, "Wrong prolog.\n");
+        exit(1); // TODO: Correct code.
+    }
 
     rule_statement_list(in_stack, tree);
 
