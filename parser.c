@@ -219,7 +219,7 @@ void rule_prog(item_ptr *in_stack, table_node_ptr tree)
 
     // TODO: Declare
 
-    assert_n_tokens(in_stack, 2, TOKEN_LESS, TOKEN_NULLABLE);
+    assert_next_token(in_stack, TOKEN_OPENING_TAG);
 
     token_ptr php = assert_next_token_get(in_stack, TOKEN_ID);
 
@@ -230,7 +230,7 @@ void rule_prog(item_ptr *in_stack, table_node_ptr tree)
 
     rule_statement_list(in_stack, tree);
 
-    assert_n_tokens(in_stack, 2, TOKEN_NULLABLE, TOKEN_MORE);
+    assert_next_token(in_stack, TOKEN_CLOSING_TAG);
 }
 
 table_node_ptr parse(array_ptr tokens)

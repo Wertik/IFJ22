@@ -58,6 +58,8 @@ typedef enum
     TOKEN_CONST_EXP,
     TOKEN_ID,
     TOKEN_KEYWORD,
+    TOKEN_CLOSING_TAG,
+    TOKEN_OPENING_TAG,
 
     // TODO: Add token types
 } token_type_t;

@@ -32,6 +32,7 @@
 #define SCANNER_ID 25
 #define SCANNER_VAR_ID 26
 #define SCANNER_PROG_START 27
+#define SCANNER_NULLABLE 28
 
 
 // TODO: States from FSM...

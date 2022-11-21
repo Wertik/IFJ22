@@ -93,6 +93,10 @@ char *token_type_to_name(token_type_t type)
         return "TOKEN_ID";
     case TOKEN_KEYWORD:
         return "TOKEN_KEYWORD";
+    case TOKEN_OPENING_TAG:
+        return "TOKEN_OPENING_TAG";
+    case TOKEN_CLOSING_TAG:
+        return "TOKEN_CLOSING_TAG";
     default:
     {
         char *s = malloc(sizeof(char));
