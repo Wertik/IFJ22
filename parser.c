@@ -163,6 +163,7 @@ void rule_statement(item_ptr *in_stack, tree_node_ptr tree)
             DEBUG_OUT("end else");
             break;
         case KEYWORD_WHILE:
+            DEBUG_OUT("in while");
             // <statement> -> while (<expression>) {<statement-list>}
             // TODO: Implement
             assert_next_token(in_stack, TOKEN_L_PAREN);
