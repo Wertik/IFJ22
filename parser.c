@@ -11,7 +11,8 @@ token_ptr peek_top(item_ptr *stack)
 {
     item_ptr top = stack_top(*stack);
 
-    if (top == NULL) {
+    if (top == NULL)
+    {
         return NULL;
     }
 
@@ -23,7 +24,8 @@ token_ptr peek_exact_type(item_ptr *stack, token_type_t token_type)
 {
     token_ptr token = peek_top(stack);
 
-    if (token == NULL) {
+    if (token == NULL)
+    {
         return NULL;
     }
 
@@ -115,7 +117,7 @@ int parse_expression(item_ptr *in_stack)
 // <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
 // <statement> -> while (<expression>) {<statement-list>}
 // <statement> -> function id(<argument-list>) {<statement-list>}
-void rule_statement(item_ptr *in_stack, table_node_ptr tree)
+void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
 {
     DEBUG_RULE();
 
@@ -129,7 +131,14 @@ void rule_statement(item_ptr *in_stack, table_node_ptr tree)
 
         int value = parse_expression(in_stack);
 
-        // TODO: Create symboltable entry
+        // Create symboltable entry if not already present
+        if (sym_get_variable(*tree, next->value.string) == NULL)
+        {
+            // TODO: Infer type from value (requires PSA)
+            // TODO-CHECK: Nullable by default?
+            variable_ptr variable = variable_create(TYPE_INT, true);
+            *tree = sym_insert(*tree, next->value.string, NULL, variable);
+        }
 
         DEBUG_OUTF("%s <- %d", next->value.string, value);
 
@@ -202,7 +211,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr tree)
 
 // <statement-list> -> <statement><statement-list>
 // <statement-list> -> eps
-void rule_statement_list(item_ptr *in_stack, table_node_ptr tree)
+void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree)
 {
     DEBUG_RULE();
 
@@ -211,7 +220,8 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr tree)
     token_ptr next = peek_top(in_stack);
 
     // Nothing more
-    if (next == NULL) {
+    if (next == NULL)
+    {
         return;
     }
 
@@ -229,7 +239,7 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr tree)
 }
 
 // <prog> -> <?php <statement> ?>
-void rule_prog(item_ptr *in_stack, table_node_ptr tree)
+void rule_prog(item_ptr *in_stack, table_node_ptr *tree)
 {
     DEBUG_RULE();
 
@@ -239,7 +249,8 @@ void rule_prog(item_ptr *in_stack, table_node_ptr tree)
 
     token_ptr php = assert_next_token_get(in_stack, TOKEN_ID);
 
-    if (strcmp(php->value.string, "php") != 0) {
+    if (strcmp(php->value.string, "php") != 0)
+    {
         fprintf(stderr, "Wrong prolog.\n");
         exit(1); // TODO: Correct code.
     }
@@ -251,7 +262,8 @@ void rule_prog(item_ptr *in_stack, table_node_ptr tree)
     token_ptr closing = peek_top(in_stack);
 
     // Closing tag optional
-    if (closing != NULL) {
+    if (closing != NULL)
+    {
         assert_next_token(in_stack, TOKEN_CLOSING_TAG);
     }
 }
@@ -271,7 +283,7 @@ table_node_ptr parse(array_ptr tokens)
         element = element->prev;
     }
 
-    rule_prog(&in_stack, tree);
+    rule_prog(&in_stack, &tree);
 
     if (stack_size(in_stack) != 0)
     {
