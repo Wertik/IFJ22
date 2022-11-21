@@ -1,6 +1,6 @@
 main
 stack
-btree
+sym
 *.o
 *.tgz
 .vscode/

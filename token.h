@@ -5,6 +5,14 @@
 
 typedef enum
 {
+    TYPE_INT,
+    TYPE_FLOAT,
+    TYPE_STRING,
+    TYPE_VOID,
+} type_t;
+
+typedef enum
+{
     KEYWORD_FUNCTION,
     KEYWORD_IF,
     KEYWORD_ELSE,
@@ -17,6 +25,7 @@ typedef union
     int integer;
     char *string;
     keyword_t keyword;
+    type_t type;
     // TODO: Add other type values
 } token_value_t;
 
@@ -25,7 +34,10 @@ typedef enum
     NONE,
     INTEGER,
     STRING,
+    /* Token is a TOKEN_KEYWORD, this indicates which of the predefined keywords. */
     KEYWORD,
+    /* Token is a TOKEN_TYPE, this indicates which of the predefined types. */
+    TYPE,
     // TODO: Add decimals and other types
 } token_value_type_t;
 
@@ -58,6 +70,10 @@ typedef enum
     TOKEN_CONST_EXP,
     TOKEN_ID,
     TOKEN_KEYWORD,
+    /* Variable type / function return type. */
+    TOKEN_TYPE,
+    TOKEN_CLOSING_TAG,
+    TOKEN_OPENING_TAG,
 
     // TODO: Add token types
 } token_type_t;
@@ -79,5 +95,8 @@ char *token_type_to_name(token_type_t type);
 void token_print(token_ptr token);
 
 void token_dispose(token_ptr token);
+
+char *type_to_name(type_t type);
+char *keyword_to_name(keyword_t keyword); 
 
 #endif

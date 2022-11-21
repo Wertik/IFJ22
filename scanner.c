@@ -6,6 +6,51 @@
 #include <stdbool.h>
 #include <string.h>
 
+bool attempt_keyword(array_ptr tokens, string_ptr *buffer, char *keyword_str, keyword_t keyword)
+{
+    if (strcmp((*buffer)->data, keyword_str) == 0)
+    {
+        append_keyword(tokens, keyword);
+        string_fresh(*buffer);
+        return true;
+    }
+    return false;
+}
+
+bool attempt_type(array_ptr tokens, string_ptr *buffer, char *type_str, type_t type)
+{
+    if (strcmp((*buffer)->data, type_str) == 0)
+    {
+        append_type(tokens, type);
+        string_fresh(*buffer);
+        return true;
+    }
+    return false;
+}
+
+void append_token(array_ptr tokens, token_type_t token_type)
+{
+    token_value_t value;
+    token_ptr token = token_create(token_type, NONE, value);
+    array_append(tokens, token);
+}
+
+void append_keyword(array_ptr tokens, keyword_t keyword)
+{
+    token_value_t value = {.keyword = keyword};
+
+    token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
+    array_append(tokens, token);
+}
+
+void append_type(array_ptr tokens, type_t type)
+{
+    token_value_t value = {.type = type};
+
+    token_ptr token = token_create(TOKEN_TYPE, TYPE, value);
+    array_append(tokens, token);
+}
+
 bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, char c)
 {
     switch (*scanner_state)
@@ -45,9 +90,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == '?')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_NULLABLE, NONE, value);
-            array_append(tokens, token);
+            *scanner_state = SCANNER_NULLABLE;
         }
         else if (c == '}')
         {
@@ -140,6 +183,24 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         break;
     }
+    case (SCANNER_NULLABLE):
+    {
+        if (c == '>')
+        {
+            *scanner_state = SCANNER_START;
+
+            append_token(tokens, TOKEN_CLOSING_TAG);
+        }
+        else
+        {
+            *scanner_state = SCANNER_START;
+
+            append_token(tokens, TOKEN_NULLABLE);
+
+            parse_character(tokens, buffer, scanner_state, c);
+        }
+        break;
+    }
     case (SCANNER_NUM_INT):
     {
         if (c >= '0' && c <= '9')
@@ -207,19 +268,22 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     }
     case (SCANNER_LESS_THAN):
     {
+        *scanner_state = SCANNER_START;
+
         if (c == '=')
         {
-
-            *scanner_state = SCANNER_START;
-
             token_value_t value;
             token_ptr token = token_create(TOKEN_LESS_EQUAL, NONE, value);
             array_append(tokens, token);
         }
+        else if (c == '?')
+        {
+            token_value_t value;
+            token_ptr token = token_create(TOKEN_OPENING_TAG, NONE, value);
+            array_append(tokens, token);
+        }
         else
         {
-            *scanner_state = SCANNER_START;
-
             token_value_t value;
             token_ptr token = token_create(TOKEN_LESS, NONE, value);
             array_append(tokens, token);
@@ -307,7 +371,9 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (!(c == EOF || c == '\n'))
         {
             *scanner_state = SCANNER_LINE_COMM;
-        }else if(c == EOF || c == '\n'){
+        }
+        else if (c == EOF || c == '\n')
+        {
             *scanner_state = SCANNER_START;
         }
         break;
@@ -342,43 +408,15 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_START;
 
-            if (strcmp((*buffer)->data, "function") == 0)
-            {
-                token_value_t value = {.keyword = KEYWORD_FUNCTION};
-
-                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
-                array_append(tokens, token);
-
-                string_fresh(*buffer);
-            }
-            else if (strcmp((*buffer)->data, "if") == 0)
-            {
-                token_value_t value = {.keyword = KEYWORD_IF};
-
-                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
-                array_append(tokens, token);
-
-                string_fresh(*buffer);
-            }
-            else if (strcmp((*buffer)->data, "else") == 0)
-            {
-                token_value_t value = {.keyword = KEYWORD_ELSE};
-
-                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
-                array_append(tokens, token);
-
-                string_fresh(*buffer);
-            }
-            else if (strcmp((*buffer)->data, "return") == 0)
-            {
-                token_value_t value = {.keyword = KEYWORD_RETURN};
-
-                token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
-                array_append(tokens, token);
-
-                string_fresh(*buffer);
-            }
-            else
+            if (!attempt_keyword(tokens, buffer, "function", KEYWORD_FUNCTION) &&
+                !attempt_keyword(tokens, buffer, "if", KEYWORD_IF) &&
+                !attempt_keyword(tokens, buffer, "else", KEYWORD_ELSE) &&
+                !attempt_keyword(tokens, buffer, "while", KEYWORD_WHILE) &&
+                !attempt_keyword(tokens, buffer, "return", KEYWORD_RETURN) &&
+                !attempt_type(tokens, buffer, "int", TYPE_INT) &&
+                !attempt_type(tokens, buffer, "string", TYPE_STRING) &&
+                !attempt_type(tokens, buffer, "float", TYPE_FLOAT) &&
+                !attempt_type(tokens, buffer, "void", TYPE_VOID))
             {
                 token_value_t value = {.string = (*buffer)->data};
 
@@ -422,6 +460,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             array_append(tokens, token);
 
             string_clean(*buffer);
+
+            parse_character(tokens, buffer, scanner_state, c);
         }
         break;
     }
