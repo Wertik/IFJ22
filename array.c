@@ -8,7 +8,7 @@ array_ptr array_create()
 
     if (array == NULL)
     {
-        // TODO: Handle better?
+       exit(99);
         return NULL;
     }
 
