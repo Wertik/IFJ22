@@ -173,6 +173,13 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
 
         assert_next_token(in_stack, TOKEN_SEMICOLON);
     }
+    else if (next->type == TOKEN_ID){
+        assert_next_token(in_stack, TOKEN_L_PAREN);
+        rule_argument_list(in_stack, tree);
+        assert_next_token(in_stack, TOKEN_R_PAREN);
+        assert_next_token(in_stack, TOKEN_SEMICOLON);
+            
+    }
     else if (next->type == TOKEN_KEYWORD)
     {
         // if / function / while
@@ -283,6 +290,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
             DEBUG_OUT("U here hjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj? \n");
             value = parse_expression(in_stack);
             assert_next_token(in_stack, TOKEN_SEMICOLON);
+
             break;
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
@@ -346,6 +354,67 @@ void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree){
     }
 }
 
+
+void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree){
+    DEBUG_OUT("rule_argument_list\n");
+    token_ptr next = peek_top(in_stack);
+    switch (next->type)
+    {
+    case TOKEN_VAR_ID:
+        assert_next_token(in_stack, TOKEN_VAR_ID);
+        rule_argument_next(in_stack, tree);
+
+        break;
+        // technicky oba case rovnake asi by bolo lepsie dat or ale neviem
+    // predpokladam ze nedostanem do funkcie nejaky vzorec ale len cislo alebo string
+    // nedoriesene v scannery pre float pravdepodobne
+
+    // assuming constatnt expression is for all types
+    case TOKEN_CONST_INT:
+        assert_next_token(in_stack, TOKEN_CONST_INT);
+        rule_argument_next(in_stack, tree);
+        break;
+    case TOKEN_CONST_DOUBLE:
+        assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
+        rule_argument_next(in_stack, tree);
+        break;
+    // missing TOKEN_CONST_STRING MAYBE???
+    default:
+        break;
+    }    
+}
+void rule_argument_next(item_ptr *in_stack, table_node_ptr *tree){
+    DEBUG_OUT("rule_argument_next\n");
+    token_ptr next = peek_top(in_stack);
+    DEBUG_OUTF("rule_argument_next %d\n", next->type);
+    if (next->type == TOKEN_COMMA){
+        assert_next_token(in_stack, TOKEN_COMMA);
+        rule_argument_list(in_stack,  tree);
+    }
+}
+
+
+void rule_expression_or_var(item_ptr *in_stack, table_node_ptr *tree){
+    token_ptr next = peek_top(in_stack);
+    switch (next->type)
+    {
+    case TOKEN_VAR_ID:
+        assert_next_token(in_stack, TOKEN_VAR_ID);
+        rule_argument_next(in_stack, tree);
+
+        break;
+        // technicky oba case rovnake asi by bolo lepsie dat or ale neviem
+    // predpokladam ze nedostanem do funkcie nejaky vzorec ale len cislo alebo string
+    // nedoriesene v scannery pre float pravdepodobne
+    case TOKEN_CONST_EXP:
+        assert_next_token(in_stack, TOKEN_CONST_EXP);
+        rule_argument_next(in_stack, tree);
+        break;
+            
+    default:
+        break  ;
+    }  
+}
 
 // <argument-list> -> type <expression> <argument-next>
 // <argument-list> -> <expression> <argument-next>
