@@ -213,7 +213,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
             int val = atoi((*buffer)->data);
 
-            token_value_t value = {.integer = val};
+            token_value_t value = {.integer = val,.type = TYPE_INT};
             token_ptr token = token_create(TOKEN_CONST_INT, INTEGER, value);
             array_append(tokens, token);
 
@@ -230,7 +230,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_START;
 
-            token_value_t value = {.string = (*buffer)->data};
+            token_value_t value = {.string = (*buffer)->data, .type = TYPE_STRING};
             token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
             array_append(tokens, token);
 
