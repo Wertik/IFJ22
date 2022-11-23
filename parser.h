@@ -30,6 +30,10 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree);
 void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree);
 void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree);
 
+void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree);
+void rule_argument_next(item_ptr *in_stack, table_node_ptr *tree);
+
+void rule_expression_or_var(item_ptr *in_stack, table_node_ptr *tree);
 // TODO: Redefine int to a expression result union type
 int parse_expression(item_ptr *in_stack);
 
