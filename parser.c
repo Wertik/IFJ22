@@ -104,10 +104,12 @@ void assert_n_tokens(item_ptr *stack, int n, ...)
 }
 
 // treba asi zmenit
-int parse_expression(item_ptr *in_stack)
+int parse_expression(item_ptr *in_stack, table_node_ptr *tree)
 {
+    int value;
     DEBUG_RULE();
     // for function if its type void and so checks if it returns anything
+    // this all will probably have to go
     if (different_parse != 0){
         token_ptr type = peek_top(in_stack);
         DEBUG_OUT("shouldnt be here? \n");
@@ -132,14 +134,108 @@ int parse_expression(item_ptr *in_stack)
         different_parse = 0;
         
     }
-    
-    token_ptr const_int = assert_next_token_get(in_stack, TOKEN_CONST_INT);
+    token_ptr next = peek_top(in_stack);
 
-    int value = const_int->value.integer;
-    token_dispose(const_int);
+    switch (next->type)
+        {
+        case TOKEN_L_PAREN:
+            
+            assert_next_token(in_stack, TOKEN_L_PAREN);
+            value = parse_expression(in_stack, tree);
+            assert_next_token(in_stack, TOKEN_R_PAREN);
+            break;
+        
+        case TOKEN_CONST_DOUBLE:
+            
+            assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
+
+            value = next->value.double_;
+            rule_expression_next(in_stack, tree);
+            break;
+        case TOKEN_CONST_INT:
+            
+            assert_next_token(in_stack, TOKEN_CONST_INT);
+            value = next->value.integer;
+            rule_expression_next(in_stack, tree);
+            break;
+        // DONR KNOW ABOUT STRING_LIT BEING RIGHT
+        case TOKEN_STRING_LIT:
+           
+            assert_next_token(in_stack, TOKEN_STRING_LIT);
+            //value = parse_expression(in_stack);
+
+            // how to return string
+            //value = next->value.string;
+            rule_expression_next(in_stack, tree);
+            break;
+        case TOKEN_VAR_ID:
+           
+            assert_next_token(in_stack, TOKEN_VAR_ID);
+            // WILL HAVE TO WORK WITH SYMBOL TABLE
+            //value = parse_expression(in_stack);
+            //value = next->value.string;
+            rule_expression_next(in_stack, tree);
+            break;
+        case TOKEN_ID:
+           
+            assert_next_token(in_stack, TOKEN_ID);
+            //value = parse_expression(in_stack);
+            //value = next->value.string;
+            assert_next_token(in_stack, TOKEN_L_PAREN);
+            rule_argument_list(in_stack, tree);
+            assert_next_token(in_stack, TOKEN_R_PAREN);
+            break;
+        // maybe require one for var_id as well maybe not
+        default:
+            fprintf(stderr, "non valid expression\n");
+            exit(1);  
+        }
+        
+
+
+   // token_ptr const_int = assert_next_token_get(in_stack, TOKEN_CONST_INT);
+
+    //int value = const_int->value.integer;
+    // dont know if neccessery
+    //token_dispose(const_int);
     return value;
 }
 
+void rule_expression_next(item_ptr *in_stack, table_node_ptr *tree){
+    token_ptr next = peek_top(in_stack);
+    // is it actually necessary?
+    //int value;
+    switch (next->type){
+        case TOKEN_PLUS:
+            
+            assert_next_token(in_stack, TOKEN_PLUS);
+            parse_expression(in_stack, tree);
+            break;
+        case TOKEN_MINUS:
+            
+            assert_next_token(in_stack, TOKEN_MINUS);
+            parse_expression(in_stack, tree);
+            break;
+        case TOKEN_MULTIPLE:
+            
+            assert_next_token(in_stack, TOKEN_MULTIPLE);
+            parse_expression(in_stack, tree);
+            break;
+        case TOKEN_DIVIDE:
+            
+            assert_next_token(in_stack, TOKEN_DIVIDE);
+            parse_expression(in_stack, tree);
+            break;
+        case TOKEN_DOT:
+            
+            assert_next_token(in_stack, TOKEN_DOT);
+            parse_expression(in_stack, tree);
+            break;
+        default:
+            fprintf(stderr, "non valid expression\n");
+            exit(1);  
+    } 
+}
 // <statement> -> var_id = const_int;
 // <statement> -> return <expression>;
 // <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
@@ -158,7 +254,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
 
         assert_next_token(in_stack, TOKEN_ASSIGN);
 
-        int value = parse_expression(in_stack);
+        int value = parse_expression(in_stack, tree);
 
         // Create symboltable entry if not already present
         if (sym_get_variable(*tree, next->value.string) == NULL)
@@ -193,7 +289,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
 
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            int value = parse_expression(in_stack);
+            int value = parse_expression(in_stack, tree);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
@@ -225,7 +321,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
             // TODO: Implement
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            value = parse_expression(in_stack);
+            value = parse_expression(in_stack, tree);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
@@ -288,7 +384,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree)
             different_parse = 1;
             expect_return = 0;
             DEBUG_OUT("U here hjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjjj? \n");
-            value = parse_expression(in_stack);
+            value = parse_expression(in_stack, tree);
             assert_next_token(in_stack, TOKEN_SEMICOLON);
 
             break;
