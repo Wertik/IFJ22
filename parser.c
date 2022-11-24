@@ -274,17 +274,18 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
         switch (next->value.keyword)
         {
         case KEYWORD_IF:
+        {
             // <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
 
             // if (<expression>) {<statement-list>}
 
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            int value = parse_expression(in_stack, tree);
+            type_t type = parse_expression(in_stack, tree);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_OUTF("if (%d)", value);
+            DEBUG_OUTF("if (%s)", type_to_name(type));
 
             rule_statement_list(in_stack, tree, function);
 
@@ -306,15 +307,17 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             DEBUG_OUT("end else");
             break;
+        }
         case KEYWORD_WHILE:
+        {
             // <statement> -> while (<expression>) {<statement-list>}
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            value = parse_expression(in_stack, tree);
+            type_t type = parse_expression(in_stack, tree);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_OUTF("while (%d)", value);
+            DEBUG_OUTF("while (%s)", type_to_name(type));
 
             rule_statement_list(in_stack, tree, function);
 
@@ -322,6 +325,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             DEBUG_OUT("end while");
             break;
+        }
         case KEYWORD_FUNCTION:
         {
             // <statement> -> function id(<argument-list>) {<statement-list>}
@@ -365,10 +369,11 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
             break;
         }
         case KEYWORD_RETURN:
-            value = parse_expression(in_stack, tree);
+        {
+            type_t result_type = parse_expression(in_stack, tree);
 
             // TODO: Check function type based on parse_expression result type
-            if (function->return_type != TYPE_INT)
+            if (function->return_type != result_type)
             {
                 fprintf(stderr, "Invalid function return type.\n");
                 exit(1); // TODO: Correct code
@@ -376,6 +381,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             assert_next_token(in_stack, TOKEN_SEMICOLON);
             break;
+        }
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
             exit(1); // TODO: Correct code
