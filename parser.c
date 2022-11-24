@@ -136,7 +136,6 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
         rule_expression_next(in_stack, tree);
         break;
     case TOKEN_CONST_INT:
-
         assert_next_token(in_stack, TOKEN_CONST_INT);
         result_type = TYPE_INT;
         rule_expression_next(in_stack, tree);
@@ -180,7 +179,6 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
         exit(1); // TODO: Correct code
     }
 
-    token_dispose(next);
     return result_type;
 }
 
@@ -217,8 +215,12 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *tree)
         parse_expression(in_stack, tree);
         break;
     default:
-        fprintf(stderr, "non valid expression\n");
-        exit(1);
+    {
+    }
+        // $x = <10>; -> 10 is a valid expression
+        /* default:
+            fprintf(stderr, "non valid expression\n");
+            exit(1); */
     }
 }
 // <statement> -> var_id = <expression>;
@@ -336,11 +338,17 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
             function_ptr function = function_create();
             *tree = sym_insert(*tree, function_id->value.string, function, NULL);
 
+            DEBUG_OUTF("function %s(...)", function_id->value.string);
+
             // Parse arguments
 
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            rule_argument_list_typ(in_stack, tree);
+            rule_argument_list_typ(in_stack, tree, function);
+
+            for (int i = 0; i < function->parameter_count; i++) {
+                DEBUG_OUTF("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
+            }
 
             assert_next_token(in_stack, TOKEN_R_PAREN);
 
@@ -365,6 +373,9 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
             }
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
+
+            DEBUG_OUTF("end function %s", function_id->value.string);
+
             token_dispose(function_id);
             break;
         }
@@ -378,6 +389,10 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
                 fprintf(stderr, "Invalid function return type.\n");
                 exit(1); // TODO: Correct code
             }
+
+            function->has_return = true;
+
+            DEBUG_OUTF("return %s;", type_to_name(result_type));
 
             assert_next_token(in_stack, TOKEN_SEMICOLON);
             break;
@@ -420,20 +435,37 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree, function_ptr 
     }
 }
 
-void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree)
+void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree, function_ptr function)
 {
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
     if (next->type == TOKEN_TYPE)
     {
-        assert_next_token(in_stack, TOKEN_TYPE);
-        assert_next_token(in_stack, TOKEN_VAR_ID);
-        rule_argument_next_typ(in_stack, tree);
+        // TODO: Extract into function
+
+        token_ptr par_type = assert_next_token_get(in_stack, TOKEN_TYPE);
+        token_ptr par_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
+
+        // cannot use void as parameter type
+        if (par_type->value.type == TYPE_VOID)
+        {
+            fprintf(stderr, "VOID is not a valid type of arguments.\n");
+            exit(1); // TODO: Correct code
+        }
+
+        // Append parameter
+        // TODO: Nullable?
+        append_parameter(function, par_id->value.string, par_type->value.type, false);
+
+        token_dispose(par_type);
+        token_dispose(par_id);
+
+        rule_argument_next_typ(in_stack, tree, function);
     }
 }
 
-void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree)
+void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -442,9 +474,27 @@ void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree)
     if (next->type == TOKEN_COMMA)
     {
         assert_next_token(in_stack, TOKEN_COMMA);
-        assert_next_token(in_stack, TOKEN_TYPE);
-        assert_next_token(in_stack, TOKEN_VAR_ID);
-        rule_argument_next_typ(in_stack, tree);
+
+        // TODO: Extract into function
+
+        token_ptr par_type = assert_next_token_get(in_stack, TOKEN_TYPE);
+        token_ptr par_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
+
+        // cannot use void as parameter type
+        if (par_type->value.type == TYPE_VOID)
+        {
+            fprintf(stderr, "VOID is not a valid type of arguments.\n");
+            exit(1); // TODO: Correct code
+        }
+
+        // Append parameter
+        // TODO: Nullable?
+        append_parameter(function, par_id->value.string, par_type->value.type, false);
+
+        token_dispose(par_type);
+        token_dispose(par_id);
+
+        rule_argument_next_typ(in_stack, tree, function);
     }
 }
 
@@ -519,6 +569,8 @@ void rule_prog(item_ptr *in_stack, table_node_ptr *tree)
     token_dispose(const_int);
 
     assert_next_token(in_stack, TOKEN_R_PAREN);
+
+    assert_next_token(in_stack, TOKEN_SEMICOLON);
 
     // Start parsing the main program body.
 

@@ -1,8 +1,10 @@
 <?php
 declare(strict_types=1);
 
-function hello() {
-    $x = 10;
+function hello(int $x, string $a): void {
+    return 10;
 }
+
+hello();
 
 ?>

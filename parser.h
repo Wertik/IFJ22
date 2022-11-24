@@ -27,8 +27,8 @@ void rule_prog_end(item_ptr *in_stack, table_node_ptr *tree);
 void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr function);
 void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree, function_ptr function);
 
-void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree);
-void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree);
+void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree, function_ptr function);
+void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree, function_ptr function);
 
 void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree);
 void rule_argument_next(item_ptr *in_stack, table_node_ptr *tree);
