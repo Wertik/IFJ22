@@ -11,6 +11,7 @@ token_ptr token_create(token_type_t type, token_value_type_t value_type, token_v
     if (token == NULL)
     {
         // TODO: Handle better?
+        exit(99);
         return NULL;
     }
 
