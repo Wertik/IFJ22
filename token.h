@@ -22,6 +22,8 @@ typedef enum
 
 typedef union
 {
+    // double not scanned yet
+    double double_;
     int integer;
     char *string;
     keyword_t keyword;
