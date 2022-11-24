@@ -211,6 +211,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_START;
 
+            // TODO: Parse better
             int val = atoi((*buffer)->data);
 
             token_value_t value = {.integer = val};

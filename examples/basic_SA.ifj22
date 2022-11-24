@@ -1,9 +1,16 @@
-<?ph
+<?php
+declare(strict_types=1)
 if (20) {
     $x = 20;
 } else {
     $x = 10;
 }
+function goblin(int $n, int $nam) : void {
+    $n = 50;
+    $ma = 100;
+    return;
+}
 
+goblin(50, 30 , $dks, $n, 100 );
 $a = 30;
 ?>

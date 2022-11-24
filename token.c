@@ -8,12 +8,7 @@ token_ptr token_create(token_type_t type, token_value_type_t value_type, token_v
 {
     token_ptr token = (token_ptr)malloc(sizeof(struct token_t));
 
-    if (token == NULL)
-    {
-        // TODO: Handle better?
-        exit(99);
-        return NULL;
-    }
+    MALLOC_CHECK(token);
 
     token->type = type;
     token->value_type = value_type;
@@ -176,7 +171,7 @@ char *value_type_to_format(token_value_type_t value_type)
     case NONE:
         return "Token (%s)";
     case INTEGER:
-        return "Token (%s, %s, %d)";
+        return "Token (%s, %s, %s)";
     case STRING:
         return "Token (%s, %s, %s)";
     case KEYWORD:
@@ -200,6 +195,7 @@ char *value_to_string(token_value_type_t type, token_value_t value)
         size_t len = snprintf(NULL, 0, "%d", value.integer);
         char *s = malloc(sizeof(char) * len);
         MALLOC_CHECK(s);
+        sprintf(s, "%d", value.integer);
         return s;
     }
     case KEYWORD:
@@ -213,8 +209,10 @@ char *value_to_string(token_value_type_t type, token_value_t value)
 
 char *token_to_string(token_ptr token)
 {
+    char *format = value_type_to_format(token->value_type);
+
     size_t len = snprintf(NULL, 0,
-                          value_type_to_format(token->value_type),
+                          format,
                           token_type_to_name(token->type),
                           value_type_to_name(token->value_type),
                           value_to_string(token->value_type, token->value));
@@ -228,7 +226,7 @@ char *token_to_string(token_ptr token)
 
     char *value_s = value_to_string(token->value_type, token->value);
 
-    sprintf(s, value_type_to_format(token->value_type),
+    sprintf(s, format,
             token_type_to_name(token->type),
             value_type_to_name(token->value_type),
             value_s);

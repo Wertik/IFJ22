@@ -22,11 +22,11 @@ typedef enum
 
 typedef union
 {
+    double float_value;
     int integer;
     char *string;
     keyword_t keyword;
     type_t type;
-    // TODO: Add other type values
 } token_value_t;
 
 typedef enum

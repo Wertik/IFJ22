@@ -24,6 +24,8 @@ typedef struct function_t
   type_t return_type;
   bool return_type_nullable;
 
+  bool has_return;
+
   int parameter_count;
   parameter_t *parameters;
 } * function_ptr;
