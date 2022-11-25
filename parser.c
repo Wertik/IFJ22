@@ -421,6 +421,10 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, functio
 {
     DEBUG_RULE();
 
+    if ( peek_top(in_stack) == NULL ){
+        return;
+    }
+
     // Decide based on first? There doesn't have to be a statement...
 
     token_ptr next = peek_top(in_stack);
