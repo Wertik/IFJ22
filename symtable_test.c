@@ -23,7 +23,7 @@ int main()
     function_ptr function = function_create();
     append_parameter(function, "key", TYPE_INT, false);
 
-    function->return_type = RETURN_TYPE_VOID;
+    function->return_type = TYPE_VOID;
 
     root = sym_insert(root, "hello", function, NULL);
 

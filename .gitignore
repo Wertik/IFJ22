@@ -1,6 +1,7 @@
 main
 stack
 sym
+instr
 *.o
 *.tgz
 .vscode/

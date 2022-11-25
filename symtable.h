@@ -28,6 +28,9 @@ typedef struct function_t
 
   int parameter_count;
   parameter_t *parameters;
+
+  // Local symtable for the function
+  struct table_node_t *symtable;
 } * function_ptr;
 
 typedef struct table_node_t

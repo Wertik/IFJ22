@@ -114,7 +114,7 @@ void assert_n_tokens(item_ptr *stack, int n, ...)
 }
 
 // treba asi zmenit
-type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
+type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -125,7 +125,7 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
     {
     case TOKEN_L_PAREN:
         assert_next_token(in_stack, TOKEN_L_PAREN);
-        result_type = parse_expression(in_stack, tree);
+        result_type = parse_expression(in_stack, sym_global);
         assert_next_token(in_stack, TOKEN_R_PAREN);
         break;
 
@@ -133,12 +133,12 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
         assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
 
         result_type = TYPE_FLOAT;
-        rule_expression_next(in_stack, tree);
+        rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_CONST_INT:
         assert_next_token(in_stack, TOKEN_CONST_INT);
         result_type = TYPE_INT;
-        rule_expression_next(in_stack, tree);
+        rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_STRING_LIT:
 
@@ -150,7 +150,7 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
 
         result_type = TYPE_STRING;
 
-        rule_expression_next(in_stack, tree);
+        rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_VAR_ID:
 
@@ -161,7 +161,7 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
         // WILL HAVE TO WORK WITH SYMBOL TABLE
         // value = parse_expression(in_stack);
         // value = next->value.string;
-        rule_expression_next(in_stack, tree);
+        rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_ID:
         assert_next_token(in_stack, TOKEN_ID);
@@ -171,7 +171,7 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
         // value = parse_expression(in_stack);
         // value = next->value.string;
         assert_next_token(in_stack, TOKEN_L_PAREN);
-        rule_argument_list(in_stack, tree);
+        rule_argument_list(in_stack, sym_global);
         assert_next_token(in_stack, TOKEN_R_PAREN);
         break;
     default:
@@ -182,7 +182,7 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree)
     return result_type;
 }
 
-void rule_expression_next(item_ptr *in_stack, table_node_ptr *tree)
+void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     token_ptr next = peek_top(in_stack);
     // is it actually necessary?
@@ -192,27 +192,27 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *tree)
     case TOKEN_PLUS:
 
         assert_next_token(in_stack, TOKEN_PLUS);
-        parse_expression(in_stack, tree);
+        parse_expression(in_stack, sym_global);
         break;
     case TOKEN_MINUS:
 
         assert_next_token(in_stack, TOKEN_MINUS);
-        parse_expression(in_stack, tree);
+        parse_expression(in_stack, sym_global);
         break;
     case TOKEN_MULTIPLE:
 
         assert_next_token(in_stack, TOKEN_MULTIPLE);
-        parse_expression(in_stack, tree);
+        parse_expression(in_stack, sym_global);
         break;
     case TOKEN_DIVIDE:
 
         assert_next_token(in_stack, TOKEN_DIVIDE);
-        parse_expression(in_stack, tree);
+        parse_expression(in_stack, sym_global);
         break;
     case TOKEN_DOT:
 
         assert_next_token(in_stack, TOKEN_DOT);
-        parse_expression(in_stack, tree);
+        parse_expression(in_stack, sym_global);
         break;
     default:
     {
@@ -223,13 +223,14 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *tree)
             exit(1); */
     }
 }
+
 // <statement> -> var_id = <expression>;
 // <statement> -> return <expression>;
 // <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
 // <statement> -> while (<expression>) {<statement-list>}
 // <statement> -> function id(<argument-list>) {<statement-list>}
 // <statement> -> id(<argument-list>);
-void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr function)
+void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -240,18 +241,18 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
         // <statement> -> var_id = <expression>;
         assert_next_token(in_stack, TOKEN_ASSIGN);
 
-        int value = parse_expression(in_stack, tree);
+        int value = parse_expression(in_stack, sym_global);
 
         // Create symboltable entry if not already present
-        if (sym_get_variable(*tree, next->value.string) == NULL)
+        if (sym_get_variable(*sym_global, next->value.string) == NULL)
         {
             // TODO: Infer type from value (requires PSA)
             // TODO-CHECK: Nullable by default?
             variable_ptr variable = variable_create(TYPE_INT, true);
-            *tree = sym_insert(*tree, next->value.string, NULL, variable);
+            *sym_global = sym_insert(*sym_global, next->value.string, NULL, variable);
         }
 
-        DEBUG_OUTF("%s <- %d", next->value.string, value);
+        DEBUG_PSEUDOF("%s <- %d", next->value.string, value);
 
         assert_next_token(in_stack, TOKEN_SEMICOLON);
     }
@@ -261,10 +262,11 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
         // TODO: Check that the function exists.
         // TODO: Generate call IFJcode22.
+        // TODO: Check parameter count and types
 
         assert_next_token(in_stack, TOKEN_L_PAREN);
 
-        rule_argument_list(in_stack, tree);
+        rule_argument_list(in_stack, sym_global);
 
         assert_next_token(in_stack, TOKEN_R_PAREN);
         assert_next_token(in_stack, TOKEN_SEMICOLON);
@@ -283,17 +285,17 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            type_t type = parse_expression(in_stack, tree);
+            type_t type = parse_expression(in_stack, sym_global);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_OUTF("if (%s)", type_to_name(type));
+            DEBUG_PSEUDOF("if (%s)", type_to_name(type));
 
-            rule_statement_list(in_stack, tree, function);
+            rule_statement_list(in_stack, sym_global, function);
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_OUT("end if");
+            DEBUG_PSEUDO("end if");
 
             // else { <statement-list> }
 
@@ -301,13 +303,13 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             assert_next_token(in_stack, TOKEN_LC_BRACKET);
 
-            DEBUG_OUT("else");
+            DEBUG_PSEUDO("else");
 
-            rule_statement_list(in_stack, tree, function);
+            rule_statement_list(in_stack, sym_global, function);
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_OUT("end else");
+            DEBUG_PSEUDO("end else");
             break;
         }
         case KEYWORD_WHILE:
@@ -315,17 +317,17 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
             // <statement> -> while (<expression>) {<statement-list>}
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            type_t type = parse_expression(in_stack, tree);
+            type_t type = parse_expression(in_stack, sym_global);
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_OUTF("while (%s)", type_to_name(type));
+            DEBUG_PSEUDOF("while (%s)", type_to_name(type));
 
-            rule_statement_list(in_stack, tree, function);
+            rule_statement_list(in_stack, sym_global, function);
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_OUT("end while");
+            DEBUG_PSEUDO("end while");
             break;
         }
         case KEYWORD_FUNCTION:
@@ -336,18 +338,18 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
             token_ptr function_id = assert_next_token_get(in_stack, TOKEN_ID);
 
             function_ptr function = function_create();
-            *tree = sym_insert(*tree, function_id->value.string, function, NULL);
+            *sym_global = sym_insert(*sym_global, function_id->value.string, function, NULL);
 
-            DEBUG_OUTF("function %s(...)", function_id->value.string);
+            DEBUG_PSEUDOF("function %s(...)", function_id->value.string);
 
             // Parse arguments
 
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            rule_argument_list_typ(in_stack, tree, function);
+            rule_argument_list_typ(in_stack, sym_global, function);
 
             for (int i = 0; i < function->parameter_count; i++) {
-                DEBUG_OUTF("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
+                DEBUG_PSEUDOF("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
             }
 
             assert_next_token(in_stack, TOKEN_R_PAREN);
@@ -360,11 +362,13 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             function->return_type = return_type->value.type;
 
+            DEBUG_PSEUDOF("Returns %s", type_to_name(function->return_type));
+
             assert_next_token(in_stack, TOKEN_LC_BRACKET);
 
             // Function statement list
 
-            rule_statement_list(in_stack, tree, function);
+            rule_statement_list(in_stack, sym_global, function);
 
             if (function->return_type != TYPE_VOID && function->has_return == false)
             {
@@ -374,14 +378,14 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             assert_next_token(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_OUTF("end function %s", function_id->value.string);
+            DEBUG_PSEUDOF("end function %s", function_id->value.string);
 
             token_dispose(function_id);
             break;
         }
         case KEYWORD_RETURN:
         {
-            type_t result_type = parse_expression(in_stack, tree);
+            type_t result_type = parse_expression(in_stack, sym_global);
 
             // TODO: Check function type based on parse_expression result type
             if (function->return_type != result_type)
@@ -392,7 +396,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
             function->has_return = true;
 
-            DEBUG_OUTF("return %s;", type_to_name(result_type));
+            DEBUG_PSEUDOF("return %s;", type_to_name(result_type));
 
             assert_next_token(in_stack, TOKEN_SEMICOLON);
             break;
@@ -413,7 +417,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *tree, function_ptr funct
 
 // <statement-list> -> <statement><statement-list>
 // <statement-list> -> eps
-void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree, function_ptr function)
+void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -424,9 +428,9 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree, function_ptr 
     if ((next->type == TOKEN_KEYWORD) || next->type == TOKEN_VAR_ID || next->type == TOKEN_ID)
     {
         // <statement-list> -> <statement>;<statement-list>
-        rule_statement(in_stack, tree, function);
+        rule_statement(in_stack, sym_global, function);
 
-        rule_statement_list(in_stack, tree, function);
+        rule_statement_list(in_stack, sym_global, function);
     }
     else
     {
@@ -435,7 +439,7 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *tree, function_ptr 
     }
 }
 
-void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree, function_ptr function)
+void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -461,11 +465,11 @@ void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *tree, function_p
         token_dispose(par_type);
         token_dispose(par_id);
 
-        rule_argument_next_typ(in_stack, tree, function);
+        rule_argument_next_typ(in_stack, sym_global, function);
     }
 }
 
-void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree, function_ptr function)
+void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -494,11 +498,11 @@ void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *tree, function_p
         token_dispose(par_type);
         token_dispose(par_id);
 
-        rule_argument_next_typ(in_stack, tree, function);
+        rule_argument_next_typ(in_stack, sym_global, function);
     }
 }
 
-void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree)
+void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -507,7 +511,7 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree)
     {
     case TOKEN_VAR_ID:
         assert_next_token(in_stack, TOKEN_VAR_ID);
-        rule_argument_next(in_stack, tree);
+        rule_argument_next(in_stack, sym_global);
 
         break;
         // technicky oba case rovnake asi by bolo lepsie dat or ale neviem
@@ -517,11 +521,11 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree)
     // assuming constatnt expression is for all types
     case TOKEN_CONST_INT:
         assert_next_token(in_stack, TOKEN_CONST_INT);
-        rule_argument_next(in_stack, tree);
+        rule_argument_next(in_stack, sym_global);
         break;
     case TOKEN_CONST_DOUBLE:
         assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
-        rule_argument_next(in_stack, tree);
+        rule_argument_next(in_stack, sym_global);
         break;
     // missing TOKEN_CONST_STRING MAYBE???
     default:
@@ -529,20 +533,20 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *tree)
     }
 }
 
-void rule_argument_next(item_ptr *in_stack, table_node_ptr *tree)
+void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
     token_ptr next = peek_top(in_stack);
-    DEBUG_OUTF("rule_argument_next %d\n", next->type);
+    DEBUG_PSEUDOF("rule_argument_next %d\n", next->type);
     if (next->type == TOKEN_COMMA)
     {
         assert_next_token(in_stack, TOKEN_COMMA);
-        rule_argument_list(in_stack, tree);
+        rule_argument_list(in_stack, sym_global);
     }
 }
 
 // <prog> -> <?php <statement> ?>
-void rule_prog(item_ptr *in_stack, table_node_ptr *tree)
+void rule_prog(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -574,7 +578,7 @@ void rule_prog(item_ptr *in_stack, table_node_ptr *tree)
 
     // Start parsing the main program body.
 
-    rule_statement_list(in_stack, tree, NULL);
+    rule_statement_list(in_stack, sym_global, NULL);
 
     token_ptr closing = peek_top(in_stack);
 
@@ -586,7 +590,7 @@ void rule_prog(item_ptr *in_stack, table_node_ptr *tree)
     }
 }
 
-void rule_prog_end(item_ptr *in_stack, table_node_ptr *tree)
+void rule_prog_end(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     token_ptr next = peek_top(in_stack);
     if (next->type == TOKEN_NULLABLE)
@@ -595,9 +599,10 @@ void rule_prog_end(item_ptr *in_stack, table_node_ptr *tree)
         assert_next_token(in_stack, TOKEN_MORE);
     }
 }
+
 table_node_ptr parse(array_ptr tokens)
 {
-    table_node_ptr tree = sym_init();
+    table_node_ptr sym_global = sym_init();
 
     item_ptr in_stack = stack_init();
 
@@ -610,7 +615,7 @@ table_node_ptr parse(array_ptr tokens)
         element = element->prev;
     }
 
-    rule_prog(&in_stack, &tree);
+    rule_prog(&in_stack, &sym_global);
 
     if (stack_size(in_stack) != 0)
     {
@@ -618,5 +623,5 @@ table_node_ptr parse(array_ptr tokens)
         exit(1); // TODO: Correct code
     }
 
-    return tree;
+    return sym_global;
 }

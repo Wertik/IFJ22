@@ -157,6 +157,9 @@ void function_dispose(function_ptr function)
     if (function == NULL)
         return;
 
+    // Free local symtable
+    sym_dispose(function->symtable);
+
     for (int i = 0; i < function->parameter_count; i++)
     {
         free(function->parameters[i].name);

@@ -82,7 +82,7 @@ void perform_reduction(item_ptr *push_down_stack, table_node_ptr *tree){
         //stack_pop(push_down_stack);
         // am not sure about different types int string float
         symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-        DEBUG_OUT("$");
+        DEBUG_PSEUDO("$");
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
     }
@@ -91,7 +91,7 @@ void perform_reduction(item_ptr *push_down_stack, table_node_ptr *tree){
         if (second_next->type != TOKEN_OPENING_TAG){
             stack_pop(push_down_stack);
             symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-            DEBUG_OUT("$");
+            DEBUG_PSEUDO("$");
             symbol_ptr symbol = create_terminal(E);
             stack_push(push_down_stack, symbol);
         }
@@ -118,7 +118,7 @@ int expression(item_ptr *in_stack, table_node_ptr *tree){
     symbol_ptr symbol = create_terminal(dollar);
 
     //dollar = create_terminal(dollar);
-    DEBUG_OUT("$");
+    DEBUG_PSEUDO("$");
     stack_push(push_down_stack, symbol);
     token_ptr next_sym_stack = peek_top(in_stack);
     token_ptr next_sym_push = get_first_non_E(push_down_stack);

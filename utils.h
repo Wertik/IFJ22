@@ -1,81 +1,104 @@
 #ifndef UTILS_H
 #define UTILS_H
 
-#define MALLOC_CHECK(var)                                \
-    do                                                   \
-    {                                                    \
-        if (var == NULL)                                 \
-        {                                                \
+#include <string.h>
+
+#define NULL_FALSE(val) (val == NULL ? "0" : val)
+
+#define LOG_ENABLED(log_type) (strcmp(NULL_FALSE(getenv("LOG_" #log_type)), "1") == 0 || strcmp(NULL_FALSE(getenv("LOG_ALL")), "1") == 0)
+
+#define MALLOC_CHECK(var)                                   \
+    do                                                      \
+    {                                                       \
+        if (var == NULL)                                    \
+        {                                                   \
             fprintf(stderr, "%s: malloc fail\n", __func__); \
-            exit(99);                                    \
-        }                                                \
+            exit(99);                                       \
+        }                                                   \
     } while (0);
 
-// TODO: Remove after generator done. Kept here so we can see some output even with debug disabled.
-#define DEBUG_OUT(str)                \
-    do                                \
-    {                                 \
-        printf("OUTPUT: " #str "\n"); \
+#define DEBUG_PSEUDO(str)                 \
+    do                                    \
+    {                                     \
+        if (LOG_ENABLED(PSEUDO))          \
+            printf("PSEUDO: " #str "\n"); \
     } while (0);
 
-#define DEBUG_OUTF(fmt, ...)                       \
-    do                                             \
-    {                                              \
-        printf("OUTPUT: " #fmt "\n", __VA_ARGS__); \
+#define DEBUG_PSEUDOF(fmt, ...)                        \
+    do                                                 \
+    {                                                  \
+        if (LOG_ENABLED(PSEUDO))                       \
+            printf("PSEUDO: " #fmt "\n", __VA_ARGS__); \
     } while (0);
 
 #ifdef VERBOSE
-#define DEBUG(format, ...)                      \
+#define DEBUG(format, ...)                          \
+    do                                              \
+    {                                               \
+        if (LOG_ENABLED(DEBUG))                     \
+            printf("DEBUG: "##format, __VA_ARGS__); \
+    } while (0);
+
+#define DEBUG_ASSERT(expected, actual)                                                                \
+    do                                                                                                \
+    {                                                                                                 \
+        if (LOG_ENABLED(ASSERT))                                                                      \
+            printf("\nASSERT: %s is %s\n", token_type_to_name(actual), token_type_to_name(expected)); \
+    } while (0);
+
+#define DEBUG_RULE()                            \
     do                                          \
     {                                           \
-        printf("DEBUG: "##format, __VA_ARGS__); \
+        if (LOG_ENABLED(RULE))                  \
+            printf("\n->RULE: %s\n", __func__); \
     } while (0);
 
-#define DEBUG_ASSERT(expected, actual)                                                            \
-    do                                                                                            \
-    {                                                                                             \
-        printf("\nASSERT: %s is %s\n", token_type_to_name(actual), token_type_to_name(expected)); \
+#define DEBUG_STACK(stack_ptr)      \
+    do                              \
+    {                               \
+        if (LOG_ENABLED(STACK))     \
+        {                           \
+            printf("\nSTACK: ");    \
+            stack_print(stack_ptr); \
+        }                           \
     } while (0);
 
-#define DEBUG_RULE()                        \
-    do                                      \
-    {                                       \
-        printf("\n->RULE: %s\n", __func__); \
+#define DEBUG_ARRAY(array_ptr)      \
+    do                              \
+    {                               \
+        if (LOG_ENABLED(ARRAY))     \
+        {                           \
+            printf("\nARRAY: ");    \
+            array_print(array_ptr); \
+        }                           \
     } while (0);
 
-#define DEBUG_STACK(stack_ptr)  \
-    do                          \
-    {                           \
-        printf("\nDEBUG: ");    \
-        stack_print(stack_ptr); \
+#define DEBUG_STACK_TOP(stack_ptr, n)                                \
+    do                                                               \
+    {                                                                \
+        if (LOG_ENABLED(STACK_TOP))                                  \
+        {                                                            \
+            printf("STACK TOP: stack(%d) [", stack_size(stack_ptr)); \
+            item_ptr item = stack_top(stack_ptr);                    \
+            for (int i = 0; i < n && item != NULL; i++)              \
+            {                                                        \
+                char *s = symbol_to_string(item->symbol);            \
+                printf("%s ", s);                                    \
+                free(s);                                             \
+                item = item->next;                                   \
+            }                                                        \
+            printf("...]\n");                                        \
+        }                                                            \
     } while (0);
 
-#define DEBUG_ARRAY(array_ptr)  \
-    do                          \
-    {                           \
-        array_print(array_ptr); \
-    } while (0);
-
-#define DEBUG_STACK_TOP(stack_ptr, n)                            \
-    do                                                           \
-    {                                                            \
-        printf("STACK TOP: stack(%d) [", stack_size(stack_ptr)); \
-        item_ptr item = stack_top(stack_ptr);                    \
-        for (int i = 0; i < n && item != NULL; i++)              \
-        {                                                        \
-            char *s = symbol_to_string(item->symbol);            \
-            printf("%s ", s);                                    \
-            free(s);                                             \
-            item = item->next;                                   \
-        }                                                        \
-        printf("...]\n");                                        \
-    } while (0);
-
-#define DEBUG_TOKEN(token_ptr)  \
-    do                          \
-    {                           \
-        printf("TOKEN: ");      \
-        token_print(token_ptr); \
+#define DEBUG_TOKEN(token_ptr)      \
+    do                              \
+    {                               \
+        if (LOG_ENABLED(TOKEN))     \
+        {                           \
+            printf("TOKEN: ");      \
+            token_print(token_ptr); \
+        }                           \
     } while (0);
 
 #else
