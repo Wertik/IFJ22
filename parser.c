@@ -33,7 +33,13 @@ token_ptr peek_exact_type(item_ptr *stack, token_type_t token_type)
 
 token_ptr get_next_token(item_ptr *stack)
 {
-    symbol_ptr symbol = stack_top(*stack)->symbol;
+    item_ptr top = stack_top(*stack);
+
+    if (top == NULL || top->symbol == NULL) {
+        return NULL;
+    }
+
+    symbol_ptr symbol = top->symbol;
     token_ptr token = symbol->token;
 
     *stack = stack_pop(*stack);
@@ -56,13 +62,13 @@ token_ptr assert_next_token_get(item_ptr *stack, token_type_t token_type)
 
 void assert_token_type(token_ptr token, token_type_t type)
 {
-    DEBUG_ASSERT(type, token->type);
-
-    if (token->type != type)
+    if (token == NULL || token->type != type)
     {
         fprintf(stderr, "%s expected.\n", token_type_to_name(type));
         exit(1); // Return bool and bubble up instead?
     }
+
+    DEBUG_ASSERT(type, token->type);
 }
 
 void assert_next_token(item_ptr *stack, token_type_t token_type)
@@ -421,13 +427,13 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, functio
 {
     DEBUG_RULE();
 
-    if ( peek_top(in_stack) == NULL ){
-        return;
-    }
-
     // Decide based on first? There doesn't have to be a statement...
 
     token_ptr next = peek_top(in_stack);
+
+    if (next == NULL) {
+        return;
+    }
 
     if ((next->type == TOKEN_KEYWORD) || next->type == TOKEN_VAR_ID || next->type == TOKEN_ID)
     {
@@ -448,6 +454,11 @@ void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *sym_global, func
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
+
+    if (next ==  NULL) {
+        return;
+    }
+
     if (next->type == TOKEN_TYPE)
     {
         // TODO: Extract into function
