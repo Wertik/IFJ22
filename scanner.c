@@ -441,7 +441,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            fprintf(stderr, "Variables have to start with alphanumeric chatacters. (%c)", c);
+            fprintf(stderr, "Variables have to start with alphanumeric chatacters. (%c)\n", c);
             exit(1);
         }
         break;
