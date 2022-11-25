@@ -4,7 +4,7 @@ OUT=main sym stack instr
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror
 LFLAGS=-lm
-LEADER=xdobes02
+LEADER=xdobes22
 
 .PHONY: all run clean pack main
 
@@ -34,7 +34,7 @@ valgrind: $(OUT)
 # Pack for submission
 pack: all
 	@rm $(LEADER).tgz -f
-	tar -cvzf $(LEADER).tgz rozdeleni *.c
+	tar -cvzf $(LEADER).tgz rozdeleni *.c Makefile *.h
 	make clean
 
 clean:
