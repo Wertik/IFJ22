@@ -17,6 +17,64 @@ char precedence_table[8][8] ={
     {'<',    '<',     '<',     '>',     '<',     '>',     '>',     '>'}, // <><=>=
 };
 
+token_ptr get_first_non_E(item_ptr *stack){
+    token_ptr next = peek_top(stack);
+    token_value_t value;
+    if (next->type == TOKEN_CONST_EXP){
+        token_ptr skiped = get_next_token(stack);
+        next = peek_top(stack);
+
+        symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+        stack_push(stack, E);
+    }
+    return next;
+}
+int get_pos_in_t(token_ptr TOKEN){
+    switch (TOKEN->type)
+    {
+    case TOKEN_OPENING_TAG :
+        return 5;
+        break;
+    case TOKEN_PLUS:
+    case TOKEN_MINUS:
+    case TOKEN_DOT:
+        return 0;
+        break;
+    case TOKEN_DIVIDE:
+    case TOKEN_MULTIPLE:
+        return 1;
+        break;
+    case TOKEN_L_PAREN:
+        return 2;
+        break;
+    case TOKEN_R_PAREN:
+        return 3;
+        break;
+    case TOKEN_LESS:
+    case TOKEN_MORE:
+    case TOKEN_LESS_EQUAL:
+    case TOKEN_MORE_EQUAL:
+        return 7;
+        break;
+    case TOKEN_EQUAL:
+    case TOKEN_NOT_EQUAL:
+        return 6;
+        break;
+    case TOKEN_STRING_LIT:
+    case TOKEN_CONST_INT:
+    case TOKEN_CONST_DOUBLE:
+        return 4;
+        break;
+    case TOKEN_CONST_EXP:
+        fprintf(stderr, "EXP SHOULD NOT END UP HERE");
+        exit(1);
+        break;
+    default:
+        break;
+    }
+    fprintf(stderr, "NON VALID TOKEN");
+    exit(1);
+}
 void perform_reduction(item_ptr *push_down_stack, table_node_ptr *tree){
     token_ptr next = get_next_token(push_down_stack);
     token_value_t value;
@@ -61,51 +119,23 @@ int expression(item_ptr *in_stack, table_node_ptr *tree){
 
     //dollar = create_terminal(dollar);
     DEBUG_OUT("$");
-    push_down_stack = stack_push(in_stack, symbol);
-    token_ptr next_in_push = peek_top(push_down_stack);
-    switch (next_in_push->type)
-    {
-    case TOKEN_OPENING_TAG :
-        /* code */
-        break;
-    case TOKEN_PLUS:
-    case TOKEN_MINUS:
-    case TOKEN_DOT:
-        /* code */
-        break;
-    case TOKEN_DIVIDE:
-    case TOKEN_MULTIPLE:
-        /* code */
-        break;
-    case TOKEN_L_PAREN:
-        /* code */
-        break;
-    case TOKEN_R_PAREN:
-        /* code */
-        break;
-    case TOKEN_LESS:
-    case TOKEN_MORE:
-    case TOKEN_LESS_EQUAL:
-    case TOKEN_MORE_EQUAL:
-        /* code */
-        break;
-    case TOKEN_EQUAL:
-    case TOKEN_NOT_EQUAL:
-        /* code */
-        break;
-    case TOKEN_STRING_LIT:
-        /* code */
-        break;
-    case TOKEN_CONST_INT:
-        /* code */
-        break;
-    case TOKEN_CONST_DOUBLE:
-        /* code */
-        break;
-    case TOKEN_CONST_EXP:
-        /* code */
-        break;
-    default:
-        break;
+    stack_push(push_down_stack, symbol);
+    token_ptr next_sym_stack = peek_top(in_stack);
+    token_ptr next_sym_push = get_first_non_E(push_down_stack);
+    int next_in_push = get_pos_in_t(next_sym_push);
+    int next_in_stack = get_pos_in_t(next_sym_stack);
+    if (precedence_table[next_in_push][next_in_stack] == '>'){
+        
+        perform_reduction(push_down_stack, tree);
+    }
+    else if (precedence_table[next_in_push][next_in_stack] == '<'){
+       // not finnished
+    }
+    else if (precedence_table[next_in_push][next_in_stack] == '='){
+       // not finnished
+    }
+    else if (precedence_table[next_in_push][next_in_stack] == 'n'){
+        exit(1);
+        fprintf(stderr,"ERROR EXPRESSION NOT IN CORRECT ORDER");
     }
 }
