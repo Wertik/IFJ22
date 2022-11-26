@@ -173,14 +173,6 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_VAR_ID_START;
         }
-        else if (c == ';')
-        {
-            *scanner_state = SCANNER_START;
-
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_SEMICOLON, NONE, value);
-            array_append(tokens, token);
-        }
         break;
     }
     case (SCANNER_NULLABLE):
@@ -207,6 +199,16 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             string_append(*buffer, c);
         }
+        else if (c == '.')
+        {
+            *scanner_state = SCANNER_NUM_POINT_START;
+            string_append(*buffer, c);
+        }
+        else if (c == 'E' || c == 'e')
+        {
+            *scanner_state = SCANNER_NUM_EXP_START;
+            string_append(*buffer, c);
+        }
         else
         {
             *scanner_state = SCANNER_START;
@@ -225,6 +227,110 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         break;
     }
+    case (SCANNER_NUM_POINT_START):
+    {
+        if (c >= '0' && c <= '9')
+        {
+            *scanner_state = SCANNER_NUM_DOUBLE;
+            string_append(*buffer, c);
+        }
+        else
+        {
+            // TODO: do better
+            fprintf(stderr, "Syntax error. \n", c);
+            exit(1);
+        }
+        break;
+    }
+    case (SCANNER_NUM_DOUBLE):
+    {
+        if (c >= '0' && c <= '9')
+        {
+            string_append(*buffer, c);
+        }
+        else if (c == 'E' || c == 'e')
+        {
+            *scanner_state = SCANNER_NUM_EXP_START;
+            string_append(*buffer, c);
+        }
+        else
+        {
+            *scanner_state = SCANNER_START;
+
+            // TODO: Parse better
+            double val = atof((*buffer)->data);
+
+            token_value_t value = {.float_value = val};
+            token_ptr token = token_create(TOKEN_CONST_DOUBLE, DOUBLE, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_fresh(*buffer);
+
+            parse_character(tokens, buffer, scanner_state, c);
+        }
+
+        break;
+    }
+    case (SCANNER_NUM_EXP_START):
+    {
+        if (c >= '0' && c <= '9')
+        {
+            *scanner_state = SCANNER_NUM_EXP;
+            string_append(*buffer, c);
+        }
+        else if (c >= '+' || c <= '-')
+        {
+            *scanner_state = SCANNER_NUM_EXP_SIGN;
+            string_append(*buffer, c);
+        }
+        else
+        {
+            // TODO: do better
+            fprintf(stderr, "Syntax error. \n", c);
+            exit(1);
+        }
+        break;
+    }
+    case (SCANNER_NUM_EXP_SIGN):
+    {
+        if (c >= '0' && c <= '9')
+        {
+            *scanner_state = SCANNER_NUM_EXP;
+            string_append(*buffer, c);
+        }else
+        {
+            //TODO: do better 
+            fprintf(stderr, "Syntax error. \n", c);
+            exit(1);
+        }
+        break;
+    }
+    case (SCANNER_NUM_EXP):
+    {
+        if (c >= '0' && c <= '9')
+        {
+            string_append(*buffer, c);
+        }
+        else
+        {
+            *scanner_state = SCANNER_START;
+
+            // TODO: Parse better
+            double val = atof((*buffer)->data);
+
+            token_value_t value = {.float_value = val};
+            token_ptr token = token_create(TOKEN_CONST_DOUBLE, DOUBLE, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_fresh(*buffer);
+
+            parse_character(tokens, buffer, scanner_state, c);
+        }
+
+        break;
+    }
     case (SCANNER_STRING):
     {
         if (c == '"')
@@ -238,8 +344,184 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             // free the string struct, but keep the data array alive
             string_clean(*buffer);
         }
+        else if (c == '\\')
+        {
+            *scanner_state = SCANNER_STRING_ESCAPE;
+            string_append(*buffer, c);
+        }
+        else if (c == '$')
+        {
+            // TODO: correct error code
+            exit(1);
+        }
         else
         {
+            string_append(*buffer, c);
+        }
+        break;
+    }
+    case (SCANNER_STRING_ESCAPE):
+    {
+        if (c == 'x')
+        {
+            *scanner_state = SCANNER_HEX_START;
+            string_append(*buffer, c);
+        }
+        else if (c >= '0' && c <= '3')
+        {
+            *scanner_state = SCANNER_OCTA_1;
+            string_append(*buffer, c);
+        }
+        else if (c == '"')
+        {
+            // TODO:
+        }
+        else if (c == '\\')
+        {
+            // TODO:
+        }
+        else if (c == '$')
+        {
+            // TODO:
+        }
+        else if (c == 'n')
+        {
+            (*buffer)->data[(*buffer)->size - 1] = '\n';
+        }
+        else if (c == 't')
+        {
+            (*buffer)->data[(*buffer)->size - 1] = '\t';
+        }
+
+        else
+        {
+            *scanner_state = SCANNER_STRING;
+            string_append(*buffer, c);
+        }
+
+        break;
+    }
+    case (SCANNER_HEX_START):
+    {
+        if (c == '"')
+        {
+            *scanner_state = SCANNER_START;
+
+            token_value_t value = {.string = (*buffer)->data};
+            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_clean(*buffer);
+        }
+        else if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
+        {
+            *scanner_state = SCANNER_HEX_FIRST;
+            string_append(*buffer, c);
+        }
+        else if (c == '$')
+        {
+            fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            exit(1);
+        }
+        else
+        {
+            *scanner_state = SCANNER_STRING;
+            string_append(*buffer, c);
+        }
+
+        break;
+    }
+    case (SCANNER_HEX_FIRST):
+    {
+        if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
+        {
+            *scanner_state = SCANNER_STRING;
+            string_append(*buffer, c);
+            string_num_to_asci(*buffer, 16);
+        }
+        else if (c == '"')
+        {
+            *scanner_state = SCANNER_START;
+
+            token_value_t value = {.string = (*buffer)->data};
+            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_clean(*buffer);
+        }
+        else if (c == '$')
+        {
+            fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            exit(1);
+        }
+        else
+        {
+            *scanner_state = SCANNER_STRING;
+            string_append(*buffer, c);
+        }
+
+        break;
+    }
+    case (SCANNER_OCTA_1):
+    {
+        if (c == '"')
+        {
+            *scanner_state = SCANNER_START;
+
+            token_value_t value = {.string = (*buffer)->data};
+            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_clean(*buffer);
+        }
+        else if ((c >= '0' && c <= '7'))
+        {
+            *scanner_state = SCANNER_OCTA_2;
+            string_append(*buffer, c);
+        }
+        else if (c == '$')
+        {
+            fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            exit(1);
+        }
+        else
+        {
+            *scanner_state = SCANNER_STRING;
+            string_append(*buffer, c);
+        }
+        break;
+    }
+    case (SCANNER_OCTA_2):
+    {
+
+        if (c == '"')
+        {
+            *scanner_state = SCANNER_START;
+
+            token_value_t value = {.string = (*buffer)->data};
+            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
+            array_append(tokens, token);
+
+            // free the string struct, but keep the data array alive
+            string_clean(*buffer);
+        }
+        else if ((c >= '0' && c <= '7'))
+        {
+            *scanner_state = SCANNER_STRING;
+            string_append(*buffer, c);
+            string_num_to_asci(*buffer, 8);
+        }
+        else if (c == '$')
+        {
+            fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            exit(1);
+        }
+        else
+        {
+            *scanner_state = SCANNER_STRING;
             string_append(*buffer, c);
         }
         break;
@@ -322,6 +604,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_EQUAL, NONE, value);
             array_append(tokens, token);
         }
+        else
+        {
+            fprintf(stderr, "Equality is compared via \"===\". \n", c);
+            exit(1);
+        }
+
         break;
     }
     case (SCANNER_EXCL_MARK):
@@ -330,6 +618,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_NOT_EQ_START;
         }
+        else
+        {
+            // TODO: do better
+            fprintf(stderr, "Syntax error. \n", c);
+            exit(1);
+        }
+
         break;
     }
     case (SCANNER_NOT_EQ_START):
@@ -342,6 +637,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
             token_ptr token = token_create(TOKEN_NOT_EQUAL, NONE, value);
             array_append(tokens, token);
         }
+        else
+        {
+            fprintf(stderr, "Equality is compared via \"===\". \n", c);
+            exit(1);
+        }
+
         break;
     }
     case (SCANNER_DIVIDE):
@@ -356,7 +657,6 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-
             *scanner_state = SCANNER_START;
 
             token_value_t value;
@@ -369,11 +669,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     }
     case (SCANNER_LINE_COMM):
     {
-        if (!(c == EOF || c == '\n'))
-        {
-            *scanner_state = SCANNER_LINE_COMM;
-        }
-        else if (c == EOF || c == '\n')
+        if (c == EOF || c == '\n')
         {
             *scanner_state = SCANNER_START;
         }
