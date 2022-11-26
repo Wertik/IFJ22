@@ -34,6 +34,7 @@ typedef enum
     NONE,
     INTEGER,
     STRING,
+    DOUBLE,
     /* Token is a TOKEN_KEYWORD, this indicates which of the predefined keywords. */
     KEYWORD,
     /* Token is a TOKEN_TYPE, this indicates which of the predefined types. */
