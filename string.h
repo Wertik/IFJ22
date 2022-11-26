@@ -17,6 +17,8 @@ void string_append(string_ptr string, char c);
 
 void string_print(string_ptr string);
 
+void string_num_to_asci(string_ptr string, int format);
+
 string_ptr string_fresh(string_ptr string);
 
 void string_clean(string_ptr string);

@@ -8,19 +8,11 @@ string_ptr string_empty()
 {
     string_ptr string = malloc(sizeof(struct string_t));
 
-    if (string == NULL)
-    {
-        fprintf(stderr, "string_empty: malloc fail.\n");
-        exit(99);
-    }
+    MALLOC_CHECK(string);
 
     string->data = malloc(sizeof(char));
 
-    if (string->data == NULL)
-    {
-        fprintf(stderr, "string_empty - data: malloc fail.\n");
-        exit(99);
-    }
+    MALLOC_CHECK(string->data);
 
     string->data[0] = '\0';
     string->size = 0;
@@ -29,13 +21,16 @@ string_ptr string_empty()
 }
 
 // Ensure a new clean string.
-string_ptr string_fresh(string_ptr str) {
-    if (str == NULL) {
+string_ptr string_fresh(string_ptr str)
+{
+    if (str == NULL)
+    {
         return string_empty();
     }
 
     // Already clean
-    if (str->size == 0) {
+    if (str->size == 0)
+    {
         return str;
     }
 
@@ -52,11 +47,7 @@ string_ptr string_create(char *data)
 {
     string_ptr string = malloc(sizeof(struct string_t));
 
-    if (string == NULL)
-    {
-        fprintf(stderr, "string_create: malloc fail.\n");
-        exit(99);
-    }
+    MALLOC_CHECK(string);
 
     string->data = data;
     string->size = strlen(data);
@@ -69,13 +60,42 @@ void string_append(string_ptr string, char c)
     string->size = string->size + 1;
     string->data = realloc(string->data, string->size + 1); // null byte
 
-    if (string->data == NULL)
+    MALLOC_CHECK(string->data);
+
+    string->data[string->size - 1] = c;
+    string->data[string->size] = '\0';
+}
+
+void string_num_to_asci(string_ptr string, int format)
+{
+    char *num_str;
+
+    if (format == 8)
     {
-        fprintf(stderr, "string_append: malloc fail.\n");
+        char *num_str = "0";
+        strcat(num_str, string->data[string->size - 3]);
+    }
+    else if (format == 16)
+    {
+        char *num_str = "0x";
+    }
+    else
+    {
+        printf(stderr, "string_num_to_asci invalid format: %d \n", format);
         exit(99);
     }
 
-    string->data[string->size - 1] = c;
+    strcat(num_str, string->data[string->size - 2]);
+    strcat(num_str, string->data[string->size - 1]);
+
+    int dec = (int)strtol(num_str, NULL, format); // hex string to integer
+
+    string->size = string->size - 3;
+    string->data = realloc(string->data, string->size + 1); // null byte
+
+    MALLOC_CHECK(string->data);
+
+    string->data[string->size - 1] = (char)dec;
     string->data[string->size] = '\0';
 }
 
