@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+
+$x = "Hello world!";
+$a = "\x48\x45\x4C\x4C\x4F!";
+
+?>
