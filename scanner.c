@@ -237,7 +237,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else
         {
             // TODO: do better
-            fprintf(stderr, "Syntax error. \n", c);
+            fprintf(stderr, "Syntax error.\n");
             exit(1);
         }
         break;
@@ -287,7 +287,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else
         {
             // TODO: do better
-            fprintf(stderr, "Syntax error. \n", c);
+            fprintf(stderr, "Syntax error.\n");
             exit(1);
         }
         break;
@@ -298,10 +298,11 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             *scanner_state = SCANNER_NUM_EXP;
             string_append(*buffer, c);
-        }else
+        }
+        else
         {
-            //TODO: do better 
-            fprintf(stderr, "Syntax error. \n", c);
+            // TODO: do better
+            fprintf(stderr, "Syntax error.\n");
             exit(1);
         }
         break;
@@ -606,7 +607,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            fprintf(stderr, "Equality is compared via \"===\". \n", c);
+            fprintf(stderr, "Equality is compared via \"===\". \n");
             exit(1);
         }
 
@@ -621,7 +622,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else
         {
             // TODO: do better
-            fprintf(stderr, "Syntax error. \n", c);
+            fprintf(stderr, "Syntax error.\n");
             exit(1);
         }
 
@@ -639,7 +640,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            fprintf(stderr, "Equality is compared via \"===\". \n", c);
+            fprintf(stderr, "Equality is compared via \"===\". \n");
             exit(1);
         }
 

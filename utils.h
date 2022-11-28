@@ -32,11 +32,15 @@
     } while (0);
 
 #ifdef VERBOSE
-#define DEBUG(format, ...)                          \
-    do                                              \
-    {                                               \
-        if (LOG_ENABLED(DEBUG))                     \
-            printf("DEBUG: "##format, __VA_ARGS__); \
+#define DEBUG(...)               \
+    do                           \
+    {                            \
+        if (LOG_ENABLED(DEBUG))  \
+        {                        \
+            printf("DEBUG: ");   \
+            printf(__VA_ARGS__); \
+            printf("\n");        \
+        }                        \
     } while (0);
 
 #define DEBUG_ASSERT(expected, actual)                                                                \
@@ -104,10 +108,9 @@
 #else
 #define UNUSED(x) (void)x
 
-#define DEBUG(fmt, ...) \
-    do                  \
-    {                   \
-        UNUSED(fmt);    \
+#define DEBUG(...) \
+    do             \
+    {              \
     } while (0);
 
 #define DEBUG_ASSERT(expected, actual) \

@@ -66,29 +66,43 @@ void string_append(string_ptr string, char c)
     string->data[string->size] = '\0';
 }
 
-void string_num_to_asci(string_ptr string, int format)
+// take last 3 characters from the buffer and turn them into a single symbol
+void string_num_to_asci(string_ptr string, int base)
 {
     char *num_str;
 
-    if (format == 8)
+    if (base == 8)
     {
-        char *num_str = "0";
-        strcat(num_str, string->data[string->size - 3]);
+        num_str = malloc(sizeof(char) * 3);
+
+        MALLOC_CHECK(num_str);
+
+        // last 3 chars
+
+        num_str[0] = string->data[string->size - 3];
+        num_str[1] = string->data[string->size - 2];
+        num_str[2] = string->data[string->size - 1];
+        num_str[3] = '\0';
     }
-    else if (format == 16)
+    else if (base == 16)
     {
-        char *num_str = "0x";
+        // 0xAA
+        num_str = malloc(sizeof(char) * 4);
+        MALLOC_CHECK(num_str);
+
+        // last 2 chars
+        // ignore the x
+        num_str[0] = string->data[string->size - 2];
+        num_str[1] = string->data[string->size - 1];
+        num_str[2] = '\0';
     }
     else
     {
-        printf(stderr, "string_num_to_asci invalid format: %d \n", format);
+        fprintf(stderr, "string_num_to_asci invalid base: %d\n", base);
         exit(99);
     }
-
-    strcat(num_str, string->data[string->size - 2]);
-    strcat(num_str, string->data[string->size - 1]);
-
-    int dec = (int)strtol(num_str, NULL, format); // hex string to integer
+    
+    int dec = (int)strtol(num_str, NULL, base);
 
     string->size = string->size - 3;
     string->data = realloc(string->data, string->size + 1); // null byte
@@ -97,6 +111,8 @@ void string_num_to_asci(string_ptr string, int format)
 
     string->data[string->size - 1] = (char)dec;
     string->data[string->size] = '\0';
+
+    free(num_str);
 }
 
 void string_print(string_ptr string)
