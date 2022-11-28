@@ -1,0 +1,3 @@
+[submodule "IFJ22_Tester"]
+	path = IFJ22_Tester
+	url = https://github.com/Wertik/IFJ22_Tester.git

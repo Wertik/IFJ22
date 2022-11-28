@@ -5,3 +5,4 @@ instr
 *.o
 *.tgz
 .vscode/
+temp_out

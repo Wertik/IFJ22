@@ -1,0 +1,7 @@
+#!/bin/bash
+
+if [[ -z "$1" ]]; then
+    ./IFJ22_Tester/test.py ./main ./ic22int_2022-11-14
+else
+    ./IFJ22_Tester/test.py ./main ./ic22int_2022-11-14 "$1"
+fi
