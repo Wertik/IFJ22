@@ -193,7 +193,7 @@ char *value_to_string(token_value_type_t type, token_value_t value)
     case INTEGER:
     {
         size_t len = snprintf(NULL, 0, "%d", value.integer);
-        char *s = malloc(sizeof(char) * len);
+        char *s = malloc(sizeof(char) * (len + 1));
         MALLOC_CHECK(s);
         sprintf(s, "%d", value.integer);
         return s;
@@ -211,11 +211,13 @@ char *token_to_string(token_ptr token)
 {
     char *format = value_type_to_format(token->value_type);
 
+    char *value_s = value_to_string(token->value_type, token->value);
+
     size_t len = snprintf(NULL, 0,
                           format,
                           token_type_to_name(token->type),
                           value_type_to_name(token->value_type),
-                          value_to_string(token->value_type, token->value));
+                          value_s);
     char *s = malloc((sizeof(char) * len) + 1);
 
     if (s == NULL)
@@ -223,8 +225,6 @@ char *token_to_string(token_ptr token)
         fprintf(stderr, "malloc fail.\n");
         exit(99);
     }
-
-    char *value_s = value_to_string(token->value_type, token->value);
 
     sprintf(s, format,
             token_type_to_name(token->type),

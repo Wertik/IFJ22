@@ -1,10 +1,18 @@
 #include "scanner.h"
 #include "token.h"
+#include "utils.h"
 #include "string.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+
+#define CHANGE_STATE(state)                 \
+    do                                      \
+    {                                       \
+        DEBUG_STATE(*scanner_state, state); \
+        *scanner_state = state;             \
+    } while (0);
 
 bool attempt_keyword(array_ptr tokens, string_ptr *buffer, char *keyword_str, keyword_t keyword)
 {
@@ -53,6 +61,7 @@ void append_type(array_ptr tokens, type_t type)
 
 bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, char c)
 {
+    DEBUG("Scanning character: %c (%d)\n", c, c);
     switch (*scanner_state)
     {
     case (SCANNER_START):
@@ -71,7 +80,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == '"')
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
 
             // create a fresh buffer
             *buffer = string_fresh(*buffer);
@@ -90,7 +99,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == '?')
         {
-            *scanner_state = SCANNER_NULLABLE;
+            CHANGE_STATE(SCANNER_NULLABLE);
         }
         else if (c == '}')
         {
@@ -136,7 +145,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c >= '0' && c <= '9')
         {
-            *scanner_state = SCANNER_NUM_INT;
+            CHANGE_STATE(SCANNER_NUM_INT);
 
             // create a fresh buffer
             *buffer = string_fresh(*buffer);
@@ -144,34 +153,39 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
         {
-            *scanner_state = SCANNER_ID;
+            CHANGE_STATE(SCANNER_ID);
 
             *buffer = string_fresh(*buffer);
             string_append(*buffer, c);
         }
         else if (c == '/')
         {
-            *scanner_state = SCANNER_DIVIDE;
+            CHANGE_STATE(SCANNER_DIVIDE);
         }
         else if (c == '>')
         {
-            *scanner_state = SCANNER_MORE_THAN;
+            CHANGE_STATE(SCANNER_MORE_THAN);
         }
         else if (c == '<')
         {
-            *scanner_state = SCANNER_LESS_THAN;
+            CHANGE_STATE(SCANNER_LESS_THAN);
         }
         else if (c == '!')
         {
-            *scanner_state = SCANNER_EXCL_MARK;
+            CHANGE_STATE(SCANNER_EXCL_MARK);
         }
         else if (c == '=')
         {
-            *scanner_state = SCANNER_ASIGN;
+            CHANGE_STATE(SCANNER_ASIGN);
         }
         else if (c == '$')
         {
-            *scanner_state = SCANNER_VAR_ID_START;
+            CHANGE_STATE(SCANNER_VAR_ID_START);
+        } else if (c == EOF || c == '\n' || c == ' ') {
+            break;
+        } else {
+            fprintf(stderr, "Unexpected character %c (%d).\n", c, c);
+            exit(1);
         }
         break;
     }
@@ -179,13 +193,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '>')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_EPILOG);
 
             append_token(tokens, TOKEN_CLOSING_TAG);
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             append_token(tokens, TOKEN_NULLABLE);
 
@@ -201,17 +215,17 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == '.')
         {
-            *scanner_state = SCANNER_NUM_POINT_START;
+            CHANGE_STATE(SCANNER_NUM_POINT_START);
             string_append(*buffer, c);
         }
         else if (c == 'E' || c == 'e')
         {
-            *scanner_state = SCANNER_NUM_EXP_START;
+            CHANGE_STATE(SCANNER_NUM_EXP_START);
             string_append(*buffer, c);
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             // TODO: Parse better
             int val = atoi((*buffer)->data);
@@ -231,7 +245,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c >= '0' && c <= '9')
         {
-            *scanner_state = SCANNER_NUM_DOUBLE;
+            CHANGE_STATE(SCANNER_NUM_DOUBLE);
             string_append(*buffer, c);
         }
         else
@@ -250,12 +264,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == 'E' || c == 'e')
         {
-            *scanner_state = SCANNER_NUM_EXP_START;
+            CHANGE_STATE(SCANNER_NUM_EXP_START);
             string_append(*buffer, c);
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             // TODO: Parse better
             double val = atof((*buffer)->data);
@@ -276,12 +290,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c >= '0' && c <= '9')
         {
-            *scanner_state = SCANNER_NUM_EXP;
+            CHANGE_STATE(SCANNER_NUM_EXP);
             string_append(*buffer, c);
         }
         else if (c >= '+' || c <= '-')
         {
-            *scanner_state = SCANNER_NUM_EXP_SIGN;
+            CHANGE_STATE(SCANNER_NUM_EXP_SIGN);
             string_append(*buffer, c);
         }
         else
@@ -296,7 +310,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c >= '0' && c <= '9')
         {
-            *scanner_state = SCANNER_NUM_EXP;
+            CHANGE_STATE(SCANNER_NUM_EXP);
             string_append(*buffer, c);
         }
         else
@@ -315,7 +329,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             // TODO: Parse better
             double val = atof((*buffer)->data);
@@ -336,7 +350,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '"')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value = {.string = (*buffer)->data};
             token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
@@ -347,7 +361,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == '\\')
         {
-            *scanner_state = SCANNER_STRING_ESCAPE;
+            CHANGE_STATE(SCANNER_STRING_ESCAPE);
             string_append(*buffer, c);
         }
         else if (c == '$')
@@ -365,12 +379,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == 'x')
         {
-            *scanner_state = SCANNER_HEX_START;
+            CHANGE_STATE(SCANNER_HEX_START);
             string_append(*buffer, c);
         }
         else if (c >= '0' && c <= '3')
         {
-            *scanner_state = SCANNER_OCTA_1;
+            CHANGE_STATE(SCANNER_OCTA_1);
             string_append(*buffer, c);
         }
         else if (c == '"')
@@ -387,16 +401,18 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == 'n')
         {
+            CHANGE_STATE(SCANNER_STRING);
             (*buffer)->data[(*buffer)->size - 1] = '\n';
         }
         else if (c == 't')
         {
+            CHANGE_STATE(SCANNER_STRING);
             (*buffer)->data[(*buffer)->size - 1] = '\t';
         }
 
         else
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
         }
 
@@ -406,7 +422,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '"')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value = {.string = (*buffer)->data};
             token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
@@ -417,7 +433,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
         {
-            *scanner_state = SCANNER_HEX_FIRST;
+            CHANGE_STATE(SCANNER_HEX_FIRST);
             string_append(*buffer, c);
         }
         else if (c == '$')
@@ -427,7 +443,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
         }
 
@@ -437,13 +453,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
             string_num_to_asci(*buffer, 16);
         }
         else if (c == '"')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value = {.string = (*buffer)->data};
             token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
@@ -459,7 +475,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
         }
 
@@ -469,7 +485,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '"')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value = {.string = (*buffer)->data};
             token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
@@ -480,7 +496,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if ((c >= '0' && c <= '7'))
         {
-            *scanner_state = SCANNER_OCTA_2;
+            CHANGE_STATE(SCANNER_OCTA_2);
             string_append(*buffer, c);
         }
         else if (c == '$')
@@ -490,7 +506,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
         }
         break;
@@ -500,7 +516,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
         if (c == '"')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value = {.string = (*buffer)->data};
             token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
@@ -511,7 +527,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if ((c >= '0' && c <= '7'))
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
             string_num_to_asci(*buffer, 8);
         }
@@ -522,7 +538,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_STRING;
+            CHANGE_STATE(SCANNER_STRING);
             string_append(*buffer, c);
         }
         break;
@@ -532,7 +548,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '=')
         {
 
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_MORE_EQUAL, NONE, value);
@@ -540,7 +556,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_MORE, NONE, value);
@@ -552,7 +568,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     }
     case (SCANNER_LESS_THAN):
     {
-        *scanner_state = SCANNER_START;
+        CHANGE_STATE(SCANNER_START);
 
         if (c == '=')
         {
@@ -580,12 +596,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '=')
         {
-            *scanner_state = SCANNER_EQ_START;
+            CHANGE_STATE(SCANNER_EQ_START);
         }
         else
         {
 
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_ASSIGN, NONE, value);
@@ -599,7 +615,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '=')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_EQUAL, NONE, value);
@@ -617,7 +633,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '=')
         {
-            *scanner_state = SCANNER_NOT_EQ_START;
+            CHANGE_STATE(SCANNER_NOT_EQ_START);
         }
         else
         {
@@ -632,7 +648,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '=')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_NOT_EQUAL, NONE, value);
@@ -650,15 +666,15 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '/')
         {
-            *scanner_state = SCANNER_LINE_COMM;
+            CHANGE_STATE(SCANNER_LINE_COMM);
         }
         else if (c == '*')
         {
-            *scanner_state = SCANNER_BLOCK_COMM;
+            CHANGE_STATE(SCANNER_BLOCK_COMM);
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value;
             token_ptr token = token_create(TOKEN_DIVIDE, NONE, value);
@@ -672,7 +688,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == EOF || c == '\n')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
         }
         break;
     }
@@ -680,7 +696,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '*')
         {
-            *scanner_state = SCANNER_BLOCK_END;
+            CHANGE_STATE(SCANNER_BLOCK_END);
         }
         break;
     }
@@ -688,11 +704,11 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '/')
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
         }
         else if (c != '*')
         {
-            *scanner_state = SCANNER_BLOCK_COMM;
+            CHANGE_STATE(SCANNER_BLOCK_COMM);
         }
         break;
     }
@@ -704,7 +720,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             if (!attempt_keyword(tokens, buffer, "function", KEYWORD_FUNCTION) &&
                 !attempt_keyword(tokens, buffer, "if", KEYWORD_IF) &&
@@ -733,7 +749,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
         {
-            *scanner_state = SCANNER_VAR_ID;
+            CHANGE_STATE(SCANNER_VAR_ID);
             string_append(*buffer, c);
         }
         else
@@ -751,7 +767,7 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-            *scanner_state = SCANNER_START;
+            CHANGE_STATE(SCANNER_START);
 
             token_value_t value = {.string = (*buffer)->data};
             token_ptr token = token_create(TOKEN_VAR_ID, STRING, value);
@@ -763,11 +779,20 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         break;
     }
+    case (SCANNER_EPILOG):
+    {
+        if (c != EOF && c != '\n')
+        {
+            fprintf(stderr, "Character %d (%c) after epilog.\n", c, c);
+            exit(1);
+        }
+        break;
+    }
     default:
         fprintf(stderr, "Unknown scanner state %d.\n", *scanner_state);
         exit(1);
     }
-    return false;
+    return c == EOF;
 }
 
 void tokenize(array_ptr tokens)
@@ -788,7 +813,7 @@ void tokenize(array_ptr tokens)
     {
         c = getc(stdin);
 
-        if ((c == (int)'\n' || c == EOF) && character_count != 0) // ignore empty lines
+        if ((c == '\n' || c == EOF) && character_count != 0) // ignore empty lines
         {
             line_count++;
             character_count = 0;
@@ -798,10 +823,19 @@ void tokenize(array_ptr tokens)
             character_count++;
         }
 
-        if (c == EOF || parse_character(tokens, &buffer, &scanner_state, (char)c))
+        if (parse_character(tokens, &buffer, &scanner_state, (char)c))
         {
             break;
         }
+    }
+
+    // scanner cannot end on anything else than start
+    // means we started parsing something and didn't finish
+    if (scanner_state != SCANNER_START && scanner_state != SCANNER_EPILOG)
+    {
+        DEBUG_ARRAY(tokens);
+        fprintf(stderr, "Didn't finish scanning. Left on state: %d\n", scanner_state);
+        exit(1);
     }
 
     string_dispose(buffer);

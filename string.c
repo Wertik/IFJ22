@@ -101,7 +101,7 @@ void string_num_to_asci(string_ptr string, int base)
         fprintf(stderr, "string_num_to_asci invalid base: %d\n", base);
         exit(99);
     }
-    
+
     int dec = (int)strtol(num_str, NULL, base);
 
     string->size = string->size - 3;
@@ -133,6 +133,13 @@ void string_clean(string_ptr string)
 
 void string_dispose(string_ptr string)
 {
-    free(string->data);
+    if (string == NULL) {
+        return;
+    }
+
+    if (string->data != NULL)
+    {
+        free(string->data);
+    }
     free(string);
 }

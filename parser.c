@@ -9,6 +9,24 @@
 
 int different_parse = 0;
 
+token_ptr peek(item_ptr *stack, int n)
+{
+    item_ptr item = *stack;
+
+    for (int i = 0; i < n && item != NULL; i++)
+    {
+        item = item->next;
+    }
+
+    if (item == NULL)
+    {
+        return NULL;
+    }
+
+    symbol_ptr symbol = item->symbol;
+    return symbol->token;
+}
+
 token_ptr peek_top(item_ptr *stack)
 {
     item_ptr top = stack_top(*stack);
@@ -35,7 +53,8 @@ token_ptr get_next_token(item_ptr *stack)
 {
     item_ptr top = stack_top(*stack);
 
-    if (top == NULL || top->symbol == NULL) {
+    if (top == NULL || top->symbol == NULL)
+    {
         return NULL;
     }
 
@@ -65,7 +84,7 @@ void assert_token_type(token_ptr token, token_type_t type)
     if (token == NULL || token->type != type)
     {
         fprintf(stderr, "%s expected.\n", token_type_to_name(type));
-        exit(1); // Return bool and bubble up instead?
+        exit(2);
     }
 
     DEBUG_ASSERT(type, token->type);
@@ -87,7 +106,7 @@ void assert_next_keyword(item_ptr *stack, keyword_t keyword)
     if (token->value.keyword != keyword)
     {
         fprintf(stderr, "Expected keyword %s, got %s.\n", keyword_to_name(keyword), keyword_to_name(token->value.keyword));
-        exit(1); // TODO: Correct code
+        exit(2);
     }
 
     token_dispose(token);
@@ -100,7 +119,7 @@ void assert_next_id(item_ptr *stack, char *id)
     if (strcmp(token->value.string, id) != 0)
     {
         fprintf(stderr, "Expected %s.", id);
-        exit(1); // TODO: Correct code
+        exit(2);
     }
 
     token_dispose(token);
@@ -169,7 +188,8 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
         // value = next->value.string;
         rule_expression_next(in_stack, sym_global);
         break;
-    case TOKEN_ID:
+    // Part of FUNEXP
+    /* case TOKEN_ID:
         assert_next_token(in_stack, TOKEN_ID);
 
         // TODO: Check if function exists and get the return type from symtable.
@@ -179,10 +199,10 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
         assert_next_token(in_stack, TOKEN_L_PAREN);
         rule_argument_list(in_stack, sym_global);
         assert_next_token(in_stack, TOKEN_R_PAREN);
-        break;
+        break; */
     default:
         fprintf(stderr, "Not a valid expression.\n");
-        exit(1); // TODO: Correct code
+        exit(2);
     }
 
     return result_type;
@@ -236,14 +256,19 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
 // <statement> -> while (<expression>) {<statement-list>}
 // <statement> -> function id(<argument-list>) {<statement-list>}
 // <statement> -> id(<argument-list>);
+// <statement> -> <expression>;
 void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
-    token_ptr next = get_next_token(in_stack);
+    token_ptr next = peek_top(in_stack);
+    token_ptr after_next = peek(in_stack, 1);
 
-    if (next->type == TOKEN_VAR_ID)
+    // var_id =
+    if (next->type == TOKEN_VAR_ID && after_next != NULL && after_next->type == TOKEN_ASSIGN)
     {
+        assert_next_token(in_stack, TOKEN_VAR_ID);
+
         // <statement> -> var_id = <expression>;
         assert_next_token(in_stack, TOKEN_ASSIGN);
 
@@ -270,6 +295,8 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
         // TODO: Generate call IFJcode22.
         // TODO: Check parameter count and types
 
+        assert_next_token(in_stack, TOKEN_ID);
+
         assert_next_token(in_stack, TOKEN_L_PAREN);
 
         rule_argument_list(in_stack, sym_global);
@@ -280,6 +307,8 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
     else if (next->type == TOKEN_KEYWORD)
     {
         // if / function / while
+
+        assert_next_token(in_stack, TOKEN_KEYWORD);
 
         switch (next->value.keyword)
         {
@@ -354,7 +383,8 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             rule_argument_list_typ(in_stack, sym_global, function);
 
-            for (int i = 0; i < function->parameter_count; i++) {
+            for (int i = 0; i < function->parameter_count; i++)
+            {
                 DEBUG_PSEUDOF("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
             }
 
@@ -391,18 +421,24 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
         }
         case KEYWORD_RETURN:
         {
-            type_t result_type = parse_expression(in_stack, sym_global);
-
-            // TODO: Check function type based on parse_expression result type
-            if (function->return_type != result_type)
+            if (function->return_type == TYPE_VOID)
             {
-                fprintf(stderr, "Invalid function return type.\n");
-                exit(1); // TODO: Correct code
+                DEBUG_PSEUDO("return;");
+            }
+            else
+            {
+                type_t result_type = parse_expression(in_stack, sym_global);
+
+                if (function->return_type != result_type)
+                {
+                    fprintf(stderr, "Invalid function return type.\n");
+                    exit(3);
+                }
+
+                DEBUG_PSEUDOF("return %s;", type_to_name(result_type));
             }
 
             function->has_return = true;
-
-            DEBUG_PSEUDOF("return %s;", type_to_name(result_type));
 
             assert_next_token(in_stack, TOKEN_SEMICOLON);
             break;
@@ -414,11 +450,11 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
     }
     else
     {
-        fprintf(stderr, "Invalid token.\n");
-        exit(1); // TODO: Correct code
-    }
+        // just let it try to parse an expression here
+        parse_expression(in_stack, sym_global);
 
-    token_dispose(next);
+        assert_next_token(in_stack, TOKEN_SEMICOLON);
+    }
 }
 
 // <statement-list> -> <statement><statement-list>
@@ -431,11 +467,17 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, functio
 
     token_ptr next = peek_top(in_stack);
 
-    if (next == NULL) {
+    if (next == NULL)
+    {
         return;
     }
 
-    if ((next->type == TOKEN_KEYWORD) || next->type == TOKEN_VAR_ID || next->type == TOKEN_ID)
+    if ((next->type == TOKEN_KEYWORD) ||
+        next->type == TOKEN_VAR_ID ||
+        next->type == TOKEN_ID ||
+        next->type == TOKEN_CONST_INT ||
+        next->type == TOKEN_CONST_DOUBLE ||
+        next->type == TOKEN_STRING_LIT)
     {
         // <statement-list> -> <statement>;<statement-list>
         rule_statement(in_stack, sym_global, function);
@@ -455,7 +497,8 @@ void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *sym_global, func
 
     token_ptr next = peek_top(in_stack);
 
-    if (next ==  NULL) {
+    if (next == NULL)
+    {
         return;
     }
 
@@ -542,8 +585,13 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global)
         assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
         rule_argument_next(in_stack, sym_global);
         break;
-    // missing TOKEN_CONST_STRING MAYBE???
+    case TOKEN_STRING_LIT:
+        assert_next_token(in_stack, TOKEN_STRING_LIT);
+        rule_argument_next(in_stack, sym_global);
+        break;
     default:
+        fprintf(stderr, "Expected constant or variable id.\n");
+        exit(2);
         break;
     }
 }
@@ -552,7 +600,8 @@ void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
     token_ptr next = peek_top(in_stack);
-    DEBUG_PSEUDOF("rule_argument_next %d\n", next->type);
+    DEBUG_PSEUDOF("rule_argument_next %s\n", token_type_to_name(next->type));
+
     if (next->type == TOKEN_COMMA)
     {
         assert_next_token(in_stack, TOKEN_COMMA);

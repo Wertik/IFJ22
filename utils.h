@@ -31,6 +31,15 @@
             printf("PSEUDO: " #fmt "\n", __VA_ARGS__); \
     } while (0);
 
+#define DEBUG_STATE(curr, state)                    \
+    do                                              \
+    {                                               \
+        if (LOG_ENABLED(STATE))                     \
+        {                                           \
+            printf("STATE: %d->%d\n", curr, state); \
+        }                                           \
+    } while (0);
+
 #ifdef VERBOSE
 #define DEBUG(...)               \
     do                           \
@@ -47,14 +56,14 @@
     do                                                                                                \
     {                                                                                                 \
         if (LOG_ENABLED(ASSERT))                                                                      \
-            printf("\nASSERT: %s is %s\n", token_type_to_name(actual), token_type_to_name(expected)); \
+            printf("ASSERT: %s is %s\n\n", token_type_to_name(actual), token_type_to_name(expected)); \
     } while (0);
 
 #define DEBUG_RULE()                            \
     do                                          \
     {                                           \
         if (LOG_ENABLED(RULE))                  \
-            printf("\n->RULE: %s\n", __func__); \
+            printf("\n->RULE: %s\n\n", __func__); \
     } while (0);
 
 #define DEBUG_STACK(stack_ptr)      \

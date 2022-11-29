@@ -33,6 +33,7 @@
 #define SCANNER_VAR_ID 26
 #define SCANNER_PROG_START 27
 #define SCANNER_NULLABLE 28
+#define SCANNER_EPILOG 29
 
 /* Read from stdin, parse into tokens. */
 void tokenize(array_ptr tokens);
