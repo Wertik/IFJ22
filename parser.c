@@ -240,6 +240,36 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
         assert_next_token(in_stack, TOKEN_DOT);
         parse_expression(in_stack, sym_global);
         break;
+    case TOKEN_EQUAL:
+
+        assert_next_token(in_stack, TOKEN_EQUAL);
+        parse_expression(in_stack, sym_global);
+        break;
+    case TOKEN_NOT_EQUAL:
+
+        assert_next_token(in_stack, TOKEN_NOT_EQUAL);
+        parse_expression(in_stack, sym_global);
+        break;
+    case TOKEN_MORE:
+
+        assert_next_token(in_stack, TOKEN_MORE);
+        parse_expression(in_stack, sym_global);
+        break;
+    case TOKEN_MORE_EQUAL:
+
+        assert_next_token(in_stack, TOKEN_MORE_EQUAL);
+        parse_expression(in_stack, sym_global);
+        break;
+    case TOKEN_LESS:
+
+        assert_next_token(in_stack, TOKEN_LESS);
+        parse_expression(in_stack, sym_global);
+        break;
+    case TOKEN_LESS_EQUAL:
+
+        assert_next_token(in_stack, TOKEN_LESS_EQUAL);
+        parse_expression(in_stack, sym_global);
+        break;
     default:
     {
     }
