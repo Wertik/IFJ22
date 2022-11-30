@@ -99,7 +99,7 @@ void string_num_to_asci(string_ptr string, int base)
     else
     {
         fprintf(stderr, "string_num_to_asci invalid base: %d\n", base);
-        exit(99);
+        exit(FAIL_INTERNAL);
     }
 
     int dec = (int)strtol(num_str, NULL, base);

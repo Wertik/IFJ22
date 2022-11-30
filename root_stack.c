@@ -11,7 +11,7 @@ root_stack_ptr root_stack_init()
     if (stack == NULL)
     {
         fprintf(stderr, "root_stack_init: malloc fail.\n");
-        exit(99);
+        exit(FAIL_INTERNAL);
     }
 
     stack->top = NULL;
@@ -32,7 +32,7 @@ void root_stack_push(root_stack_ptr stack, table_node_ptr root)
         if (elem == NULL)
         {
             fprintf(stderr, "root_stack_push: malloc fail.\n");
-            exit(99);
+            exit(FAIL_INTERNAL);
         }
 
         elem->root = root;

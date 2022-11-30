@@ -9,9 +9,9 @@
 
 int different_parse = 0;
 
-token_ptr peek(item_ptr *stack, int n)
+token_ptr peek(stack_ptr stack, int n)
 {
-    item_ptr item = *stack;
+    item_ptr item = stack->top;
 
     for (int i = 0; i < n && item != NULL; i++)
     {
@@ -27,19 +27,19 @@ token_ptr peek(item_ptr *stack, int n)
     return symbol->token;
 }
 
-token_ptr peek_top(item_ptr *stack)
+token_ptr peek_top(stack_ptr stack)
 {
-    item_ptr top = stack_top(*stack);
+    item_ptr top = stack_top(stack);
 
     if (top == NULL)
     {
         return NULL;
     }
-    symbol_ptr symbol = stack_top(*stack)->symbol;
+    symbol_ptr symbol = stack_top(stack)->symbol;
     return symbol->token;
 }
 
-token_ptr peek_exact_type(item_ptr *stack, token_type_t token_type)
+token_ptr peek_exact_type(stack_ptr stack, token_type_t token_type)
 {
     token_ptr token = peek_top(stack);
     if (token == NULL)
@@ -49,9 +49,9 @@ token_ptr peek_exact_type(item_ptr *stack, token_type_t token_type)
     return token->type == token_type ? token : NULL;
 }
 
-token_ptr get_next_token(item_ptr *stack)
+token_ptr get_next_token(stack_ptr stack)
 {
-    item_ptr top = stack_top(*stack);
+    item_ptr top = stack_top(stack);
 
     if (top == NULL || top->symbol == NULL)
     {
@@ -61,85 +61,39 @@ token_ptr get_next_token(item_ptr *stack)
     symbol_ptr symbol = top->symbol;
     token_ptr token = symbol->token;
 
-    *stack = stack_pop(*stack);
+    stack_pop(stack);
 
     DEBUG_TOKEN(token);
-    DEBUG_STACK_TOP(*stack, 2);
+    DEBUG_STACK_TOP(stack, 2);
 
     free(symbol);
     return token;
 }
 
-token_ptr assert_next_token_get(item_ptr *stack, token_type_t token_type)
+token_ptr assert_next_token_get(stack_ptr stack, token_type_t token_type)
 {
     token_ptr token = get_next_token(stack);
 
-    assert_token_type(token, token_type);
+    ASSERT_TOKEN_TYPE(token, token_type);
 
     return token;
 }
 
-void assert_token_type(token_ptr token, token_type_t type)
-{
-    if (token == NULL || token->type != type)
-    {
-        fprintf(stderr, "%s expected.\n", token_type_to_name(type));
-        exit(2);
-    }
-
-    DEBUG_ASSERT(type, token->type);
-}
-
-void assert_next_token(item_ptr *stack, token_type_t token_type)
-{
-    token_ptr token = get_next_token(stack);
-
-    assert_token_type(token, token_type);
-
-    token_dispose(token);
-}
-
-void assert_next_keyword(item_ptr *stack, keyword_t keyword)
-{
-    token_ptr token = assert_next_token_get(stack, TOKEN_KEYWORD);
-
-    if (token->value.keyword != keyword)
-    {
-        fprintf(stderr, "Expected keyword %s, got %s.\n", keyword_to_name(keyword), keyword_to_name(token->value.keyword));
-        exit(2);
-    }
-
-    token_dispose(token);
-}
-
-void assert_next_id(item_ptr *stack, char *id)
-{
-    token_ptr token = assert_next_token_get(stack, TOKEN_ID);
-
-    if (strcmp(token->value.string, id) != 0)
-    {
-        fprintf(stderr, "Expected %s.", id);
-        exit(2);
-    }
-
-    token_dispose(token);
-}
-
-void assert_n_tokens(item_ptr *stack, int n, ...)
+void assert_n_tokens(stack_ptr stack, int n, ...)
 {
     va_list valist;
     va_start(valist, n);
 
     for (int i = 0; i < n; i++)
     {
-        assert_next_token(stack, va_arg(valist, token_type_t));
+        ASSERT_NEXT_TOKEN(stack, va_arg(valist, token_type_t));
     }
 
     va_end(valist);
 }
 
 // treba asi zmenit
-type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
+type_t parse_expression(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -149,25 +103,25 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
     switch (next->type)
     {
     case TOKEN_L_PAREN:
-        assert_next_token(in_stack, TOKEN_L_PAREN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
         result_type = parse_expression(in_stack, sym_global);
-        assert_next_token(in_stack, TOKEN_R_PAREN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
         break;
 
     case TOKEN_CONST_DOUBLE:
-        assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
 
         result_type = TYPE_FLOAT;
         rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_CONST_INT:
-        assert_next_token(in_stack, TOKEN_CONST_INT);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_INT);
         result_type = TYPE_INT;
         rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_STRING_LIT:
 
-        assert_next_token(in_stack, TOKEN_STRING_LIT);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
         // value = parse_expression(in_stack);
 
         // how to return string
@@ -179,7 +133,7 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
         break;
     case TOKEN_VAR_ID:
 
-        assert_next_token(in_stack, TOKEN_VAR_ID);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
 
         // TODO: Check if var exists in symtable, get the type.
 
@@ -190,25 +144,25 @@ type_t parse_expression(item_ptr *in_stack, table_node_ptr *sym_global)
         break;
     // Part of FUNEXP
     /* case TOKEN_ID:
-        assert_next_token(in_stack, TOKEN_ID);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_ID);
 
         // TODO: Check if function exists and get the return type from symtable.
 
         // value = parse_expression(in_stack);
         // value = next->value.string;
-        assert_next_token(in_stack, TOKEN_L_PAREN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
         rule_argument_list(in_stack, sym_global);
-        assert_next_token(in_stack, TOKEN_R_PAREN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
         break; */
     default:
         fprintf(stderr, "Not a valid expression.\n");
-        exit(2);
+        exit(FAIL_SYNTAX);
     }
 
     return result_type;
 }
 
-void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
+void rule_expression_next(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     token_ptr next = peek_top(in_stack);
     // is it actually necessary?
@@ -217,57 +171,57 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
     {
     case TOKEN_PLUS:
 
-        assert_next_token(in_stack, TOKEN_PLUS);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_PLUS);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_MINUS:
 
-        assert_next_token(in_stack, TOKEN_MINUS);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MINUS);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_MULTIPLE:
 
-        assert_next_token(in_stack, TOKEN_MULTIPLE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MULTIPLE);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_DIVIDE:
 
-        assert_next_token(in_stack, TOKEN_DIVIDE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_DIVIDE);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_DOT:
 
-        assert_next_token(in_stack, TOKEN_DOT);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_DOT);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_EQUAL:
 
-        assert_next_token(in_stack, TOKEN_EQUAL);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_EQUAL);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_NOT_EQUAL:
 
-        assert_next_token(in_stack, TOKEN_NOT_EQUAL);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_NOT_EQUAL);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_MORE:
 
-        assert_next_token(in_stack, TOKEN_MORE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MORE);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_MORE_EQUAL:
 
-        assert_next_token(in_stack, TOKEN_MORE_EQUAL);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MORE_EQUAL);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_LESS:
 
-        assert_next_token(in_stack, TOKEN_LESS);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_LESS);
         parse_expression(in_stack, sym_global);
         break;
     case TOKEN_LESS_EQUAL:
 
-        assert_next_token(in_stack, TOKEN_LESS_EQUAL);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_LESS_EQUAL);
         parse_expression(in_stack, sym_global);
         break;
     default:
@@ -276,7 +230,7 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
         // $x = <10>; -> 10 is a valid expression
         /* default:
             fprintf(stderr, "non valid expression\n");
-            exit(1); */
+            exit(FAIL_LEXICAL); */
     }
 }
 
@@ -287,7 +241,7 @@ void rule_expression_next(item_ptr *in_stack, table_node_ptr *sym_global)
 // <statement> -> function id(<argument-list>) {<statement-list>}
 // <statement> -> id(<argument-list>);
 // <statement> -> <expression>;
-void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -297,10 +251,10 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
     // var_id =
     if (next->type == TOKEN_VAR_ID && after_next != NULL && after_next->type == TOKEN_ASSIGN)
     {
-        assert_next_token(in_stack, TOKEN_VAR_ID);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
 
         // <statement> -> var_id = <expression>;
-        assert_next_token(in_stack, TOKEN_ASSIGN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_ASSIGN);
 
         int value = parse_expression(in_stack, sym_global);
 
@@ -315,7 +269,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
         DEBUG_PSEUDOF("%s <- %d", next->value.string, value);
 
-        assert_next_token(in_stack, TOKEN_SEMICOLON);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
     }
     else if (next->type == TOKEN_ID)
     {
@@ -325,20 +279,20 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
         // TODO: Generate call IFJcode22.
         // TODO: Check parameter count and types
 
-        assert_next_token(in_stack, TOKEN_ID);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_ID);
 
-        assert_next_token(in_stack, TOKEN_L_PAREN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
         rule_parameter_list(in_stack, sym_global);
 
-        assert_next_token(in_stack, TOKEN_R_PAREN);
-        assert_next_token(in_stack, TOKEN_SEMICOLON);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
     }
     else if (next->type == TOKEN_KEYWORD)
     {
         // if / function / while
 
-        assert_next_token(in_stack, TOKEN_KEYWORD);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_KEYWORD);
 
         switch (next->value.keyword)
         {
@@ -348,7 +302,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             // if (<expression>) {<statement-list>}
 
-            assert_next_token(in_stack, TOKEN_L_PAREN);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
             type_t type = parse_expression(in_stack, sym_global);
 
@@ -358,21 +312,21 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             rule_statement_list(in_stack, sym_global, function);
 
-            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end if");
 
             // else { <statement-list> }
 
-            assert_next_keyword(in_stack, KEYWORD_ELSE);
+            ASSERT_KEYWORD(in_stack, KEYWORD_ELSE);
 
-            assert_next_token(in_stack, TOKEN_LC_BRACKET);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("else");
 
             rule_statement_list(in_stack, sym_global, function);
 
-            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end else");
             break;
@@ -380,7 +334,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
         case KEYWORD_WHILE:
         {
             // <statement> -> while (<expression>) {<statement-list>}
-            assert_next_token(in_stack, TOKEN_L_PAREN);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
             type_t type = parse_expression(in_stack, sym_global);
 
@@ -390,7 +344,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             rule_statement_list(in_stack, sym_global, function);
 
-            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end while");
             break;
@@ -409,7 +363,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             // Parse arguments
 
-            assert_next_token(in_stack, TOKEN_L_PAREN);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
             rule_argument_list(in_stack, sym_global, function);
 
@@ -418,9 +372,9 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
                 DEBUG_PSEUDOF("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
             }
 
-            assert_next_token(in_stack, TOKEN_R_PAREN);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
 
-            assert_next_token(in_stack, TOKEN_COLON);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_COLON);
 
             // Save return type to symtable
 
@@ -430,7 +384,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             DEBUG_PSEUDOF("Returns %s", type_to_name(function->return_type));
 
-            assert_next_token(in_stack, TOKEN_LC_BRACKET);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_LC_BRACKET);
 
             // Function statement list
 
@@ -439,10 +393,10 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
             if (function->return_type != TYPE_VOID && function->has_return == false)
             {
                 fprintf(stderr, "Missing return statement for non-void function %s.", function_id->value.string);
-                exit(1); // TODO: Correct code
+                exit(FAIL_LEXICAL); // TODO: Correct code
             }
 
-            assert_next_token(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDOF("end function %s", function_id->value.string);
 
@@ -462,7 +416,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
                 if (function->return_type != result_type)
                 {
                     fprintf(stderr, "Invalid function return type.\n");
-                    exit(3);
+                    exit(FAIL_SEMANTIC);
                 }
 
                 DEBUG_PSEUDOF("return %s;", type_to_name(result_type));
@@ -470,12 +424,12 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             function->has_return = true;
 
-            assert_next_token(in_stack, TOKEN_SEMICOLON);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
             break;
         }
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
-            exit(1); // TODO: Correct code
+            exit(FAIL_LEXICAL); // TODO: Correct code
         }
     }
     else
@@ -483,13 +437,13 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
         // just let it try to parse an expression here
         parse_expression(in_stack, sym_global);
 
-        assert_next_token(in_stack, TOKEN_SEMICOLON);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
     }
 }
 
 // <statement-list> -> <statement><statement-list>
 // <statement-list> -> eps
-void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_statement_list(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -523,7 +477,7 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, functio
 
 // <arg-list> -> eps
 // <arg-list> -> type var_id <arg-next>
-void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_argument_list(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -540,7 +494,7 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global, function
         if (arg_type->value.type == TYPE_VOID)
         {
             fprintf(stderr, "VOID is not a valid type of arguments.\n");
-            exit(1); // TODO: Correct code
+            exit(FAIL_LEXICAL); // TODO: Correct code
         }
 
         // Append parameter
@@ -561,7 +515,7 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global, function
 
 // <arg-next> -> eps
 // <arg-next> -> , <arg-list>
-void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_argument_next(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -570,7 +524,7 @@ void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global, function
     if (next->type == TOKEN_COMMA)
     {
         // <arg-next> -> , <arg-list>
-        assert_next_token(in_stack, TOKEN_COMMA);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
 
         rule_argument_list(in_stack, sym_global, function);
     }
@@ -583,7 +537,7 @@ void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global, function
 
 // <par-list> -> eps
 // <par-list> -> var_id <par-next>
-void rule_parameter_list(item_ptr *in_stack, table_node_ptr *sym_global)
+void rule_parameter_list(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -591,7 +545,7 @@ void rule_parameter_list(item_ptr *in_stack, table_node_ptr *sym_global)
     switch (next->type)
     {
     case TOKEN_VAR_ID:
-        assert_next_token(in_stack, TOKEN_VAR_ID);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
         rule_parameter_next(in_stack, sym_global);
         break;
         // technicky oba case rovnake asi by bolo lepsie dat or ale neviem
@@ -600,15 +554,15 @@ void rule_parameter_list(item_ptr *in_stack, table_node_ptr *sym_global)
 
     // assuming constatnt expression is for all types
     case TOKEN_CONST_INT:
-        assert_next_token(in_stack, TOKEN_CONST_INT);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_INT);
         rule_parameter_next(in_stack, sym_global);
         break;
     case TOKEN_CONST_DOUBLE:
-        assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
         rule_parameter_next(in_stack, sym_global);
         break;
     case TOKEN_STRING_LIT:
-        assert_next_token(in_stack, TOKEN_STRING_LIT);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
         rule_parameter_next(in_stack, sym_global);
         break;
     default:
@@ -618,7 +572,7 @@ void rule_parameter_list(item_ptr *in_stack, table_node_ptr *sym_global)
 
 // <par-next> -> eps
 // <par-next> -> , <par-list>
-void rule_parameter_next(item_ptr *in_stack, table_node_ptr *sym_global)
+void rule_parameter_next(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -627,7 +581,7 @@ void rule_parameter_next(item_ptr *in_stack, table_node_ptr *sym_global)
     if (next->type == TOKEN_COMMA)
     {
         // <par-next> -> , <par-list>
-        assert_next_token(in_stack, TOKEN_COMMA);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
         rule_parameter_list(in_stack, sym_global);
     }
     else
@@ -638,35 +592,35 @@ void rule_parameter_next(item_ptr *in_stack, table_node_ptr *sym_global)
 }
 
 // <prog> -> <?php <statement> ?>
-void rule_prog(item_ptr *in_stack, table_node_ptr *sym_global)
+void rule_prog(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
     // Parse prolog
 
-    assert_next_token(in_stack, TOKEN_OPENING_TAG);
+    ASSERT_NEXT_TOKEN(in_stack, TOKEN_OPENING_TAG);
 
-    assert_next_id(in_stack, "php");
-    assert_next_id(in_stack, "declare");
+    ASSERT_ID(in_stack, "php");
+    ASSERT_ID(in_stack, "declare");
 
-    assert_next_token(in_stack, TOKEN_L_PAREN);
+    ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
-    assert_next_id(in_stack, "strict_types");
-    assert_next_token(in_stack, TOKEN_ASSIGN);
+    ASSERT_ID(in_stack, "strict_types");
+    ASSERT_NEXT_TOKEN(in_stack, TOKEN_ASSIGN);
 
     token_ptr const_int = assert_next_token_get(in_stack, TOKEN_CONST_INT);
 
     if (const_int->value.integer != 1)
     {
         fprintf(stderr, "Strict types has to be enabled.\n");
-        exit(1); // TODO: Correct code
+        exit(FAIL_LEXICAL); // TODO: Correct code
     }
 
     token_dispose(const_int);
 
-    assert_next_token(in_stack, TOKEN_R_PAREN);
+    ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
 
-    assert_next_token(in_stack, TOKEN_SEMICOLON);
+    ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
 
     // Start parsing the main program body.
 
@@ -678,42 +632,29 @@ void rule_prog(item_ptr *in_stack, table_node_ptr *sym_global)
 
     if (closing != NULL)
     {
-        assert_next_token(in_stack, TOKEN_CLOSING_TAG);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CLOSING_TAG);
     }
 }
 
-void rule_prog_end(item_ptr *in_stack, table_node_ptr *sym_global)
+void rule_prog_end(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     token_ptr next = peek_top(in_stack);
     if (next->type == TOKEN_NULLABLE)
     {
-        assert_next_token(in_stack, TOKEN_NULLABLE);
-        assert_next_token(in_stack, TOKEN_MORE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_NULLABLE);
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MORE);
     }
 }
 
-table_node_ptr parse(array_ptr tokens)
+void parse(stack_ptr stack)
 {
     table_node_ptr sym_global = sym_init();
 
-    item_ptr in_stack = stack_init();
+    rule_prog(stack, &sym_global);
 
-    // fill input stack from tokens
-    element_ptr element = tokens->last;
-    while (element != NULL)
-    {
-        symbol_ptr symbol = create_terminal(element->token);
-        in_stack = stack_push(in_stack, symbol);
-        element = element->prev;
-    }
-
-    rule_prog(&in_stack, &sym_global);
-
-    if (stack_size(in_stack) != 0)
+    if (stack_size(stack) != 0)
     {
         fprintf(stderr, "SA failed, symbols left on the input stack.\n");
-        exit(1); // TODO: Correct code
+        exit(FAIL_LEXICAL); // TODO: Correct code
     }
-
-    return sym_global;
 }

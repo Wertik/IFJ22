@@ -35,7 +35,7 @@ variable_ptr variable_create(type_t type, bool type_nullable)
     if (variable == NULL)
     {
         fprintf(stderr, "variable_create: malloc fail\n");
-        exit(99);
+        exit(FAIL_INTERNAL);
     }
 
     variable->type = TYPE_INT;
@@ -118,7 +118,7 @@ function_ptr function_create()
     if (function == NULL)
     {
         fprintf(stderr, "function_create: malloc fail\n");
-        exit(99);
+        exit(FAIL_INTERNAL);
     }
 
     function->return_type = TYPE_VOID;
@@ -130,7 +130,7 @@ function_ptr function_create()
     if (function->parameters == NULL)
     {
         fprintf(stderr, "function_create(parameters): malloc fail\n");
-        exit(99);
+        exit(FAIL_INTERNAL);
     }
 
     return function;

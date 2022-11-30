@@ -67,13 +67,13 @@ int get_pos_in_t(token_ptr TOKEN){
         break;
     case TOKEN_CONST_EXP:
         fprintf(stderr, "EXP SHOULD NOT END UP HERE");
-        exit(1);
+        exit(FAIL_LEXICAL);
         break;
     default:
         break;
     }
     fprintf(stderr, "NON VALID TOKEN");
-    exit(1);
+    exit(FAIL_LEXICAL);
 }
 void perform_reduction(item_ptr *push_down_stack, table_node_ptr *tree){
     token_ptr next = get_next_token(push_down_stack);
@@ -96,7 +96,7 @@ void perform_reduction(item_ptr *push_down_stack, table_node_ptr *tree){
             stack_push(push_down_stack, symbol);
         }
     }
-    exit(1);
+    exit(FAIL_LEXICAL);
     fprintf(stderr,"NOT POSSIBLE TO REDUCE");
 
 }
@@ -135,7 +135,7 @@ int expression(item_ptr *in_stack, table_node_ptr *tree){
        // not finnished
     }
     else if (precedence_table[next_in_push][next_in_stack] == 'n'){
-        exit(1);
+        exit(FAIL_LEXICAL);
         fprintf(stderr,"ERROR EXPRESSION NOT IN CORRECT ORDER");
     }
 }

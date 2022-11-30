@@ -10,7 +10,7 @@
         if ((what) == false)                               \
         {                                                  \
             fprintf(stderr, "Assert " #name " failed.\n"); \
-            exit(1);                                       \
+            exit(FAIL_LEXICAL);                                       \
         }                                                  \
     } while (0);
 

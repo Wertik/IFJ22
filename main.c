@@ -8,19 +8,14 @@
 
 int main(int argc, char const *argv[])
 {
-    // Initialize a token array.
-    array_ptr tokens = array_create();
-
     // Tokenize stdin
-    tokenize(tokens);
+    stack_ptr stack = tokenize();
 
     // Print tokens
-    DEBUG_ARRAY(tokens);
+    DEBUG_STACK(stack);
 
     // Parse tokens
-    parse(tokens);
-
-    array_dispose(tokens);
+    parse(stack);
 
     printf("Finished without errors!\n");
     return 0;

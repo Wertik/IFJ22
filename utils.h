@@ -3,6 +3,16 @@
 
 #include <string.h>
 
+#define FAIL_LEXICAL 1
+#define FAIL_SYNTAX 2
+#define FAIL_SEMANTIC_FUNC_DEF 3
+#define FAIL_SEMANTIC_BAD_ARGS 4
+#define FAIL_SEMANTIC_VAR_UNDEFINED 5
+#define FAIL_SEMANTIC_BAD_RETURN 6
+#define FAIL_SEMANTIC_EXPRE 7
+#define FAIL_SEMANTIC 8
+#define FAIL_INTERNAL 99
+
 #define NULL_FALSE(val) (val == NULL ? "0" : val)
 
 #define LOG_ENABLED(log_type) (strcmp(NULL_FALSE(getenv("LOG_" #log_type)), "1") == 0 || strcmp(NULL_FALSE(getenv("LOG_ALL")), "1") == 0)
@@ -13,7 +23,7 @@
         if (var == NULL)                                    \
         {                                                   \
             fprintf(stderr, "%s: malloc fail\n", __func__); \
-            exit(99);                                       \
+            exit(FAIL_INTERNAL);                                       \
         }                                                   \
     } while (0);
 
@@ -52,17 +62,17 @@
         }                        \
     } while (0);
 
-#define DEBUG_ASSERT(expected, actual)                                                                \
-    do                                                                                                \
-    {                                                                                                 \
-        if (LOG_ENABLED(ASSERT))                                                                      \
-            printf("ASSERT: %s is %s\n\n", token_type_to_name(actual), token_type_to_name(expected)); \
+#define DEBUG_ASSERT(expected_type, token)                                                                                               \
+    do                                                                                                                                   \
+    {                                                                                                                                    \
+        if (LOG_ENABLED(ASSERT))                                                                                                         \
+            printf("ASSERT: %s is %s\n\n", token == NULL ? "null" : token_type_to_name(token->type), token_type_to_name(expected_type)); \
     } while (0);
 
-#define DEBUG_RULE()                            \
-    do                                          \
-    {                                           \
-        if (LOG_ENABLED(RULE))                  \
+#define DEBUG_RULE()                              \
+    do                                            \
+    {                                             \
+        if (LOG_ENABLED(RULE))                    \
             printf("\n->RULE: %s\n\n", __func__); \
     } while (0);
 

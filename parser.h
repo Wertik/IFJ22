@@ -1,40 +1,91 @@
 #ifndef PARSER_H
 #define PARSER_H
 
-#include "array.h"
 #include "symtable.h"
 #include "stack.h"
+#include "utils.h"
+
+#define ASSERT_TOKEN_TYPE(token, token_type)                                   \
+    do                                                                         \
+    {                                                                          \
+        DEBUG_ASSERT(token_type, token);                                       \
+        if (token == NULL || token->type != token_type)                        \
+        {                                                                      \
+            fprintf(stderr, "%s expected.\n", token_type_to_name(token_type)); \
+            exit(FAIL_SYNTAX);                                                 \
+        }                                                                      \
+    } while (0);
+
+#define ASSERT_NEXT_TOKEN(stack, token_type)     \
+    do                                           \
+    {                                            \
+        token_ptr token = get_next_token(stack); \
+        ASSERT_TOKEN_TYPE(token, token_type);    \
+        token_dispose(token);                    \
+    } while (0);
+
+#define ASSERT_KEYWORD(stack, keyword_type)                                                                                     \
+    do                                                                                                                          \
+    {                                                                                                                           \
+        token_ptr token = assert_next_token_get(stack, TOKEN_KEYWORD);                                                          \
+        if (token->value.keyword != keyword_type)                                                                               \
+        {                                                                                                                       \
+            fprintf(stderr, "Expected keyword %s, got %s.\n", #keyword_type, keyword_to_name(token->value.keyword)); \
+            exit(FAIL_SYNTAX);                                                                                                  \
+        }                                                                                                                       \
+        token_dispose(token);                                                                                                   \
+    } while (0);
+
+#define ASSERT_ID(stack, id)                                      \
+    do                                                            \
+    {                                                             \
+        token_ptr token = assert_next_token_get(stack, TOKEN_ID); \
+        if (strcmp(token->value.string, id) != 0)                 \
+        {                                                         \
+            fprintf(stderr, "Expected %s.\n", id);                \
+            exit(FAIL_SYNTAX);                                    \
+        }                                                         \
+        token_dispose(token);                                     \
+    } while (0);
 
 // -- utilities
 
-// Get token from stack.
-token_ptr get_next_token(item_ptr *stack);
+// Peek next nth token in the stack.
+token_ptr peek(stack_ptr stack, int n);
 
-// Assert token type
-void assert_token_type(token_ptr token, token_type_t token_type);
+// Peek next token
+token_ptr peek_top(stack_ptr stack);
 
-void assert_next_token(item_ptr *stack, token_type_t token_type);
+// Peek and look for an exact type. If the token has a different type return null.
+token_ptr peek_exact_type(stack_ptr stack, token_type_t token_type);
 
-void assert_n_tokens(item_ptr *stack, int count, ...);
+// Get next token from the stack, pop it.
+token_ptr get_next_token(stack_ptr stack);
 
 // Assert token type and return the token
-token_ptr assert_next_token_get(item_ptr *stack, token_type_t token_type);
+token_ptr assert_next_token_get(stack_ptr stack, token_type_t token_type);
+
+void assert_token_type(token_ptr token, token_type_t token_type);
+
+void assert_next_token(stack_ptr stack, token_type_t token_type);
+
+void assert_n_tokens(stack_ptr stack, int count, ...);
 
 // -- rule functions
 
-void rule_prog(item_ptr *in_stack, table_node_ptr *sym_global);
-void rule_prog_end(item_ptr *in_stack, table_node_ptr *sym_global);
-void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function);
-void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function);
+void rule_prog(stack_ptr in_stack, table_node_ptr *sym_global);
+void rule_prog_end(stack_ptr in_stack, table_node_ptr *sym_global);
+void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function);
+void rule_statement_list(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function);
 
-void rule_argument_list(item_ptr *in_stack,  table_node_ptr *sym_global, function_ptr function);
-void rule_argument_next(item_ptr *in_stack,  table_node_ptr *sym_global, function_ptr function);
+void rule_argument_list(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function);
+void rule_argument_next(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function);
 
-void rule_parameter_list(item_ptr *in_stack,  table_node_ptr *sym_global);
-void rule_parameter_next(item_ptr *in_stack,  table_node_ptr *sym_global);
+void rule_parameter_list(stack_ptr in_stack, table_node_ptr *sym_global);
+void rule_parameter_next(stack_ptr in_stack, table_node_ptr *sym_global);
 
-// TODO: Redefine int to a expression result union type
-type_t parse_expression(item_ptr *in_stack, table_node_ptr *tree);
-void rule_expression_next(item_ptr *in_stack, table_node_ptr *tree);
-table_node_ptr parse(array_ptr tokens);
+type_t parse_expression(stack_ptr in_stack, table_node_ptr *tree);
+void rule_expression_next(stack_ptr in_stack, table_node_ptr *tree);
+
+void parse(stack_ptr tokens);
 #endif

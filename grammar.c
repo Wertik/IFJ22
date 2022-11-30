@@ -2,16 +2,13 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include "grammar.h"
+#include "utils.h"
 
 symbol_ptr create_nonterminal(nonterminal_t type)
 {
     symbol_ptr symbol = malloc(sizeof(struct symbol_t));
 
-    if (symbol == NULL)
-    {
-        fprintf(stderr, "create_nonterminal: malloc fail\n");
-        exit(99);
-    }
+    MALLOC_CHECK(symbol);
 
     symbol->terminal = false;
     symbol->nonterminal_type = type;
@@ -23,11 +20,7 @@ symbol_ptr create_terminal(token_ptr token)
 {
     symbol_ptr symbol = malloc(sizeof(struct symbol_t));
 
-    if (symbol == NULL)
-    {
-        fprintf(stderr, "create_terminal: malloc fail\n");
-        exit(99);
-    }
+    MALLOC_CHECK(symbol);
 
     symbol->terminal = true;
     symbol->token = token;
@@ -62,11 +55,7 @@ char *symbol_to_string(symbol_ptr symbol)
 
         char *s = malloc((sizeof(char) * len) + 1);
 
-        if (s == NULL)
-        {
-            fprintf(stderr, "symbol_to_string: malloc fail.\n");
-            exit(99);
-        }
+        MALLOC_CHECK(s);
 
         sprintf(s, "Symbol (terminal, %s)", token_s);
         free(token_s);
@@ -79,11 +68,7 @@ char *symbol_to_string(symbol_ptr symbol)
 
         char *s = malloc((sizeof(char) * len) + 1);
 
-        if (s == NULL)
-        {
-            fprintf(stderr, "symbol_to_string: malloc fail.\n");
-            exit(99);
-        }
+        MALLOC_CHECK(s);
 
         sprintf(s, "Symbol (nonterminal, %s)", nonterminal_s);
         return s;
