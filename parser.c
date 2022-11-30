@@ -329,7 +329,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
         assert_next_token(in_stack, TOKEN_L_PAREN);
 
-        rule_argument_list(in_stack, sym_global);
+        rule_parameter_list(in_stack, sym_global);
 
         assert_next_token(in_stack, TOKEN_R_PAREN);
         assert_next_token(in_stack, TOKEN_SEMICOLON);
@@ -411,7 +411,7 @@ void rule_statement(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr
 
             assert_next_token(in_stack, TOKEN_L_PAREN);
 
-            rule_argument_list_typ(in_stack, sym_global, function);
+            rule_argument_list(in_stack, sym_global, function);
 
             for (int i = 0; i < function->parameter_count; i++)
             {
@@ -521,26 +521,23 @@ void rule_statement_list(item_ptr *in_stack, table_node_ptr *sym_global, functio
     }
 }
 
-void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
+// <arg-list> -> eps
+// <arg-list> -> type var_id <arg-next>
+void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
 
-    if (next == NULL)
-    {
-        return;
-    }
-
     if (next->type == TOKEN_TYPE)
     {
-        // TODO: Extract into function
+        // <arg-list> -> type var_id <arg-next>
 
-        token_ptr par_type = assert_next_token_get(in_stack, TOKEN_TYPE);
-        token_ptr par_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
+        token_ptr arg_type = assert_next_token_get(in_stack, TOKEN_TYPE);
+        token_ptr arg_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
 
         // cannot use void as parameter type
-        if (par_type->value.type == TYPE_VOID)
+        if (arg_type->value.type == TYPE_VOID)
         {
             fprintf(stderr, "VOID is not a valid type of arguments.\n");
             exit(1); // TODO: Correct code
@@ -548,16 +545,23 @@ void rule_argument_list_typ(item_ptr *in_stack, table_node_ptr *sym_global, func
 
         // Append parameter
         // TODO: Nullable?
-        append_parameter(function, par_id->value.string, par_type->value.type, false);
+        append_parameter(function, arg_id->value.string, arg_type->value.type, false);
 
-        token_dispose(par_type);
-        token_dispose(par_id);
+        token_dispose(arg_type);
+        token_dispose(arg_id);
 
-        rule_argument_next_typ(in_stack, sym_global, function);
+        rule_argument_next(in_stack, sym_global, function);
+    }
+    else
+    {
+        // <arg-list> -> eps
+        return;
     }
 }
 
-void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
+// <arg-next> -> eps
+// <arg-next> -> , <arg-list>
+void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -565,32 +569,21 @@ void rule_argument_next_typ(item_ptr *in_stack, table_node_ptr *sym_global, func
 
     if (next->type == TOKEN_COMMA)
     {
+        // <arg-next> -> , <arg-list>
         assert_next_token(in_stack, TOKEN_COMMA);
 
-        // TODO: Extract into function
-
-        token_ptr par_type = assert_next_token_get(in_stack, TOKEN_TYPE);
-        token_ptr par_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
-
-        // cannot use void as parameter type
-        if (par_type->value.type == TYPE_VOID)
-        {
-            fprintf(stderr, "VOID is not a valid type of arguments.\n");
-            exit(1); // TODO: Correct code
-        }
-
-        // Append parameter
-        // TODO: Nullable?
-        append_parameter(function, par_id->value.string, par_type->value.type, false);
-
-        token_dispose(par_type);
-        token_dispose(par_id);
-
-        rule_argument_next_typ(in_stack, sym_global, function);
+        rule_argument_list(in_stack, sym_global, function);
+    }
+    else
+    {
+        // <arg-next> -> eps
+        return;
     }
 }
 
-void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global)
+// <par-list> -> eps
+// <par-list> -> var_id <par-next>
+void rule_parameter_list(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
 
@@ -599,8 +592,7 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global)
     {
     case TOKEN_VAR_ID:
         assert_next_token(in_stack, TOKEN_VAR_ID);
-        rule_argument_next(in_stack, sym_global);
-
+        rule_parameter_next(in_stack, sym_global);
         break;
         // technicky oba case rovnake asi by bolo lepsie dat or ale neviem
     // predpokladam ze nedostanem do funkcie nejaky vzorec ale len cislo alebo string
@@ -609,33 +601,39 @@ void rule_argument_list(item_ptr *in_stack, table_node_ptr *sym_global)
     // assuming constatnt expression is for all types
     case TOKEN_CONST_INT:
         assert_next_token(in_stack, TOKEN_CONST_INT);
-        rule_argument_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global);
         break;
     case TOKEN_CONST_DOUBLE:
         assert_next_token(in_stack, TOKEN_CONST_DOUBLE);
-        rule_argument_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global);
         break;
     case TOKEN_STRING_LIT:
         assert_next_token(in_stack, TOKEN_STRING_LIT);
-        rule_argument_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global);
         break;
     default:
-        fprintf(stderr, "Expected constant or variable id.\n");
-        exit(2);
         break;
     }
 }
 
-void rule_argument_next(item_ptr *in_stack, table_node_ptr *sym_global)
+// <par-next> -> eps
+// <par-next> -> , <par-list>
+void rule_parameter_next(item_ptr *in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
+
     token_ptr next = peek_top(in_stack);
-    DEBUG_PSEUDOF("rule_argument_next %s\n", token_type_to_name(next->type));
 
     if (next->type == TOKEN_COMMA)
     {
+        // <par-next> -> , <par-list>
         assert_next_token(in_stack, TOKEN_COMMA);
-        rule_argument_list(in_stack, sym_global);
+        rule_parameter_list(in_stack, sym_global);
+    }
+    else
+    {
+        // <par-next> -> eps
+        return;
     }
 }
 
