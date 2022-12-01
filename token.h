@@ -1,5 +1,7 @@
-#ifndef TOKEN_H
-#define TOKEN_H
+#ifndef _TOKEN_H
+#define _TOKEN_H
+
+#include <stdbool.h>
 
 /* Token definitions */
 
@@ -74,6 +76,7 @@ typedef enum
     TOKEN_TYPE,
     TOKEN_CLOSING_TAG,
     TOKEN_OPENING_TAG,
+    TOKEN_DECLARE,
 } token_type_t;
 
 typedef struct token_t
@@ -87,6 +90,8 @@ typedef struct token_t
 
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value);
 
+token_ptr token_create_empty(token_type_t type);
+
 token_ptr token_create_string(token_type_t type, char *str);
 
 token_ptr token_create_keyword(keyword_t keyword);
@@ -96,6 +101,8 @@ char *token_to_string(token_ptr token);
 char *token_type_to_name(token_type_t type);
 
 void token_print(token_ptr token);
+
+bool token_compare(token_ptr token1, token_ptr token2);
 
 void token_dispose(token_ptr token);
 

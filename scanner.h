@@ -80,7 +80,7 @@
 #define APPEND_KEYWORD(stack, keyword_type)                                      \
     do                                                                           \
     {                                                                            \
-        symbol_ptr symbol = create_terminal(token_create_keyword(keyword_type)); \
+    symbol_ptr symbol = create_terminal(token_create_keyword(keyword_type)); \
         stack_add(stack, symbol);                                                \
     } while (0);
 
@@ -99,5 +99,7 @@ bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyw
 
 // Attempt to parse type from buffer. Return true if successful.
 bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type);
+
+bool attempt_greedy(char *rest);
 
 #endif

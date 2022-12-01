@@ -1,8 +1,9 @@
-#include <stdlib.h>
-#include <stdio.h>
 #include "utils.h"
 #include "token.h"
 #include "array.h"
+#include <stdlib.h>
+#include <stdio.h>
+#include <stdbool.h>
 
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value)
 {
@@ -15,6 +16,12 @@ token_ptr token_create(token_type_t type, token_value_type_t value_type, token_v
     token->value = value;
 
     return token;
+}
+
+token_ptr token_create_empty(token_type_t type)
+{
+    token_value_t value;
+    return token_create(type, NONE, value);
 }
 
 // Create a token with str as string value. Copies str into a new string, can be freed.
@@ -121,6 +128,8 @@ char *token_type_to_name(token_type_t type)
         return "TOKEN_OPENING_TAG";
     case TOKEN_CLOSING_TAG:
         return "TOKEN_CLOSING_TAG";
+    case TOKEN_DECLARE:
+        return "TOKEN_DECLARE";
     default:
     {
         char *s = malloc(sizeof(char));
@@ -273,4 +282,29 @@ void token_print(token_ptr token)
     // but we should use this for debugging only, so it's fine
     printf("%s\n", s);
     free(s);
+}
+
+bool token_compare(token_ptr token1, token_ptr token2)
+{
+    if (token1->type != token2->type || token1->value_type != token2->value_type)
+    {
+        return false;
+    }
+
+    switch (token1->value_type)
+    {
+    case INTEGER:
+        return token1->value.integer == token2->value.integer;
+    case STRING:
+        return strcmp(token1->value.string, token2->value.string) == 0;
+    case FLOAT:
+        return token1->value.float_value == token2->value.float_value;
+    case TYPE:
+        return token1->value.type == token2->value.type;
+    case KEYWORD:
+        return token1->value.keyword == token2->value.keyword;
+    default:
+        fprintf(stderr, "Don't know how to compare type %s.", value_type_to_name(token1->value_type));
+        exit(FAIL_INTERNAL);
+    }
 }

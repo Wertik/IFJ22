@@ -637,28 +637,7 @@ void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global)
     // Parse prolog
 
     ASSERT_NEXT_TOKEN(in_stack, TOKEN_OPENING_TAG);
-
-    ASSERT_ID(in_stack, "php");
-    ASSERT_ID(in_stack, "declare");
-
-    ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
-
-    ASSERT_ID(in_stack, "strict_types");
-    ASSERT_NEXT_TOKEN(in_stack, TOKEN_ASSIGN);
-
-    token_ptr const_int = assert_next_token_get(in_stack, TOKEN_CONST_INT);
-
-    if (const_int->value.integer != 1)
-    {
-        fprintf(stderr, "Strict types has to be enabled.\n");
-        exit(FAIL_SYNTAX);
-    }
-
-    token_dispose(const_int);
-
-    ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
-
-    ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+    ASSERT_NEXT_TOKEN(in_stack, TOKEN_DECLARE);
 
     // Start parsing the main program body.
 

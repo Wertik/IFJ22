@@ -30,6 +30,47 @@ bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t typ
     return false;
 }
 
+bool attempt_greedy(char *rest)
+{
+    // Found declare, be greedy and eat more characters.
+    unsigned int i = 0; // chars read
+
+    bool whole = true;
+
+    char c = fgetc(stdin);
+
+    buffer_ptr read = buffer_init();
+    buffer_append(read, c);
+
+    for (; i < strlen(rest); i++)
+    {
+        printf("%c %c\n", rest[i], c);
+        if (rest[i] != c)
+        {
+            whole = false;
+            break;
+        }
+        c = fgetc(stdin);
+        buffer_append(read, c);
+    }
+
+    printf("Whole: %d\n", whole);
+
+    if (whole)
+    {
+        return true;
+    }
+    else
+    {
+        for (int i = 0; i <= read->size; i++)
+        {
+            ungetc(read->data[i], stdin);
+        }
+    }
+    buffer_dispose(read);
+    return false;
+}
+
 bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, char c)
 {
     DEBUG("Scanning character: %c (%d)\n", c, c);
@@ -474,7 +515,10 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else if (c == '?')
         {
-            APPEND_EMPTY(stack, TOKEN_OPENING_TAG);
+            if (attempt_greedy("php"))
+            {
+                APPEND_EMPTY(stack, TOKEN_OPENING_TAG);
+            }
         }
         else
         {
@@ -598,6 +642,18 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         {
             CHANGE_STATE(SCANNER_START);
 
+            ungetc(c, stdin);
+            if (strcmp("declare", buffer->data) == 0 && attempt_greedy("(strict_types=1);"))
+            {
+                APPEND_EMPTY(stack, TOKEN_DECLARE);
+                buffer_reset(buffer);
+                break;
+            }
+            else
+            {
+                c = fgetc(stdin);
+            }
+
             // check if the buffer content matches any keywords / types
             if (!attempt_keyword(stack, buffer, "function", KEYWORD_FUNCTION) &&
                 !attempt_keyword(stack, buffer, "if", KEYWORD_IF) &&
@@ -612,8 +668,10 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
                 // none of the keywords matched, create a token id from this
                 APPEND_STRING(stack, TOKEN_ID, buffer);
             }
-
-            parse_character(stack, buffer, scanner_state, c);
+            else
+            {
+                parse_character(stack, buffer, scanner_state, c);
+            }
         }
         break;
     }
