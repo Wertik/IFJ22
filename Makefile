@@ -13,7 +13,7 @@ all: main
 main: $(OBJS)
 	$(CC) -o $@ $^ $(LFLAGS)
 
-sym: symtable_test.o symtable.o
+sym: symtable_test.o symtable.o token.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 stack: stack_test.o stack.o token.o symbol.o
