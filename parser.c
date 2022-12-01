@@ -385,6 +385,10 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
             for (int i = 0; i < function->parameter_count; i++)
             {
                 DEBUG_PSEUDO("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
+
+                // Insert as variables into function local symtable
+                variable_ptr parameter = variable_create(function->parameters[i].type, function->parameters[i].type_nullable);
+                sym_insert(function->symtable, function->parameters[i].name, NULL, parameter);
             }
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
