@@ -133,6 +133,8 @@ function_ptr function_create()
         exit(FAIL_INTERNAL);
     }
 
+    function->symtable = sym_init();
+
     return function;
 }
 
@@ -177,21 +179,21 @@ void variable_dispose(variable_ptr variable)
     free(variable);
 }
 
-function_ptr sym_get_function(table_node_ptr root, char *id)
+function_ptr sym_get_function(sym_table_ptr table, char *id)
 {
-    table_node_ptr node = sym_search(root, id);
+    sym_node_ptr node = sym_search(table, id);
     return node == NULL ? NULL : node->function;
 }
 
-variable_ptr sym_get_variable(table_node_ptr root, char *id)
+variable_ptr sym_get_variable(sym_table_ptr table, char *id)
 {
-    table_node_ptr node = sym_search(root, id);
+    sym_node_ptr node = sym_search(table, id);
     return node == NULL ? NULL : node->variable;
 }
 
-table_node_ptr create_node(char *id, function_ptr function, variable_ptr variable)
+sym_node_ptr create_node(char *id, function_ptr function, variable_ptr variable)
 {
-    table_node_ptr node = malloc(sizeof(struct table_node_t));
+    sym_node_ptr node = malloc(sizeof(struct sym_node_t));
 
     MALLOC_CHECK(node);
 
@@ -209,12 +211,18 @@ table_node_ptr create_node(char *id, function_ptr function, variable_ptr variabl
     return node;
 }
 
-table_node_ptr sym_init()
+sym_table_ptr sym_init()
 {
-    return NULL;
+    sym_table_ptr table = malloc(sizeof(struct sym_table_t));
+
+    MALLOC_CHECK(table);
+
+    table->root = NULL;
+
+    return table;
 }
 
-table_node_ptr sym_insert(table_node_ptr root, char *id, function_ptr function, variable_ptr variable)
+sym_node_ptr sym_insert_rec(sym_node_ptr root, char *id, function_ptr function, variable_ptr variable)
 {
     if (root == NULL)
     {
@@ -224,11 +232,11 @@ table_node_ptr sym_insert(table_node_ptr root, char *id, function_ptr function, 
     {
         if (compare_keys(id, root->id) == 1)
         {
-            root->left = sym_insert(root->left, id, function, variable);
+            root->left = sym_insert_rec(root->left, id, function, variable);
         }
         else if (compare_keys(id, root->id) == -1)
         {
-            root->right = sym_insert(root->right, id, function, variable);
+            root->right = sym_insert_rec(root->right, id, function, variable);
         }
         else
         {
@@ -242,7 +250,12 @@ table_node_ptr sym_insert(table_node_ptr root, char *id, function_ptr function, 
     return root;
 }
 
-table_node_ptr sym_min(table_node_ptr root)
+void sym_insert(sym_table_ptr table, char *id, function_ptr function, variable_ptr variable)
+{
+    table->root = sym_insert_rec(table->root, id, function, variable);
+}
+
+sym_node_ptr sym_min(sym_node_ptr root)
 {
     if (root == NULL)
     {
@@ -251,87 +264,94 @@ table_node_ptr sym_min(table_node_ptr root)
     return (root->left == NULL) ? root : sym_min(root->left);
 }
 
-table_node_ptr sym_delete(table_node_ptr root, char *id)
+void sym_delete_rec(sym_node_ptr root, char *id)
 {
     if (root == NULL)
     {
-        return NULL;
+        return;
+    }
+
+    if (compare_keys(id, root->id) == 1)
+    {
+        sym_delete_rec(root->left, id);
+    }
+    else if (compare_keys(id, root->id) == -1)
+    {
+        sym_delete_rec(root->right, id);
     }
     else
     {
-        if (compare_keys(id, root->id) == 1)
+        if (root->right == NULL && root->left == NULL) // no children
         {
-            root->left = sym_delete(root->left, id);
-            return root;
+            free(root->id);
+            function_dispose(root->function);
+            variable_dispose(root->variable);
+            free(root);
         }
-        else if (compare_keys(id, root->id) == -1)
+        else if (root->right != NULL && root->left != NULL) // both children
         {
-            root->right = sym_delete(root->right, id);
-            return root;
+            sym_node_ptr min = sym_min(root->right);
+
+            root->function = min->function;
+            root->variable = min->variable;
+
+            root->id = min->id;
+            sym_delete_rec(root->right, min->id);
         }
         else
         {
-            if (root->right == NULL && root->left == NULL) // no children
-            {
-                free(root->id);
-                function_dispose(root->function);
-                variable_dispose(root->variable);
-                free(root);
-                return NULL;
-            }
-            else if (root->right != NULL && root->left != NULL) // both children
-            {
-                table_node_ptr min = sym_min(root->right);
-
-                root->function = min->function;
-                root->variable = min->variable;
-
-                root->id = min->id;
-                root->right = sym_delete(root->right, min->id);
-                return root;
-            }
-            else
-            {
-                table_node_ptr child = (root->left == NULL) ? root->right : root->left;
-                free(root->id);
-                function_dispose(root->function);
-                variable_dispose(root->variable);
-                free(root);
-                return child;
-            }
+            free(root->id);
+            function_dispose(root->function);
+            variable_dispose(root->variable);
+            free(root);
         }
     }
 }
 
-void sym_dispose(table_node_ptr root)
+void node_dispose(sym_node_ptr node)
 {
-    if (root == NULL) {
+    function_dispose(node->function);
+    variable_dispose(node->variable);
+    free(node->id);
+    free(node);
+}
+
+void sym_delete(sym_table_ptr table, char *id)
+{
+    sym_delete_rec(table->root, id);
+}
+
+void sym_dispose_rec(sym_node_ptr node)
+{
+    if (node == NULL)
+    {
         return;
     }
-    
-    char *id = root->id;
-    while (root != NULL)
-    {
-        root = sym_delete(root, id);
-        if (root != NULL)
-        {
-            id = root->id;
-        }
-    }
+
+    sym_dispose_rec(node->left);
+    sym_dispose_rec(node->right);
+
+    node_dispose(node);
 }
 
-table_node_ptr sym_search(table_node_ptr root, char *id)
+void sym_dispose(sym_table_ptr table)
+{
+    sym_dispose_rec(table->root);
+    free(table);
+}
+
+sym_node_ptr sym_search_rec(sym_node_ptr root, char *id)
 {
     if (root == NULL)
         return NULL;
 
     if (compare_keys(id, root->id) == 1)
     {
-        return sym_search(root->left, id);
+        return sym_search_rec(root->left, id);
     }
     else if (compare_keys(id, root->id) == -1)
     {
-        return sym_search(root->right, id);
+        return sym_search_rec(root->right, id);
     }
     else
     {
@@ -339,7 +359,12 @@ table_node_ptr sym_search(table_node_ptr root, char *id)
     }
 }
 
-void sym_print_util(table_node_ptr root, int space)
+sym_node_ptr sym_search(sym_table_ptr table, char *id)
+{
+    return sym_search_rec(table->root, id);
+}
+
+void sym_print_util(sym_node_ptr root, int space)
 {
     if (root == NULL)
     {
@@ -359,10 +384,10 @@ void sym_print_util(table_node_ptr root, int space)
     sym_print_util(root->left, space);
 }
 
-void sym_print(table_node_ptr root)
+void sym_print(sym_table_ptr table)
 {
     printf("root\n");
     printf("↓");
-    sym_print_util(root, 0);
+    sym_print_util(table->root, 0);
     printf("\n ------------------------------------------------------------ \n");
 }

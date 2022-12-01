@@ -53,7 +53,8 @@ token_ptr get_next_token(stack_ptr stack)
 {
     item_ptr item = stack_pop(stack);
 
-    if (item == NULL) {
+    if (item == NULL)
+    {
         return NULL;
     }
 
@@ -91,7 +92,7 @@ void assert_n_tokens(stack_ptr stack, int n, ...)
 }
 
 // treba asi zmenit
-type_t parse_expression(stack_ptr in_stack, table_node_ptr *sym_global)
+type_t parse_expression(stack_ptr in_stack, sym_table_ptr sym_global)
 {
     DEBUG_RULE();
 
@@ -159,7 +160,7 @@ type_t parse_expression(stack_ptr in_stack, table_node_ptr *sym_global)
     return result_type;
 }
 
-void rule_expression_next(stack_ptr in_stack, table_node_ptr *sym_global)
+void rule_expression_next(stack_ptr in_stack, sym_table_ptr sym_global)
 {
     token_ptr next = peek_top(in_stack);
     // is it actually necessary?
@@ -238,7 +239,7 @@ void rule_expression_next(stack_ptr in_stack, table_node_ptr *sym_global)
 // <statement> -> function id(<argument-list>) {<statement-list>}
 // <statement> -> id(<argument-list>);
 // <statement> -> <expression>;
-void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -255,7 +256,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
         type_t result_type = parse_expression(in_stack, sym_global);
 
-        variable_ptr var = sym_get_variable(*sym_global, next->value.string);
+        variable_ptr var = sym_get_variable(sym_global, next->value.string);
 
         // Create symboltable entry if not already present
         if (var == NULL)
@@ -263,7 +264,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             // TODO: Infer type from value (requires PSA)
             // TODO-CHECK: Nullable by default?
             variable_ptr variable = variable_create(TYPE_INT, true);
-            *sym_global = sym_insert(*sym_global, next->value.string, NULL, variable);
+            sym_insert(sym_global, next->value.string, NULL, variable);
         }
         else
         {
@@ -288,7 +289,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
-        function_ptr function = sym_get_function(*sym_global, func_id->value.string);
+        function_ptr function = sym_get_function(sym_global, func_id->value.string);
 
         if (function == NULL)
         {
@@ -307,7 +308,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
     {
         // if / function / while
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_KEYWORD);
+        next = assert_next_token_get(in_stack, TOKEN_KEYWORD);
 
         switch (next->value.keyword)
         {
@@ -372,7 +373,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             token_ptr function_id = assert_next_token_get(in_stack, TOKEN_ID);
 
             function_ptr function = function_create();
-            *sym_global = sym_insert(*sym_global, function_id->value.string, function, NULL);
+            sym_insert(sym_global, function_id->value.string, function, NULL);
 
             DEBUG_PSEUDO("function %s(...)", function_id->value.string);
 
@@ -416,6 +417,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             DEBUG_PSEUDO("end function %s", function_id->value.string);
 
             token_dispose(function_id);
+            token_dispose(return_type);
             break;
         }
         case KEYWORD_RETURN:
@@ -466,6 +468,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             fprintf(stderr, "Invalid keyword in statement.\n");
             exit(FAIL_SYNTAX);
         }
+        token_dispose(next);
     }
     else
     {
@@ -478,7 +481,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
 // <statement-list> -> <statement><statement-list>
 // <statement-list> -> eps
-void rule_statement_list(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -512,7 +515,7 @@ void rule_statement_list(stack_ptr in_stack, table_node_ptr *sym_global, functio
 
 // <arg-list> -> eps
 // <arg-list> -> type var_id <arg-next>
-void rule_argument_list(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -550,7 +553,7 @@ void rule_argument_list(stack_ptr in_stack, table_node_ptr *sym_global, function
 
 // <arg-next> -> eps
 // <arg-next> -> , <arg-list>
-void rule_argument_next(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr function)
+void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -572,7 +575,7 @@ void rule_argument_next(stack_ptr in_stack, table_node_ptr *sym_global, function
 
 // <par-list> -> eps
 // <par-list> -> var_id <par-next>
-void rule_parameter_list(stack_ptr in_stack, table_node_ptr *sym_global)
+void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global)
 {
     DEBUG_RULE();
 
@@ -607,7 +610,7 @@ void rule_parameter_list(stack_ptr in_stack, table_node_ptr *sym_global)
 
 // <par-next> -> eps
 // <par-next> -> , <par-list>
-void rule_parameter_next(stack_ptr in_stack, table_node_ptr *sym_global)
+void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global)
 {
     DEBUG_RULE();
 
@@ -627,7 +630,7 @@ void rule_parameter_next(stack_ptr in_stack, table_node_ptr *sym_global)
 }
 
 // <prog> -> <?php <statement-list> ?>
-void rule_prog(stack_ptr in_stack, table_node_ptr *sym_global)
+void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global)
 {
     DEBUG_RULE();
 
@@ -671,7 +674,7 @@ void rule_prog(stack_ptr in_stack, table_node_ptr *sym_global)
     }
 }
 
-void rule_prog_end(stack_ptr in_stack, table_node_ptr *sym_global)
+void rule_prog_end(stack_ptr in_stack, sym_table_ptr sym_global)
 {
     token_ptr next = peek_top(in_stack);
     if (next->type == TOKEN_NULLABLE)
@@ -683,9 +686,9 @@ void rule_prog_end(stack_ptr in_stack, table_node_ptr *sym_global)
 
 void parse(stack_ptr stack)
 {
-    table_node_ptr sym_global = sym_init();
+    sym_table_ptr sym_global = sym_init();
 
-    rule_prog(stack, &sym_global);
+    rule_prog(stack, sym_global);
 
     if (stack_size(stack) != 0)
     {

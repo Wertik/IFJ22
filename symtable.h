@@ -30,10 +30,10 @@ typedef struct function_t
   parameter_t *parameters;
 
   // Local symtable for the function
-  struct table_node_t *symtable;
+  struct sym_table_t *symtable;
 } * function_ptr;
 
-typedef struct table_node_t
+typedef struct sym_node_t
 {
   // function / variable identifier
   // lexi alphanum compare
@@ -44,9 +44,14 @@ typedef struct table_node_t
   function_ptr function;
   variable_ptr variable;
 
-  struct table_node_t *left;
-  struct table_node_t *right;
-} * table_node_ptr;
+  struct sym_node_t *left;
+  struct sym_node_t *right;
+} * sym_node_ptr;
+
+typedef struct sym_table_t
+{
+  sym_node_ptr root;
+} * sym_table_ptr;
 
 // Lexi compare two keys
 int compare_keys(char *key1, char *key2);
@@ -64,22 +69,23 @@ void function_dispose();
 // Append a parameter to the function
 void append_parameter(function_ptr function, char *name, type_t type, bool type_nullable);
 
-function_ptr sym_get_function(table_node_ptr root, char *id);
-variable_ptr sym_get_variable(table_node_ptr root, char *id);
+function_ptr sym_get_function(sym_table_ptr table, char *id);
+variable_ptr sym_get_variable(sym_table_ptr table, char *id);
 
-table_node_ptr sym_init();
-table_node_ptr sym_search(table_node_ptr root, char *id);
+sym_table_ptr sym_init();
+sym_node_ptr sym_search(sym_table_ptr table, char *id);
 
-table_node_ptr create_node(char *id, function_ptr function, variable_ptr variable);
+sym_node_ptr create_node(char *id, function_ptr function, variable_ptr variable);
 
-table_node_ptr sym_insert(table_node_ptr root, char *id, function_ptr function, variable_ptr variable);
+void sym_insert(sym_table_ptr table, char *id, function_ptr function, variable_ptr variable);
 
-table_node_ptr sym_min(table_node_ptr root);
-table_node_ptr sym_delete(table_node_ptr root, char *id);
+sym_node_ptr sym_min(sym_node_ptr root);
 
-void sym_dispose(table_node_ptr root);
+void sym_delete(sym_table_ptr table, char *id);
 
-void sym_print(table_node_ptr root);
-void sym_print_util(table_node_ptr root, int spaces);
+void sym_dispose(sym_table_ptr table);
+
+void sym_print(sym_table_ptr table);
+void sym_print_util(sym_node_ptr table, int spaces);
 
 #endif
