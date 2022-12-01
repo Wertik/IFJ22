@@ -41,5 +41,6 @@ clean:
 	@rm $(OBJS) -rf
 	@rm stack_test.o -rf
 	@rm symtable_test.o -rf
+	@rm instruction_test.o -rf
 	@rm $(OUT) -rf
 
