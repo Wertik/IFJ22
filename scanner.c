@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 
 bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyword_t keyword)
 {
@@ -30,8 +31,10 @@ bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t typ
     return false;
 }
 
-bool attempt_greedy(char *rest)
+bool attempt_greedy(char *rest, bool ignore_whitespace)
 {
+    DEBUG("GREEDY: %s", rest);
+
     // Found declare, be greedy and eat more characters.
     unsigned int i = 0; // chars read
 
@@ -42,22 +45,24 @@ bool attempt_greedy(char *rest)
     buffer_ptr read = buffer_init();
     buffer_append(read, c);
 
-    for (; i < strlen(rest); i++)
+    for (; i < strlen(rest); )
     {
-        printf("%c %c\n", rest[i], c);
-        if (rest[i] != c)
+        if (!isspace(c) || !ignore_whitespace)
         {
-            whole = false;
-            break;
+            if (rest[i] != c)
+            {
+                whole = false;
+                break;
+            }
+            i++;
         }
         c = fgetc(stdin);
         buffer_append(read, c);
     }
 
-    printf("Whole: %d\n", whole);
-
     if (whole)
     {
+        DEBUG("Ate it, nom.");
         return true;
     }
     else
@@ -68,6 +73,7 @@ bool attempt_greedy(char *rest)
         }
     }
     buffer_dispose(read);
+    DEBUG("Not complete.");
     return false;
 }
 
@@ -515,7 +521,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else if (c == '?')
         {
-            if (attempt_greedy("php"))
+            if (attempt_greedy("php", false))
             {
                 APPEND_EMPTY(stack, TOKEN_OPENING_TAG);
             }
@@ -643,7 +649,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_START);
 
             ungetc(c, stdin);
-            if (strcmp("declare", buffer->data) == 0 && attempt_greedy("(strict_types=1);"))
+            if (strcmp("declare", buffer->data) == 0 && attempt_greedy("(strict_types=1);", true))
             {
                 APPEND_EMPTY(stack, TOKEN_DECLARE);
                 buffer_reset(buffer);
