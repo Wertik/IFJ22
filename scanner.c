@@ -67,7 +67,7 @@ bool attempt_greedy(char *rest, bool ignore_whitespace)
     }
     else
     {
-        for (int i = 0; i <= read->size; i++)
+        for (int i = read->size - 1; i >= 0; i--)
         {
             ungetc(read->data[i], stdin);
         }
