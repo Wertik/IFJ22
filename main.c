@@ -15,7 +15,9 @@ int main(int argc, char const *argv[])
     DEBUG_STACK(stack);
 
     // Parse tokens
-    parse(stack);
+    // parse(stack);
+
+    stack_dispose(stack);
 
     printf("Finished without errors!\n");
     return 0;

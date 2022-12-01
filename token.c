@@ -6,7 +6,7 @@
 
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value)
 {
-    token_ptr token = (token_ptr)malloc(sizeof(struct token_t));
+    token_ptr token = malloc(sizeof(struct token_t));
 
     MALLOC_CHECK(token);
 

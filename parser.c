@@ -35,7 +35,7 @@ token_ptr peek_top(stack_ptr stack)
     {
         return NULL;
     }
-    symbol_ptr symbol = stack_top(stack)->symbol;
+    symbol_ptr symbol = top->symbol;
     return symbol->token;
 }
 
@@ -51,17 +51,14 @@ token_ptr peek_exact_type(stack_ptr stack, token_type_t token_type)
 
 token_ptr get_next_token(stack_ptr stack)
 {
-    item_ptr top = stack_top(stack);
+    item_ptr item = stack_pop(stack);
 
-    if (top == NULL || top->symbol == NULL)
-    {
+    if (item == NULL) {
         return NULL;
     }
 
-    symbol_ptr symbol = top->symbol;
+    symbol_ptr symbol = item->symbol;
     token_ptr token = symbol->token;
-
-    stack_pop(stack);
 
     DEBUG_TOKEN(token);
     DEBUG_STACK_TOP(stack, 2);
@@ -273,7 +270,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             var->type = result_type;
         }
 
-        DEBUG_PSEUDOF("%s <- %s", next->value.string, type_to_name(result_type));
+        DEBUG_PSEUDO("%s <- %s", next->value.string, type_to_name(result_type));
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
     }
@@ -287,6 +284,8 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
         // Check that the function exists.
         token_ptr func_id = assert_next_token_get(in_stack, TOKEN_ID);
 
+        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
+
         function_ptr function = sym_get_function(*sym_global, func_id->value.string);
 
         if (function == NULL)
@@ -296,8 +295,6 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
         }
 
         token_dispose(func_id);
-
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
         rule_parameter_list(in_stack, sym_global);
 
@@ -324,7 +321,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_PSEUDOF("if (%s)", type_to_name(type));
+            DEBUG_PSEUDO("if (%s)", type_to_name(type));
 
             rule_statement_list(in_stack, sym_global, function);
 
@@ -356,7 +353,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
             assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_PSEUDOF("while (%s)", type_to_name(type));
+            DEBUG_PSEUDO("while (%s)", type_to_name(type));
 
             rule_statement_list(in_stack, sym_global, function);
 
@@ -375,7 +372,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             function_ptr function = function_create();
             *sym_global = sym_insert(*sym_global, function_id->value.string, function, NULL);
 
-            DEBUG_PSEUDOF("function %s(...)", function_id->value.string);
+            DEBUG_PSEUDO("function %s(...)", function_id->value.string);
 
             // Parse arguments
 
@@ -385,7 +382,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
             for (int i = 0; i < function->parameter_count; i++)
             {
-                DEBUG_PSEUDOF("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
+                DEBUG_PSEUDO("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
             }
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
@@ -398,7 +395,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
             function->return_type = return_type->value.type;
 
-            DEBUG_PSEUDOF("Returns %s", type_to_name(function->return_type));
+            DEBUG_PSEUDO("Returns %s", type_to_name(function->return_type));
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_LC_BRACKET);
 
@@ -414,33 +411,53 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
 
-            DEBUG_PSEUDOF("end function %s", function_id->value.string);
+            DEBUG_PSEUDO("end function %s", function_id->value.string);
 
             token_dispose(function_id);
             break;
         }
         case KEYWORD_RETURN:
         {
-            if (function->return_type == TYPE_VOID)
+            // Global return
+            if (function == NULL)
             {
-                DEBUG_PSEUDO("return;");
+                // Can return a value or not.
+                token_ptr next = peek_top(in_stack);
+
+                type_t result_type = TYPE_VOID;
+
+                // not a semicolon, has to be an expression or constant
+                if (next->type != TOKEN_SEMICOLON)
+                {
+                    result_type = parse_expression(in_stack, sym_global);
+                }
+
+                DEBUG_PSEUDO("global return %s;", type_to_name(result_type));
+                ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
             }
             else
             {
-                type_t result_type = parse_expression(in_stack, sym_global);
+                // Function return
 
-                if (function->return_type != result_type)
+                if (function->return_type == TYPE_VOID)
                 {
-                    fprintf(stderr, "Invalid function return type.\n");
-                    exit(FAIL_SEMANTIC_BAD_RETURN);
+                    DEBUG_PSEUDO("return;");
                 }
+                else
+                {
+                    type_t result_type = parse_expression(in_stack, sym_global);
 
-                DEBUG_PSEUDOF("return %s;", type_to_name(result_type));
+                    if (function->return_type != result_type)
+                    {
+                        fprintf(stderr, "Invalid function return type.\n");
+                        exit(FAIL_SEMANTIC_BAD_RETURN);
+                    }
+
+                    DEBUG_PSEUDO("return %s;", type_to_name(result_type));
+                }
+                function->has_return = true;
+                ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
             }
-
-            function->has_return = true;
-
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
             break;
         }
         default:

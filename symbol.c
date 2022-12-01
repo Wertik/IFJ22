@@ -83,5 +83,8 @@ void symbol_print(symbol_ptr symbol)
 
 void symbol_dispose(symbol_ptr symbol)
 {
+    if (symbol->terminal == true) {
+        token_dispose(symbol->token);
+    }
     free(symbol);
 }

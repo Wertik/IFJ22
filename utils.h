@@ -27,18 +27,15 @@
         }                                                   \
     } while (0);
 
-#define DEBUG_PSEUDO(str)                 \
-    do                                    \
-    {                                     \
-        if (LOG_ENABLED(PSEUDO))          \
-            printf("PSEUDO: " #str "\n"); \
-    } while (0);
-
-#define DEBUG_PSEUDOF(fmt, ...)                        \
-    do                                                 \
-    {                                                  \
-        if (LOG_ENABLED(PSEUDO))                       \
-            printf("PSEUDO: " #fmt "\n", __VA_ARGS__); \
+#define DEBUG_PSEUDO(...) \
+    do                            \
+    {                             \
+        if (LOG_ENABLED(PSEUDO))  \
+        {                         \
+            printf("PSEUDO: ");   \
+            printf(__VA_ARGS__);  \
+            printf("\n");         \
+        }                         \
     } while (0);
 
 #define DEBUG_STATE(curr, state)                    \

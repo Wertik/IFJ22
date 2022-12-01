@@ -12,6 +12,9 @@ stack_ptr stack_init()
 
     MALLOC_CHECK(stack);
 
+    stack->top = NULL;
+    stack->last = NULL;
+
     return stack;
 }
 
@@ -27,6 +30,8 @@ void stack_add(stack_ptr stack, symbol_ptr symbol)
     MALLOC_CHECK(item);
 
     item->symbol = symbol;
+    item->next = NULL;
+    
     if (stack->top == NULL)
     {
         stack->top = item;
@@ -110,7 +115,6 @@ item_ptr stack_pop(stack_ptr stack)
     {
         stack->last = NULL;
     }
-
     return item;
 }
 

@@ -5,15 +5,15 @@
 #include "stack.h"
 #include "utils.h"
 
-#define ASSERT_TOKEN_TYPE(token, token_type)                                   \
-    do                                                                         \
-    {                                                                          \
-        DEBUG_ASSERT(token_type, token);                                       \
-        if (token == NULL || token->type != token_type)                        \
-        {                                                                      \
-            fprintf(stderr, "%s expected.\n", token_type_to_name(token_type)); \
-            exit(FAIL_SYNTAX);                                                 \
-        }                                                                      \
+#define ASSERT_TOKEN_TYPE(token, token_type)                                                                                                  \
+    do                                                                                                                                        \
+    {                                                                                                                                         \
+        DEBUG_ASSERT(token_type, token);                                                                                                      \
+        if (token == NULL || token->type != token_type)                                                                                       \
+        {                                                                                                                                     \
+            fprintf(stderr, "%s expected, got %s.\n", token_type_to_name(token_type), token == NULL ? "NULL" : token_type_to_name(token->type)); \
+            exit(FAIL_SYNTAX);                                                                                                                \
+        }                                                                                                                                     \
     } while (0);
 
 #define ASSERT_NEXT_TOKEN(stack, token_type)     \
@@ -21,19 +21,20 @@
     {                                            \
         token_ptr token = get_next_token(stack); \
         ASSERT_TOKEN_TYPE(token, token_type);    \
-        token_dispose(token);                    \
+        if (token != NULL)                       \
+            token_dispose(token);                \
     } while (0);
 
-#define ASSERT_KEYWORD(stack, keyword_type)                                                                                     \
-    do                                                                                                                          \
-    {                                                                                                                           \
-        token_ptr token = assert_next_token_get(stack, TOKEN_KEYWORD);                                                          \
-        if (token->value.keyword != keyword_type)                                                                               \
-        {                                                                                                                       \
+#define ASSERT_KEYWORD(stack, keyword_type)                                                                          \
+    do                                                                                                               \
+    {                                                                                                                \
+        token_ptr token = assert_next_token_get(stack, TOKEN_KEYWORD);                                               \
+        if (token->value.keyword != keyword_type)                                                                    \
+        {                                                                                                            \
             fprintf(stderr, "Expected keyword %s, got %s.\n", #keyword_type, keyword_to_name(token->value.keyword)); \
-            exit(FAIL_SYNTAX);                                                                                                  \
-        }                                                                                                                       \
-        token_dispose(token);                                                                                                   \
+            exit(FAIL_SYNTAX);                                                                                       \
+        }                                                                                                            \
+        token_dispose(token);                                                                                        \
     } while (0);
 
 #define ASSERT_ID(stack, id)                                      \
