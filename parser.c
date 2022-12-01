@@ -262,7 +262,6 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
         if (var == NULL)
         {
             // TODO: Infer type from value (requires PSA)
-            // TODO-CHECK: Nullable by default?
             variable_ptr variable = variable_create(TYPE_INT, true);
             sym_insert(sym_global, next->value.string, NULL, variable);
         }
@@ -299,7 +298,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
         token_dispose(func_id);
 
-        rule_parameter_list(in_stack, sym_global);
+        rule_parameter_list(in_stack, sym_global, function, 0);
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
@@ -575,42 +574,87 @@ void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_p
 
 // <par-list> -> eps
 // <par-list> -> var_id <par-next>
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global)
+// <par-list> -> const_int <par-next>
+// <par-list> -> const_float <par-next>
+// <par-list> -> string_list <par-next>
+void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter)
 {
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
+
+    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    {
+        // <par-list> -> eps
+        if (current_parameter < function->parameter_count - 1)
+        {
+            fprintf(stderr, "Not enough parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter);
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+        return;
+    }
+
+    if (current_parameter + 1 > function->parameter_count)
+    {
+        fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        exit(FAIL_SEMANTIC_BAD_ARGS);
+    }
+
+    parameter_t expected_parameter = function->parameters[current_parameter];
+
     switch (next->type)
     {
     case TOKEN_VAR_ID:
+    {
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
-        rule_parameter_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter);
         break;
-        // technicky oba case rovnake asi by bolo lepsie dat or ale neviem
-    // predpokladam ze nedostanem do funkcie nejaky vzorec ale len cislo alebo string
-    // nedoriesene v scannery pre float pravdepodobne
-
-    // assuming constatnt expression is for all types
+    }
     case TOKEN_CONST_INT:
+    {
+        if (expected_parameter.type != TYPE_INT)
+        {
+            fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_INT");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_INT);
-        rule_parameter_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter);
         break;
+    }
     case TOKEN_CONST_DOUBLE:
+    {
+        if (expected_parameter.type != TYPE_FLOAT)
+        {
+            fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_FLOAT");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
-        rule_parameter_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter);
         break;
+    }
     case TOKEN_STRING_LIT:
+    {
+        if (expected_parameter.type != TYPE_STRING)
+        {
+            fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_STRING");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
-        rule_parameter_next(in_stack, sym_global);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter);
         break;
+    }
     default:
-        break;
+        fprintf(stderr, "Invalid token in function parameter.\n");
+        exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 }
 
 // <par-next> -> eps
 // <par-next> -> , <par-list>
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global)
+void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter)
 {
     DEBUG_RULE();
 
@@ -620,7 +664,7 @@ void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global)
     {
         // <par-next> -> , <par-list>
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
-        rule_parameter_list(in_stack, sym_global);
+        rule_parameter_list(in_stack, sym_global, function, current_parameter + 1);
     }
     else
     {

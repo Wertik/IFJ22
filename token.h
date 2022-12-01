@@ -97,6 +97,8 @@ token_ptr token_create_string(token_type_t type, char *str);
 token_ptr token_create_keyword(keyword_t keyword);
 token_ptr token_create_type(type_t type);
 
+bool is_one_of(token_ptr token, int count, ...);
+
 char *token_to_string(token_ptr token);
 char *token_type_to_name(token_type_t type);
 

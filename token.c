@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
+#include <stdarg.h>
 
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value)
 {
@@ -307,4 +308,22 @@ bool token_compare(token_ptr token1, token_ptr token2)
         fprintf(stderr, "Don't know how to compare type %s.", value_type_to_name(token1->value_type));
         exit(FAIL_INTERNAL);
     }
+}
+
+bool is_one_of(token_ptr token, int count, ...)
+{
+    va_list va_list;
+    va_start(va_list, count);
+
+    for (int i = 0; i < count; i++)
+    {
+        if (va_arg(va_list, token_type_t) == token->type)
+        {
+            va_end(va_list);
+            return true;
+        }
+    }
+
+    va_end(va_list);
+    return false;
 }
