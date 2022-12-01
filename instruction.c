@@ -5,16 +5,18 @@
 #include <stdlib.h>
 #include <string.h>
 
-char *instruction_to_str(instruction_t instruction)
+const char *instruction_to_str(instruction_t instruction)
 {
     switch (instruction)
     {
     case INSTR_MOVE:
         return "MOVE";
     case INSTR_CREATE_FRAME:
-        return "CREATE_FRAME";
+        return "CREATEFRAME";
     case INSTR_POP_FRAME:
-        return "POP_FRAME";
+        return "POPFRAME";
+    case INSTR_PUSH_FRAME:
+        return "PUSHFRAME";
     case INSTR_DEFVAR:
         return "DEFVAR";
     case INSTR_CALL:
@@ -122,11 +124,26 @@ char *instruction_to_str(instruction_t instruction)
     }
 }
 
+char *generate_instruction(instruction_t instruction)
+{
+    const char *instruction_str = instruction_to_str(instruction);
+
+    // +1 for null byte
+    size_t len = (strlen(instruction_str) + 1);
+    char *call_str = malloc(sizeof(char) * len);
+
+    MALLOC_CHECK(call_str);
+
+    strcpy(call_str, instruction_str);
+
+    return call_str;
+}
+
 // Generate an instruction call with n operands
 // <INSTR> <OP1> <OP2> <OP3>
-char *generate_instruction(instruction_t instruction, int n, ...)
+char *generate_instruction_ops(instruction_t instruction, int n, ...)
 {
-    char *instruction_str = instruction_to_str(instruction);
+    const char *instruction_str = instruction_to_str(instruction);
 
     va_list val;
     va_start(val, n);
@@ -178,7 +195,7 @@ void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr)
 {
     instr_buffer->len += 1;
 
-    instr_buffer->instructions = realloc(instr_buffer->instructions, sizeof(char*) * instr_buffer->len);
+    instr_buffer->instructions = realloc(instr_buffer->instructions, sizeof(char *) * instr_buffer->len);
 
     MALLOC_CHECK(instr_buffer->instructions);
 
@@ -198,6 +215,15 @@ void instr_buffer_print(instr_buffer_ptr instr_buffer)
         }
     }
     printf("]\n");
+}
+
+void instr_buffer_out(instr_buffer_ptr instr_buffer)
+{
+    printf(".ifjcode22\n"); // Header
+    for (int i = 0; i < instr_buffer->len; i++)
+    {
+        printf("%s\n", instr_buffer->instructions[i]);
+    }
 }
 
 void instr_buffer_dispose(instr_buffer_ptr instr_buffer)

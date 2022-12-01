@@ -1,12 +1,18 @@
-#ifndef INSTRUCTION_H
-#define INSTRUCTION_H
+#ifndef _INSTRUCTION_H
+#define _INSTRUCTION_H
 
 #include <string.h>
 
-#define ADD_INSTRUCTION(instr_buffer, instr, count, ...)              \
+#define ADD_INSTRUCTION(instr_buffer, instr)                          \
     do                                                                \
     {                                                                 \
-        char *call = generate_instruction(instr, count, __VA_ARGS__); \
+        instr_buffer_append(instr_buffer, generate_instruction(instr)); \
+    } while (0);
+
+#define ADD_INSTRUCTION_OPS(instr_buffer, instr, count, ...)          \
+    do                                                                \
+    {                                                                 \
+        char *call = generate_instruction_ops(instr, count, __VA_ARGS__); \
         instr_buffer_append(instr_buffer, call);                      \
     } while (0);
 
@@ -19,6 +25,7 @@ typedef enum
 
     INSTR_CREATE_FRAME,
     INSTR_POP_FRAME,
+    INSTR_PUSH_FRAME,
     // var
     INSTR_DEFVAR,
 
@@ -149,10 +156,12 @@ typedef struct instr_buffer_t
 } * instr_buffer_ptr;
 
 // Convert enum instruction to instruction keyword
-char *instruction_to_str(instruction_t instr);
+const char *instruction_to_str(instruction_t instr);
+
+char *generate_instruction(instruction_t instr);
 
 // Generate an instruction call with n operands.
-char *generate_instruction(instruction_t instr, int n, ...);
+char *generate_instruction_ops(instruction_t instr, int n, ...);
 
 // Instruction buffer
 
@@ -160,5 +169,8 @@ instr_buffer_ptr instr_buffer_init();
 void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr);
 void instr_buffer_print(instr_buffer_ptr instr_buffer);
 void instr_buffer_dispose(instr_buffer_ptr instr_buffer);
+
+// Write the buffer to stdout
+void instr_buffer_out(instr_buffer_ptr instr_buffer);
 
 #endif
