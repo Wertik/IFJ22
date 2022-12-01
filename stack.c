@@ -109,6 +109,10 @@ item_ptr stack_pop(stack_ptr stack)
 {
     item_ptr item = stack->top;
 
+    if (item == NULL) {
+        return NULL;
+    }
+
     stack->top = item->next;
 
     if (item == stack->last)

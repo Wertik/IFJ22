@@ -305,6 +305,10 @@ table_node_ptr sym_delete(table_node_ptr root, char *id)
 
 void sym_dispose(table_node_ptr root)
 {
+    if (root == NULL) {
+        return;
+    }
+    
     char *id = root->id;
     while (root != NULL)
     {
