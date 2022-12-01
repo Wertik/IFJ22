@@ -6,7 +6,7 @@
 
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value)
 {
-    token_ptr token = (token_ptr)malloc(sizeof(struct token_t));
+    token_ptr token = malloc(sizeof(struct token_t));
 
     MALLOC_CHECK(token);
 
@@ -15,6 +15,34 @@ token_ptr token_create(token_type_t type, token_value_type_t value_type, token_v
     token->value = value;
 
     return token;
+}
+
+// Create a token with str as string value. Copies str into a new string, can be freed.
+token_ptr token_create_string(token_type_t type, char *str)
+{
+    size_t len = strlen(str);
+
+    char *token_str = malloc(sizeof(char) * (len + 1));
+
+    MALLOC_CHECK(token_str);
+
+    strcpy(token_str, str);
+
+    token_value_t value = {.string = token_str};
+
+    return token_create(type, STRING, value);
+}
+
+token_ptr token_create_keyword(keyword_t keyword)
+{
+    token_value_t value = {.keyword = keyword};
+    return token_create(TOKEN_KEYWORD, KEYWORD, value);
+}
+
+token_ptr token_create_type(type_t type)
+{
+    token_value_t value = {.type = type};
+    return token_create(TOKEN_TYPE, TYPE, value);
 }
 
 void token_dispose(token_ptr token)
@@ -223,7 +251,7 @@ char *token_to_string(token_ptr token)
     if (s == NULL)
     {
         fprintf(stderr, "malloc fail.\n");
-        exit(99);
+        exit(FAIL_INTERNAL);
     }
 
     sprintf(s, format,

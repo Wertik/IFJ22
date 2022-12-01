@@ -34,12 +34,11 @@ typedef enum
     NONE,
     INTEGER,
     STRING,
-    DOUBLE,
+    FLOAT,
     /* Token is a TOKEN_KEYWORD, this indicates which of the predefined keywords. */
     KEYWORD,
     /* Token is a TOKEN_TYPE, this indicates which of the predefined types. */
     TYPE,
-    // TODO: Add decimals and other types
 } token_value_type_t;
 
 typedef enum
@@ -75,8 +74,6 @@ typedef enum
     TOKEN_TYPE,
     TOKEN_CLOSING_TAG,
     TOKEN_OPENING_TAG,
-
-    // TODO: Add token types
 } token_type_t;
 
 typedef struct token_t
@@ -89,6 +86,11 @@ typedef struct token_t
 /* Token functions */
 
 token_ptr token_create(token_type_t type, token_value_type_t value_type, token_value_t value);
+
+token_ptr token_create_string(token_type_t type, char *str);
+
+token_ptr token_create_keyword(keyword_t keyword);
+token_ptr token_create_type(type_t type);
 
 char *token_to_string(token_ptr token);
 char *token_type_to_name(token_type_t type);

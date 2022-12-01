@@ -10,13 +10,13 @@
         if ((what) == false)                               \
         {                                                  \
             fprintf(stderr, "Assert " #name " failed.\n"); \
-            exit(1);                                       \
+            exit(FAIL_LEXICAL);                                       \
         }                                                  \
     } while (0);
 
 int main()
 {
-    table_node_ptr root = sym_init();
+    sym_table_ptr table = sym_init();
 
     // Insert a function
 
@@ -25,11 +25,11 @@ int main()
 
     function->return_type = TYPE_VOID;
 
-    root = sym_insert(root, "hello", function, NULL);
+    sym_insert(table, "hello", function, NULL);
 
-    sym_print(root);
+    sym_print(table);
 
-    function = sym_get_function(root, "hello");
+    function = sym_get_function(table, "hello");
 
     ASSERT(function != NULL, "function not null");
     ASSERT(function->parameter_count == 1, "function parameter count");
@@ -37,23 +37,23 @@ int main()
     ASSERT(strcmp(function->parameters[0].name, "key") == 0, "parameter name");
 
     variable_ptr variable = variable_create(TYPE_INT, false);
-    root = sym_insert(root, "a", NULL, variable);
+    sym_insert(table, "a", NULL, variable);
 
-    sym_print(root);
+    sym_print(table);
 
-    variable = sym_get_variable(root, "a");
+    variable = sym_get_variable(table, "a");
 
     ASSERT(variable != NULL, "variable not null");
 
     variable = variable_create(TYPE_INT, false);
 
-    root = sym_insert(root, "hello", NULL, variable);
+    sym_insert(table, "hello", NULL, variable);
 
-    variable = sym_get_variable(root, "hello");
+    variable = sym_get_variable(table, "hello");
 
     ASSERT(variable != NULL, "variable not null 2");
 
-    function = sym_get_function(root, "hello");
+    function = sym_get_function(table, "hello");
 
     char *s = function_to_string("hello", function);
     printf("%s\n", s);
@@ -61,5 +61,5 @@ int main()
 
     ASSERT(function != NULL, "function not null 2");
 
-    sym_dispose(root);
+    sym_dispose(table);
 }

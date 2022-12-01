@@ -1,101 +1,63 @@
 #include "scanner.h"
 #include "token.h"
 #include "utils.h"
-#include "string.h"
+#include "buffer.h"
+#include "stack.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
 
-#define CHANGE_STATE(state)                 \
-    do                                      \
-    {                                       \
-        DEBUG_STATE(*scanner_state, state); \
-        *scanner_state = state;             \
-    } while (0);
-
-bool attempt_keyword(array_ptr tokens, string_ptr *buffer, char *keyword_str, keyword_t keyword)
+bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyword_t keyword)
 {
-    if (strcmp((*buffer)->data, keyword_str) == 0)
+    if (strcmp(buffer->data, keyword_str) == 0)
     {
-        append_keyword(tokens, keyword);
-        string_fresh(*buffer);
+        APPEND_KEYWORD(stack, keyword);
+        buffer_reset(buffer);
         return true;
     }
     return false;
 }
 
-bool attempt_type(array_ptr tokens, string_ptr *buffer, char *type_str, type_t type)
+bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type)
 {
-    if (strcmp((*buffer)->data, type_str) == 0)
+    if (strcmp(buffer->data, type_str) == 0)
     {
-        append_type(tokens, type);
-        string_fresh(*buffer);
+        APPEND_TYPE(stack, type);
+        buffer_reset(buffer);
         return true;
     }
     return false;
 }
 
-void append_token(array_ptr tokens, token_type_t token_type)
-{
-    token_value_t value;
-    token_ptr token = token_create(token_type, NONE, value);
-    array_append(tokens, token);
-}
-
-void append_keyword(array_ptr tokens, keyword_t keyword)
-{
-    token_value_t value = {.keyword = keyword};
-
-    token_ptr token = token_create(TOKEN_KEYWORD, KEYWORD, value);
-    array_append(tokens, token);
-}
-
-void append_type(array_ptr tokens, type_t type)
-{
-    token_value_t value = {.type = type};
-
-    token_ptr token = token_create(TOKEN_TYPE, TYPE, value);
-    array_append(tokens, token);
-}
-
-bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, char c)
+bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, char c)
 {
     DEBUG("Scanning character: %c (%d)\n", c, c);
+
     switch (*scanner_state)
     {
     case (SCANNER_START):
     {
         if (c == '(')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_L_PAREN, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_L_PAREN);
         }
         else if (c == ')')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_R_PAREN, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_R_PAREN);
         }
         else if (c == '"')
         {
             CHANGE_STATE(SCANNER_STRING);
-
-            // create a fresh buffer
-            *buffer = string_fresh(*buffer);
+            buffer_reset(buffer);
         }
         else if (c == '.')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_DOT, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_DOT);
         }
         else if (c == ':')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_COLON, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_COLON);
         }
         else if (c == '?')
         {
@@ -103,60 +65,43 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else if (c == '}')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_RC_BRACKET, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_RC_BRACKET);
         }
         else if (c == '{')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_LC_BRACKET, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_LC_BRACKET);
         }
         else if (c == ',')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_COMMA, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_COMMA);
         }
         else if (c == ';')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_SEMICOLON, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_SEMICOLON);
         }
         else if (c == '+')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_PLUS, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_PLUS);
         }
         else if (c == '-')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_MINUS, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_MINUS);
         }
         else if (c == '*')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_MULTIPLE, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_MULTIPLE);
         }
         else if (c >= '0' && c <= '9')
         {
             CHANGE_STATE(SCANNER_NUM_INT);
-
-            // create a fresh buffer
-            *buffer = string_fresh(*buffer);
-            string_append(*buffer, c);
+            buffer_reset(buffer);
+            buffer_append(buffer, c);
         }
         else if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
         {
             CHANGE_STATE(SCANNER_ID);
-
-            *buffer = string_fresh(*buffer);
-            string_append(*buffer, c);
+            buffer_reset(buffer);
+            buffer_append(buffer, c);
         }
         else if (c == '/')
         {
@@ -181,11 +126,16 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else if (c == '$')
         {
             CHANGE_STATE(SCANNER_VAR_ID_START);
-        } else if (c == EOF || c == '\n' || c == ' ') {
+            buffer_append(buffer, c);
+        }
+        else if (c == EOF || c == '\n' || c == ' ')
+        {
             break;
-        } else {
+        }
+        else
+        {
             fprintf(stderr, "Unexpected character %c (%d).\n", c, c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         break;
     }
@@ -194,16 +144,14 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '>')
         {
             CHANGE_STATE(SCANNER_EPILOG);
-
-            append_token(tokens, TOKEN_CLOSING_TAG);
+            APPEND_EMPTY(stack, TOKEN_CLOSING_TAG);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
+            APPEND_EMPTY(stack, TOKEN_NULLABLE);
 
-            append_token(tokens, TOKEN_NULLABLE);
-
-            parse_character(tokens, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -211,33 +159,30 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c >= '0' && c <= '9')
         {
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == '.')
         {
             CHANGE_STATE(SCANNER_NUM_POINT_START);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == 'E' || c == 'e')
         {
             CHANGE_STATE(SCANNER_NUM_EXP_START);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
 
             // TODO: Parse better
-            int val = atoi((*buffer)->data);
+            int val = atoi(buffer->data);
 
-            token_value_t value = {.integer = val};
-            token_ptr token = token_create(TOKEN_CONST_INT, INTEGER, value);
-            array_append(tokens, token);
+            APPEND_INT(stack, TOKEN_CONST_INT, val);
 
-            // free the string struct, but keep the data array alive
-            string_fresh(*buffer);
+            buffer_reset(buffer);
 
-            parse_character(tokens, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -246,13 +191,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c >= '0' && c <= '9')
         {
             CHANGE_STATE(SCANNER_NUM_DOUBLE);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             // TODO: do better
             fprintf(stderr, "Syntax error.\n");
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         break;
     }
@@ -260,28 +205,25 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c >= '0' && c <= '9')
         {
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == 'E' || c == 'e')
         {
             CHANGE_STATE(SCANNER_NUM_EXP_START);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
 
             // TODO: Parse better
-            double val = atof((*buffer)->data);
+            double val = atof(buffer->data);
 
-            token_value_t value = {.float_value = val};
-            token_ptr token = token_create(TOKEN_CONST_DOUBLE, DOUBLE, value);
-            array_append(tokens, token);
+            APPEND_FLOAT(stack, TOKEN_CONST_DOUBLE, val);
 
-            // free the string struct, but keep the data array alive
-            string_fresh(*buffer);
+            buffer_reset(buffer);
 
-            parse_character(tokens, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c);
         }
 
         break;
@@ -291,18 +233,18 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c >= '0' && c <= '9')
         {
             CHANGE_STATE(SCANNER_NUM_EXP);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c >= '+' || c <= '-')
         {
             CHANGE_STATE(SCANNER_NUM_EXP_SIGN);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             // TODO: do better
             fprintf(stderr, "Syntax error.\n");
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         break;
     }
@@ -311,13 +253,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c >= '0' && c <= '9')
         {
             CHANGE_STATE(SCANNER_NUM_EXP);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             // TODO: do better
             fprintf(stderr, "Syntax error.\n");
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         break;
     }
@@ -325,23 +267,20 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c >= '0' && c <= '9')
         {
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
 
             // TODO: Parse better
-            double val = atof((*buffer)->data);
+            double val = atof(buffer->data);
 
-            token_value_t value = {.float_value = val};
-            token_ptr token = token_create(TOKEN_CONST_DOUBLE, DOUBLE, value);
-            array_append(tokens, token);
+            APPEND_FLOAT(stack, TOKEN_CONST_DOUBLE, val);
 
-            // free the string struct, but keep the data array alive
-            string_fresh(*buffer);
+            buffer_reset(buffer);
 
-            parse_character(tokens, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c);
         }
 
         break;
@@ -351,27 +290,21 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '"')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
-            array_append(tokens, token);
-
-            // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+            APPEND_STRING(stack, TOKEN_STRING_LIT, buffer);
         }
         else if (c == '\\')
         {
             CHANGE_STATE(SCANNER_STRING_ESCAPE);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == '$')
         {
             // TODO: correct error code
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         else
         {
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         break;
     }
@@ -380,12 +313,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == 'x')
         {
             CHANGE_STATE(SCANNER_HEX_START);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c >= '0' && c <= '3')
         {
             CHANGE_STATE(SCANNER_OCTA_1);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == '"')
         {
@@ -402,20 +335,18 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else if (c == 'n')
         {
             CHANGE_STATE(SCANNER_STRING);
-            (*buffer)->data[(*buffer)->size - 1] = '\n';
+            buffer->data[buffer->size - 1] = '\n';
         }
         else if (c == 't')
         {
             CHANGE_STATE(SCANNER_STRING);
-            (*buffer)->data[(*buffer)->size - 1] = '\t';
+            buffer->data[buffer->size - 1] = '\t';
         }
-
         else
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
-
         break;
     }
     case (SCANNER_HEX_START):
@@ -423,28 +354,22 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '"')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
-            array_append(tokens, token);
-
-            // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+            APPEND_STRING(stack, TOKEN_STRING_LIT, buffer);
         }
         else if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
         {
             CHANGE_STATE(SCANNER_HEX_FIRST);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         else
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
 
         break;
@@ -454,31 +379,24 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if ((c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F') || (c >= '0' && c <= '9'))
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
-            string_num_to_asci(*buffer, 16);
+            buffer_append(buffer, c);
+            buffer_num_to_asci(buffer, 16);
         }
         else if (c == '"')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
-            array_append(tokens, token);
-
-            // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+            APPEND_STRING(stack, TOKEN_STRING_LIT, buffer);
         }
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         else
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
-
         break;
     }
     case (SCANNER_OCTA_1):
@@ -486,60 +404,47 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '"')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
-            array_append(tokens, token);
-
-            // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+            APPEND_STRING(stack, TOKEN_STRING_LIT, buffer);
         }
         else if ((c >= '0' && c <= '7'))
         {
             CHANGE_STATE(SCANNER_OCTA_2);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         else
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         break;
     }
     case (SCANNER_OCTA_2):
     {
-
         if (c == '"')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_STRING_LIT, STRING, value);
-            array_append(tokens, token);
-
-            // free the string struct, but keep the data array alive
-            string_clean(*buffer);
+            APPEND_STRING(stack, TOKEN_STRING_LIT, buffer);
         }
         else if ((c >= '0' && c <= '7'))
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
-            string_num_to_asci(*buffer, 8);
+            buffer_append(buffer, c);
+            buffer_num_to_asci(buffer, 8);
         }
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         else
         {
             CHANGE_STATE(SCANNER_STRING);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         break;
     }
@@ -547,22 +452,15 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if (c == '=')
         {
-
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_MORE_EQUAL, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_MORE_EQUAL);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
+            APPEND_EMPTY(stack, TOKEN_MORE);
 
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_MORE, NONE, value);
-            array_append(tokens, token);
-
-            parse_character(tokens, buffer, scanner_state, (char)c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -572,23 +470,16 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
 
         if (c == '=')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_LESS_EQUAL, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_LESS_EQUAL);
         }
         else if (c == '?')
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_OPENING_TAG, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_OPENING_TAG);
         }
         else
         {
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_LESS, NONE, value);
-            array_append(tokens, token);
-
-            parse_character(tokens, buffer, scanner_state, (char)c);
+            APPEND_EMPTY(stack, TOKEN_LESS);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -600,14 +491,10 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         }
         else
         {
-
             CHANGE_STATE(SCANNER_START);
+            APPEND_EMPTY(stack, TOKEN_ASSIGN);
 
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_ASSIGN, NONE, value);
-            array_append(tokens, token);
-
-            parse_character(tokens, buffer, scanner_state, (char)c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -616,17 +503,13 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '=')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_EQUAL, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_EQUAL);
         }
         else
         {
             fprintf(stderr, "Equality is compared via \"===\". \n");
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
-
         break;
     }
     case (SCANNER_EXCL_MARK):
@@ -639,9 +522,8 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         {
             // TODO: do better
             fprintf(stderr, "Syntax error.\n");
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
-
         break;
     }
     case (SCANNER_NOT_EQ_START):
@@ -649,15 +531,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c == '=')
         {
             CHANGE_STATE(SCANNER_START);
-
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_NOT_EQUAL, NONE, value);
-            array_append(tokens, token);
+            APPEND_EMPTY(stack, TOKEN_NOT_EQUAL);
         }
         else
         {
-            fprintf(stderr, "Equality is compared via \"===\". \n");
-            exit(1);
+            fprintf(stderr, "Equality is compared via \"!==\". \n");
+            exit(FAIL_LEXICAL);
         }
 
         break;
@@ -675,12 +554,9 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         else
         {
             CHANGE_STATE(SCANNER_START);
+            APPEND_EMPTY(stack, TOKEN_DIVIDE);
 
-            token_value_t value;
-            token_ptr token = token_create(TOKEN_DIVIDE, NONE, value);
-            array_append(tokens, token);
-
-            parse_character(tokens, buffer, scanner_state, (char)c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -716,32 +592,28 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || (c >= '0' && c <= '9'))
         {
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
 
-            if (!attempt_keyword(tokens, buffer, "function", KEYWORD_FUNCTION) &&
-                !attempt_keyword(tokens, buffer, "if", KEYWORD_IF) &&
-                !attempt_keyword(tokens, buffer, "else", KEYWORD_ELSE) &&
-                !attempt_keyword(tokens, buffer, "while", KEYWORD_WHILE) &&
-                !attempt_keyword(tokens, buffer, "return", KEYWORD_RETURN) &&
-                !attempt_type(tokens, buffer, "int", TYPE_INT) &&
-                !attempt_type(tokens, buffer, "string", TYPE_STRING) &&
-                !attempt_type(tokens, buffer, "float", TYPE_FLOAT) &&
-                !attempt_type(tokens, buffer, "void", TYPE_VOID))
+            // check if the buffer content matches any keywords / types
+            if (!attempt_keyword(stack, buffer, "function", KEYWORD_FUNCTION) &&
+                !attempt_keyword(stack, buffer, "if", KEYWORD_IF) &&
+                !attempt_keyword(stack, buffer, "else", KEYWORD_ELSE) &&
+                !attempt_keyword(stack, buffer, "while", KEYWORD_WHILE) &&
+                !attempt_keyword(stack, buffer, "return", KEYWORD_RETURN) &&
+                !attempt_type(stack, buffer, "int", TYPE_INT) &&
+                !attempt_type(stack, buffer, "string", TYPE_STRING) &&
+                !attempt_type(stack, buffer, "float", TYPE_FLOAT) &&
+                !attempt_type(stack, buffer, "void", TYPE_VOID))
             {
-                token_value_t value = {.string = (*buffer)->data};
-
-                token_ptr token = token_create(TOKEN_ID, STRING, value);
-                array_append(tokens, token);
-
-                // free the string struct, but keep the data array alive
-                string_clean(*buffer);
+                // none of the keywords matched, create a token id from this
+                APPEND_STRING(stack, TOKEN_ID, buffer);
             }
 
-            parse_character(tokens, buffer, scanner_state, (char)c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -750,12 +622,12 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_')
         {
             CHANGE_STATE(SCANNER_VAR_ID);
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             fprintf(stderr, "Variables have to start with alphanumeric chatacters. (%c)\n", c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         break;
     }
@@ -763,19 +635,14 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
     {
         if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_' || (c >= '0' && c <= '9'))
         {
-            string_append(*buffer, c);
+            buffer_append(buffer, c);
         }
         else
         {
             CHANGE_STATE(SCANNER_START);
+            APPEND_STRING(stack, TOKEN_VAR_ID, buffer);
 
-            token_value_t value = {.string = (*buffer)->data};
-            token_ptr token = token_create(TOKEN_VAR_ID, STRING, value);
-            array_append(tokens, token);
-
-            string_clean(*buffer);
-
-            parse_character(tokens, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c);
         }
         break;
     }
@@ -784,59 +651,43 @@ bool parse_character(array_ptr tokens, string_ptr *buffer, int *scanner_state, c
         if (c != EOF && c != '\n')
         {
             fprintf(stderr, "Character %d (%c) after epilog.\n", c, c);
-            exit(1);
+            exit(FAIL_LEXICAL);
         }
         break;
     }
     default:
         fprintf(stderr, "Unknown scanner state %d.\n", *scanner_state);
-        exit(1);
+        exit(FAIL_LEXICAL);
     }
     return c == EOF;
 }
 
-void tokenize(array_ptr tokens)
+stack_ptr tokenize()
 {
     int c;
-
-    /* Keep a count of how many lines we read to display pretty semantic errors. */
-    int line_count = 0;
-    /* Keep a count of how many characters we read in this line to display pretty semantic errors. */
-    int character_count = 0;
 
     int scanner_state = SCANNER_START;
 
     // Buffer for parses that require multiple char reads
-    string_ptr buffer = NULL;
+    buffer_ptr buffer = buffer_init();
 
-    while (true)
+    stack_ptr stack = stack_init();
+
+    while (!parse_character(stack, buffer, &scanner_state, (c = fgetc(stdin))))
     {
-        c = getc(stdin);
-
-        if ((c == '\n' || c == EOF) && character_count != 0) // ignore empty lines
-        {
-            line_count++;
-            character_count = 0;
-        }
-        else
-        {
-            character_count++;
-        }
-
-        if (parse_character(tokens, &buffer, &scanner_state, (char)c))
-        {
-            break;
-        }
+        //
     }
 
-    // scanner cannot end on anything else than start
+    // scanner cannot end on anything else than start and epilog
     // means we started parsing something and didn't finish
     if (scanner_state != SCANNER_START && scanner_state != SCANNER_EPILOG)
     {
-        DEBUG_ARRAY(tokens);
+        DEBUG_STACK(stack);
         fprintf(stderr, "Didn't finish scanning. Left on state: %d\n", scanner_state);
-        exit(1);
+        exit(FAIL_LEXICAL);
     }
 
-    string_dispose(buffer);
+    // Dispose of buffer
+    buffer_dispose(buffer);
+    return stack;
 }

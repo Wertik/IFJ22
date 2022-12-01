@@ -1,24 +1,36 @@
 #ifndef STACK_H
 #define STACK_H
 
-#include "grammar.h"
+#include "symbol.h"
 
+// Stack item
 typedef struct item_t
 {
   symbol_ptr symbol;
   struct item_t *next;
 } * item_ptr;
 
-item_ptr stack_init();
-item_ptr stack_push(item_ptr stack, symbol_ptr symbol);
-item_ptr stack_pop(item_ptr stack);
+typedef struct stack_t
+{
+  item_ptr last;
+  item_ptr top;
+} * stack_ptr;
 
-int stack_size(item_ptr stack);
+// Initialize a stack
+stack_ptr stack_init();
 
-item_ptr stack_top(item_ptr stack);
+// Add an item to the end of the stack
+void stack_add(stack_ptr stack, symbol_ptr symbol);
+// Push an item to the top of the stack
+void stack_push(stack_ptr stack, symbol_ptr symbol);
+item_ptr stack_pop(stack_ptr stack);
+item_ptr stack_top(stack_ptr stack);
 
-void stack_print(item_ptr stack);
+bool stack_empty(stack_ptr stack);
 
-void stack_dispose(item_ptr stack);
+unsigned int stack_size(stack_ptr stack);
+
+void stack_print(stack_ptr stack);
+void stack_dispose(stack_ptr stack);
 
 #endif

@@ -1,4 +1,5 @@
 #include "array.h"
+#include "utils.h"
 #include <stdlib.h>
 #include <stdio.h>
 
@@ -6,11 +7,7 @@ array_ptr array_create()
 {
     array_ptr array = malloc(sizeof(struct array_t));
 
-    if (array == NULL)
-    {
-       exit(99);
-        return NULL;
-    }
+    MALLOC_CHECK(array);
 
     array->first = NULL;
     array->last = NULL;
@@ -45,12 +42,7 @@ element_ptr element_create(token_ptr token)
 {
     element_ptr element = malloc(sizeof(struct element_t));
 
-    if (element == NULL)
-    {
-        // TODO: Handle better?
-        fprintf(stderr, "malloc fail.\n");
-        exit(99);
-    }
+    MALLOC_CHECK(element);
 
     element->next = NULL;
     element->prev = NULL;

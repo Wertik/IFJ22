@@ -2,47 +2,80 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include "stack.h"
+#include "utils.h"
 #include "token.h"
+#include "symbol.h"
 
-item_ptr stack_init()
+stack_ptr stack_init()
 {
-    return NULL;
-}
+    stack_ptr stack = malloc(sizeof(struct stack_t));
 
-item_ptr stack_top(item_ptr stack)
-{
+    MALLOC_CHECK(stack);
+
+    stack->top = NULL;
+    stack->last = NULL;
+
     return stack;
 }
 
-item_ptr stack_push(item_ptr stack, symbol_ptr symbol)
+item_ptr stack_top(stack_ptr stack)
+{
+    return stack->top;
+}
+
+void stack_add(stack_ptr stack, symbol_ptr symbol)
 {
     item_ptr item = malloc(sizeof(struct item_t));
 
-    if (item == NULL)
-    {
-        fprintf(stderr, "stack_push: malloc fail.\n");
-        exit(99);
-    }
+    MALLOC_CHECK(item);
 
     item->symbol = symbol;
-    item->next = stack;
+    item->next = NULL;
+    
+    if (stack->top == NULL)
+    {
+        stack->top = item;
+    }
 
-    return item;
+    if (stack->last != NULL)
+    {
+        stack->last->next = item;
+    }
+
+    stack->last = item;
 }
 
-int stack_size(item_ptr stack)
+void stack_push(stack_ptr stack, symbol_ptr symbol)
 {
-    int i = 0;
-    for (; stack != NULL; i++)
+    item_ptr item = malloc(sizeof(struct item_t));
+
+    MALLOC_CHECK(item);
+
+    item->symbol = symbol;
+
+    item->next = stack->top;
+
+    if (stack->last == NULL)
     {
-        stack = stack->next;
+        stack->last = item;
+    }
+    stack->top = item;
+}
+
+unsigned int stack_size(stack_ptr stack)
+{
+    item_ptr item = stack->top;
+    int i = 0;
+    for (; item != NULL; i++)
+    {
+        item = item->next;
     }
     return i;
 }
 
-void stack_print(item_ptr stack)
+void stack_print(stack_ptr stack)
 {
-    item_ptr item = stack;
+    item_ptr item = stack->top;
 
     int size = stack_size(stack);
 
@@ -68,24 +101,37 @@ void stack_print(item_ptr stack)
     printf("]\n");
 }
 
-item_ptr stack_pop(item_ptr stack)
-{
-    item_ptr top = stack->next;
-    free(stack);
-    return top;
+bool stack_empty(stack_ptr stack) {
+    return stack->top == NULL;
 }
 
-void stack_dispose(item_ptr stack)
+item_ptr stack_pop(stack_ptr stack)
 {
-    while (stack != NULL)
-    {
-        if (stack->symbol->terminal)
-        {
-            free(stack->symbol->token);
-        }
-        free(stack->symbol);
-        item_ptr next = stack->next;
-        free(stack);
-        stack = next;
+    item_ptr item = stack->top;
+
+    if (item == NULL) {
+        return NULL;
     }
+
+    stack->top = item->next;
+
+    if (item == stack->last)
+    {
+        stack->last = NULL;
+    }
+    return item;
+}
+
+void stack_dispose(stack_ptr stack)
+{
+    item_ptr item = stack->top;
+    while (item != NULL)
+    {
+        symbol_dispose(item->symbol);
+
+        item_ptr next = item->next;
+        free(item);
+        item = next;
+    }
+    free(stack);
 }

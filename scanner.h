@@ -2,7 +2,8 @@
 #define SCANNER_H
 
 #include "token.h"
-#include "array.h"
+#include "stack.h"
+#include "buffer.h"
 
 /* States */
 #define SCANNER_START 1
@@ -35,12 +36,68 @@
 #define SCANNER_NULLABLE 28
 #define SCANNER_EPILOG 29
 
+#define CHANGE_STATE(state)                 \
+    do                                      \
+    {                                       \
+        DEBUG_STATE(*scanner_state, state); \
+        *scanner_state = state;             \
+    } while (0);
+
+#define APPEND_EMPTY(stack, token_type)                          \
+    do                                                           \
+    {                                                            \
+        token_value_t value;                                     \
+        token_ptr token = token_create(token_type, NONE, value); \
+        symbol_ptr symbol = create_terminal(token);              \
+        stack_add(stack, symbol);                                \
+    } while (0);
+
+// Add string token to stack, clean the buffer
+#define APPEND_STRING(stack, token_type, buffer)                                            \
+    do                                                                                      \
+    {                                                                                       \
+        symbol_ptr symbol = create_terminal(token_create_string(token_type, buffer->data)); \
+        stack_add(stack, symbol);                                                           \
+        buffer_reset(buffer);                                                               \
+    } while (0);
+
+#define APPEND_INT(stack, token_type, value)                                                 \
+    do                                                                                       \
+    {                                                                                        \
+        token_value_t token_value = {.integer = value};                                      \
+        symbol_ptr symbol = create_terminal(token_create(token_type, INTEGER, token_value)); \
+        stack_add(stack, symbol);                                                            \
+    } while (0);
+
+#define APPEND_FLOAT(stack, token_type, value)                                             \
+    do                                                                                     \
+    {                                                                                      \
+        token_value_t token_value = {.float_value = value};                                \
+        symbol_ptr symbol = create_terminal(token_create(token_type, FLOAT, token_value)); \
+        stack_add(stack, symbol);                                                          \
+    } while (0);
+
+#define APPEND_KEYWORD(stack, keyword_type)                                      \
+    do                                                                           \
+    {                                                                            \
+        symbol_ptr symbol = create_terminal(token_create_keyword(keyword_type)); \
+        stack_add(stack, symbol);                                                \
+    } while (0);
+
+#define APPEND_TYPE(stack, type)                                      \
+    do                                                                \
+    {                                                                 \
+        symbol_ptr symbol = create_terminal(token_create_type(type)); \
+        stack_add(stack, symbol);                                     \
+    } while (0);
+
 /* Read from stdin, parse into tokens. */
-void tokenize(array_ptr tokens);
+stack_ptr tokenize();
 
-void append_token(array_ptr tokens, token_type_t token_type);
+// Attempt to parse keyword from buffer. Return true if successful.
+bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyword_t keyword);
 
-void append_keyword(array_ptr tokens, keyword_t keyword);
-void append_type(array_ptr tokens, type_t type);
+// Attempt to parse type from buffer. Return true if successful.
+bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type);
 
 #endif
