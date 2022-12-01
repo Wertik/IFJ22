@@ -467,6 +467,23 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
             }
             break;
         }
+        case KEYWORD_WRITE:
+        {
+            //write("Hello\n");
+            //<statement> -> write ( <expression> );
+
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
+
+            DEBUG_PSEUDO("write");
+
+            parse_expression(in_stack, sym_global);
+
+            DEBUG_PSEUDO("end write");
+
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
+            ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+            break;
+        }
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
             exit(FAIL_SYNTAX);
