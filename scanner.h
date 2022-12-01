@@ -3,7 +3,7 @@
 
 #include "token.h"
 #include "stack.h"
-#include "string.h"
+#include "buffer.h"
 
 /* States */
 #define SCANNER_START 1
@@ -53,28 +53,28 @@
     } while (0);
 
 // Add string token to stack, clean the buffer
-#define APPEND_STRING(stack, token_type, buffer)                                               \
-    do                                                                                         \
-    {                                                                                          \
-        symbol_ptr symbol = create_terminal(token_create_string(token_type, (*buffer)->data)); \
-        stack_add(stack, symbol);                                                              \
-        *buffer = string_fresh(*buffer);                                                       \
+#define APPEND_STRING(stack, token_type, buffer)                                            \
+    do                                                                                      \
+    {                                                                                       \
+        symbol_ptr symbol = create_terminal(token_create_string(token_type, buffer->data)); \
+        stack_add(stack, symbol);                                                           \
+        buffer_reset(buffer);                                                               \
     } while (0);
 
-#define APPEND_INT(stack, token_type, value)                                        \
-    do                                                                              \
-    {                                                                               \
-        token_value_t token_value = {.integer = value};                             \
-        symbol_ptr symbol = create_terminal(token_create(token_type, INTEGER, token_value)); \
-        stack_add(stack, symbol);                                                   \
-    } while (0);
-
-#define APPEND_FLOAT(stack, token_type, value)                                               \
+#define APPEND_INT(stack, token_type, value)                                                 \
     do                                                                                       \
     {                                                                                        \
-        token_value_t token_value = {.float_value = value};                                  \
-        symbol_ptr symbol = create_terminal(token_create(token_type, FLOAT, token_value)); \
+        token_value_t token_value = {.integer = value};                                      \
+        symbol_ptr symbol = create_terminal(token_create(token_type, INTEGER, token_value)); \
         stack_add(stack, symbol);                                                            \
+    } while (0);
+
+#define APPEND_FLOAT(stack, token_type, value)                                             \
+    do                                                                                     \
+    {                                                                                      \
+        token_value_t token_value = {.float_value = value};                                \
+        symbol_ptr symbol = create_terminal(token_create(token_type, FLOAT, token_value)); \
+        stack_add(stack, symbol);                                                          \
     } while (0);
 
 #define APPEND_KEYWORD(stack, keyword_type)                                      \
@@ -95,9 +95,9 @@
 stack_ptr tokenize();
 
 // Attempt to parse keyword from buffer. Return true if successful.
-bool attempt_keyword(stack_ptr stack, string_ptr *buffer, char *keyword_str, keyword_t keyword);
+bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyword_t keyword);
 
 // Attempt to parse type from buffer. Return true if successful.
-bool attempt_type(stack_ptr stack, string_ptr *buffer, char *type_str, type_t type);
+bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type);
 
 #endif

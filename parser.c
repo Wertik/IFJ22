@@ -132,7 +132,6 @@ type_t parse_expression(stack_ptr in_stack, table_node_ptr *sym_global)
         rule_expression_next(in_stack, sym_global);
         break;
     case TOKEN_VAR_ID:
-
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
 
         // TODO: Check if var exists in symtable, get the type.
@@ -155,7 +154,7 @@ type_t parse_expression(stack_ptr in_stack, table_node_ptr *sym_global)
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
         break; */
     default:
-        fprintf(stderr, "Not a valid expression.\n");
+        fprintf(stderr, "Not an expression.\n");
         exit(FAIL_SYNTAX);
     }
 
@@ -251,23 +250,30 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
     // var_id =
     if (next->type == TOKEN_VAR_ID && after_next != NULL && after_next->type == TOKEN_ASSIGN)
     {
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
+        next = assert_next_token_get(in_stack, TOKEN_VAR_ID);
 
         // <statement> -> var_id = <expression>;
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_ASSIGN);
 
-        int value = parse_expression(in_stack, sym_global);
+        type_t result_type = parse_expression(in_stack, sym_global);
+
+        variable_ptr var = sym_get_variable(*sym_global, next->value.string);
 
         // Create symboltable entry if not already present
-        if (sym_get_variable(*sym_global, next->value.string) == NULL)
+        if (var == NULL)
         {
             // TODO: Infer type from value (requires PSA)
             // TODO-CHECK: Nullable by default?
             variable_ptr variable = variable_create(TYPE_INT, true);
             *sym_global = sym_insert(*sym_global, next->value.string, NULL, variable);
         }
+        else
+        {
+            // The entry exists, change the type
+            var->type = result_type;
+        }
 
-        DEBUG_PSEUDOF("%s <- %d", next->value.string, value);
+        DEBUG_PSEUDOF("%s <- %s", next->value.string, type_to_name(result_type));
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
     }
@@ -275,11 +281,21 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
     {
         // <statement> -> id(<argument-list>);
 
-        // TODO: Check that the function exists.
         // TODO: Generate call IFJcode22.
         // TODO: Check parameter count and types
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_ID);
+        // Check that the function exists.
+        token_ptr func_id = assert_next_token_get(in_stack, TOKEN_ID);
+
+        function_ptr function = sym_get_function(*sym_global, func_id->value.string);
+
+        if (function == NULL)
+        {
+            fprintf(stderr, "Function %s not defined.\n", func_id->value.string);
+            exit(FAIL_SEMANTIC_FUNC_DEF);
+        }
+
+        token_dispose(func_id);
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
@@ -393,7 +409,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
             if (function->return_type != TYPE_VOID && function->has_return == false)
             {
                 fprintf(stderr, "Missing return statement for non-void function %s.", function_id->value.string);
-                exit(FAIL_LEXICAL); // TODO: Correct code
+                exit(FAIL_SEMANTIC_BAD_RETURN);
             }
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
@@ -416,7 +432,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
                 if (function->return_type != result_type)
                 {
                     fprintf(stderr, "Invalid function return type.\n");
-                    exit(FAIL_SEMANTIC);
+                    exit(FAIL_SEMANTIC_BAD_RETURN);
                 }
 
                 DEBUG_PSEUDOF("return %s;", type_to_name(result_type));
@@ -429,7 +445,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
         }
         default:
             fprintf(stderr, "Invalid keyword in statement.\n");
-            exit(FAIL_LEXICAL); // TODO: Correct code
+            exit(FAIL_SYNTAX);
         }
     }
     else
@@ -494,7 +510,7 @@ void rule_argument_list(stack_ptr in_stack, table_node_ptr *sym_global, function
         if (arg_type->value.type == TYPE_VOID)
         {
             fprintf(stderr, "VOID is not a valid type of arguments.\n");
-            exit(FAIL_LEXICAL); // TODO: Correct code
+            exit(FAIL_SYNTAX);
         }
 
         // Append parameter
@@ -591,7 +607,7 @@ void rule_parameter_next(stack_ptr in_stack, table_node_ptr *sym_global)
     }
 }
 
-// <prog> -> <?php <statement> ?>
+// <prog> -> <?php <statement-list> ?>
 void rule_prog(stack_ptr in_stack, table_node_ptr *sym_global)
 {
     DEBUG_RULE();
@@ -613,7 +629,7 @@ void rule_prog(stack_ptr in_stack, table_node_ptr *sym_global)
     if (const_int->value.integer != 1)
     {
         fprintf(stderr, "Strict types has to be enabled.\n");
-        exit(FAIL_LEXICAL); // TODO: Correct code
+        exit(FAIL_SYNTAX);
     }
 
     token_dispose(const_int);
@@ -655,6 +671,6 @@ void parse(stack_ptr stack)
     if (stack_size(stack) != 0)
     {
         fprintf(stderr, "SA failed, symbols left on the input stack.\n");
-        exit(FAIL_LEXICAL); // TODO: Correct code
+        exit(FAIL_SYNTAX);
     }
 }

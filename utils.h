@@ -23,7 +23,7 @@
         if (var == NULL)                                    \
         {                                                   \
             fprintf(stderr, "%s: malloc fail\n", __func__); \
-            exit(FAIL_INTERNAL);                                       \
+            exit(FAIL_INTERNAL);                            \
         }                                                   \
     } while (0);
 

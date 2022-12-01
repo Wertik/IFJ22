@@ -4,7 +4,7 @@
 #include "stack.h"
 #include "utils.h"
 #include "token.h"
-#include "grammar.h"
+#include "symbol.h"
 
 stack_ptr stack_init()
 {
@@ -94,6 +94,10 @@ void stack_print(stack_ptr stack)
         item = item->next;
     }
     printf("]\n");
+}
+
+bool stack_empty(stack_ptr stack) {
+    return stack->top == NULL;
 }
 
 item_ptr stack_pop(stack_ptr stack)

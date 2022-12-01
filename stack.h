@@ -1,7 +1,7 @@
 #ifndef STACK_H
 #define STACK_H
 
-#include "grammar.h"
+#include "symbol.h"
 
 // Stack item
 typedef struct item_t
@@ -25,6 +25,8 @@ void stack_add(stack_ptr stack, symbol_ptr symbol);
 void stack_push(stack_ptr stack, symbol_ptr symbol);
 item_ptr stack_pop(stack_ptr stack);
 item_ptr stack_top(stack_ptr stack);
+
+bool stack_empty(stack_ptr stack);
 
 unsigned int stack_size(stack_ptr stack);
 

@@ -1,5 +1,5 @@
-OBJS=main.o token.o scanner.o string.o array.o symtable.o stack.o grammar.o parser.o instruction.o
-HEADER=scanner.h token.h string.h array.h symtable.h grammar.h stack.h parser.h utils.h instruction.h
+OBJS=main.o token.o scanner.o buffer.o array.o symtable.o stack.o symbol.o parser.o instruction.o
+HEADER=scanner.h token.h buffer.h array.h symtable.h symbol.h stack.h parser.h utils.h instruction.h
 OUT=main sym stack instr
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror
@@ -16,7 +16,7 @@ main: $(OBJS)
 sym: symtable_test.o symtable.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
-stack: stack_test.o stack.o token.o grammar.o
+stack: stack_test.o stack.o token.o symbol.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 instr: instruction_test.o instruction.o
