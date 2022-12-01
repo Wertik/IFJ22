@@ -45,7 +45,7 @@ bool attempt_greedy(char *rest, bool ignore_whitespace)
     buffer_ptr read = buffer_init();
     buffer_append(read, c);
 
-    for (; i < strlen(rest); )
+    for (; i < strlen(rest);)
     {
         if (!isspace(c) || !ignore_whitespace)
         {
@@ -673,6 +673,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             {
                 // none of the keywords matched, create a token id from this
                 APPEND_STRING(stack, TOKEN_ID, buffer);
+                parse_character(stack, buffer, scanner_state, c);
             }
             else
             {
