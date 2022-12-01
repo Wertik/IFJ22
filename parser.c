@@ -64,6 +64,7 @@ token_ptr get_next_token(stack_ptr stack)
     DEBUG_STACK_TOP(stack, 2);
 
     free(symbol);
+    free(item);
     return token;
 }
 
@@ -273,6 +274,7 @@ void rule_statement(stack_ptr in_stack, table_node_ptr *sym_global, function_ptr
         DEBUG_PSEUDO("%s <- %s", next->value.string, type_to_name(result_type));
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+        token_dispose(next);
     }
     else if (next->type == TOKEN_ID)
     {
@@ -690,4 +692,6 @@ void parse(stack_ptr stack)
         fprintf(stderr, "SA failed, symbols left on the input stack.\n");
         exit(FAIL_SYNTAX);
     }
+
+    sym_dispose(sym_global);
 }
