@@ -177,6 +177,37 @@ char *generate_instruction_ops(instruction_t instruction, int n, ...)
     return call_str;
 }
 
+const char *frame_to_formal(frame_t frame)
+{
+    switch (frame)
+    {
+    case FRAME_LOCAL:
+        return "LF";
+    case FRAME_GLOBAL:
+        return "GF";
+    case FRAME_TEMP:
+        return "TF";
+    default:
+        fprintf(stderr, "Invalid frame %d.\n", frame);
+        exit(FAIL_INTERNAL);
+    }
+}
+
+char *instr_var(frame_t frame, char *var)
+{
+    const char *frame_formal = frame_to_formal(frame);
+
+    size_t len = snprintf(NULL, 0, "%s@%s", frame_formal, var);
+
+    char *s = malloc(sizeof(char) * (len + 1));
+
+    MALLOC_CHECK(s);
+
+    sprintf(s, "%s@%s", frame_formal, var);
+
+    return s;
+}
+
 instr_buffer_ptr instr_buffer_init()
 {
     instr_buffer_ptr instr_buffer = malloc(sizeof(struct instr_buffer_t));

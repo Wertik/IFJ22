@@ -18,7 +18,5 @@ int main(int argc, char const *argv[])
     parse(stack);
 
     stack_dispose(stack);
-
-    printf("Finished without errors!\n");
     return 0;
 }

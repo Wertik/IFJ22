@@ -65,7 +65,7 @@ void token_dispose(token_ptr token)
 }
 
 // Parse type name to string for pretty print
-char *token_type_to_name(token_type_t type)
+const char *token_type_to_name(token_type_t type)
 {
     switch (type)
     {
@@ -133,14 +133,12 @@ char *token_type_to_name(token_type_t type)
         return "TOKEN_DECLARE";
     default:
     {
-        char *s = malloc(sizeof(char));
-        sprintf(s, "%d", type);
-        return s;
+        return "#invalid-token-type";
     }
     }
 }
 
-char *type_to_name(type_t type)
+const char *type_to_name(type_t type)
 {
     switch (type)
     {
@@ -157,7 +155,24 @@ char *type_to_name(type_t type)
     }
 }
 
-char *keyword_to_name(keyword_t keyword)
+const char *type_to_formal(type_t type)
+{
+    switch (type)
+    {
+    case TYPE_INT:
+        return "int";
+    case TYPE_STRING:
+        return "string";
+    case TYPE_FLOAT:
+        return "float";
+    case TYPE_VOID:
+        return "void";
+    default:
+        return "#unknown-type";
+    }
+}
+
+const char *keyword_to_name(keyword_t keyword)
 {
     switch (keyword)
     {
@@ -177,7 +192,7 @@ char *keyword_to_name(keyword_t keyword)
 }
 
 // Parse value type name to string for pretty print
-char *value_type_to_name(token_value_type_t value_type)
+const char *value_type_to_name(token_value_type_t value_type)
 {
     switch (value_type)
     {
@@ -193,16 +208,14 @@ char *value_type_to_name(token_value_type_t value_type)
         return "TYPE";
     default:
     {
-        char *s = malloc(sizeof(char));
-        sprintf(s, "%d", value_type);
-        return s;
+        return "#invalid-value-type";
     }
     }
 }
 
 // Parse value type to printf format for pretty print
 // Token (<type>, <value type>, <value>)
-char *value_type_to_format(token_value_type_t value_type)
+const char *value_type_to_format(token_value_type_t value_type)
 {
     switch (value_type)
     {
@@ -237,17 +250,30 @@ char *value_to_string(token_value_type_t type, token_value_t value)
         return s;
     }
     case KEYWORD:
-        return keyword_to_name(value.keyword);
+    {
+        size_t len = snprintf(NULL, 0, "%s", keyword_to_name(value.keyword));
+        char *s = malloc(sizeof(char) * (len + 1));
+        MALLOC_CHECK(s);
+        sprintf(s, "%s", keyword_to_name(value.keyword));
+        return s;
+    }
     case TYPE:
-        return type_to_name(value.type);
+    {
+        size_t len = snprintf(NULL, 0, "%s", type_to_name(value.type));
+        char *s = malloc(sizeof(char) * (len + 1));
+        MALLOC_CHECK(s);
+        sprintf(s, "%s", type_to_name(value.type));
+        return s;
+    }
     default:
-        return "#invalid-type-value";
+        fprintf(stderr, "Invalid value type %d.\n", type);
+        exit(FAIL_INTERNAL);
     }
 }
 
 char *token_to_string(token_ptr token)
 {
-    char *format = value_type_to_format(token->value_type);
+    const char *format = value_type_to_format(token->value_type);
 
     char *value_s = value_to_string(token->value_type, token->value);
 

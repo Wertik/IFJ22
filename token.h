@@ -101,7 +101,7 @@ token_ptr token_create_type(type_t type);
 bool is_one_of(token_ptr token, int count, ...);
 
 char *token_to_string(token_ptr token);
-char *token_type_to_name(token_type_t type);
+const char *token_type_to_name(token_type_t type);
 
 void token_print(token_ptr token);
 
@@ -109,7 +109,8 @@ bool token_compare(token_ptr token1, token_ptr token2);
 
 void token_dispose(token_ptr token);
 
-char *type_to_name(type_t type);
-char *keyword_to_name(keyword_t keyword); 
+const char *type_to_name(type_t type);
+const char *type_to_format(type_t type);
+const char *keyword_to_name(keyword_t keyword);
 
 #endif

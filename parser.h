@@ -4,6 +4,7 @@
 #include "symtable.h"
 #include "stack.h"
 #include "utils.h"
+#include "instruction.h"
 
 #define ASSERT_TOKEN_TYPE(token, token_type)                                                                                                  \
     do                                                                                                                                        \
@@ -74,10 +75,9 @@ void assert_n_tokens(stack_ptr stack, int count, ...);
 
 // -- rule functions
 
-void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global);
-void rule_prog_end(stack_ptr in_stack, sym_table_ptr sym_global);
-void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
-void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
+void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr instr_buffer);
+void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
+void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
 
 void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
 void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);

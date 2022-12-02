@@ -6,3 +6,4 @@ instr
 *.tgz
 .vscode/
 temp_out
+prog.out

@@ -1,0 +1,4 @@
+#!/bin/bash
+
+make main
+cat "$1" | ./main > prog.out | ./ic22int_2022-11-14 prog.out

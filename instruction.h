@@ -3,18 +3,20 @@
 
 #include <string.h>
 
-#define ADD_INSTRUCTION(instr_buffer, instr)                          \
-    do                                                                \
-    {                                                                 \
+#define INSTRUCTION(instr_buffer, instr)                                \
+    do                                                                  \
+    {                                                                   \
         instr_buffer_append(instr_buffer, generate_instruction(instr)); \
     } while (0);
 
-#define ADD_INSTRUCTION_OPS(instr_buffer, instr, count, ...)          \
-    do                                                                \
-    {                                                                 \
+#define INSTRUCTION_OPS(instr_buffer, instr, count, ...)                  \
+    do                                                                    \
+    {                                                                     \
         char *call = generate_instruction_ops(instr, count, __VA_ARGS__); \
-        instr_buffer_append(instr_buffer, call);                      \
+        instr_buffer_append(instr_buffer, call);                          \
     } while (0);
+
+#define TERM(frame, var) (#frame "@" #var)
 
 typedef enum
 {
@@ -149,6 +151,13 @@ typedef enum
     INSTR_DPRINT,
 } instruction_t;
 
+typedef enum
+{
+    FRAME_LOCAL,
+    FRAME_GLOBAL,
+    FRAME_TEMP,
+} frame_t;
+
 typedef struct instr_buffer_t
 {
     char **instructions;
@@ -172,5 +181,7 @@ void instr_buffer_dispose(instr_buffer_ptr instr_buffer);
 
 // Write the buffer to stdout
 void instr_buffer_out(instr_buffer_ptr instr_buffer);
+
+char *instr_var(frame_t frame, char *name);
 
 #endif
