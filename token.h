@@ -20,7 +20,6 @@ typedef enum
     KEYWORD_ELSE,
     KEYWORD_WHILE,
     KEYWORD_RETURN,
-    KEYWORD_WRITE,
 } keyword_t;
 
 typedef union

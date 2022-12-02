@@ -666,7 +666,6 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
                 !attempt_keyword(stack, buffer, "else", KEYWORD_ELSE) &&
                 !attempt_keyword(stack, buffer, "while", KEYWORD_WHILE) &&
                 !attempt_keyword(stack, buffer, "return", KEYWORD_RETURN) &&
-                !attempt_keyword(stack, buffer, "write", KEYWORD_WRITE) &&
                 !attempt_type(stack, buffer, "int", TYPE_INT) &&
                 !attempt_type(stack, buffer, "string", TYPE_STRING) &&
                 !attempt_type(stack, buffer, "float", TYPE_FLOAT) &&

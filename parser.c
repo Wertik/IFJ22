@@ -292,23 +292,47 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
         // Check that the function exists.
         token_ptr func_id = assert_next_token_get(in_stack, TOKEN_ID);
+        bool is_builtin = false;
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
         function_ptr function = sym_get_function(sym_global, func_id->value.string);
 
-        if (function == NULL)
+        if (strcmp("reads", func_id->value.string) || strcmp("readi", func_id->value.string) || strcmp("readf", func_id->value.string))
         {
-            fprintf(stderr, "Function %s not defined.\n", func_id->value.string);
-            exit(FAIL_SEMANTIC_FUNC_DEF);
+            is_builtin = true;
+
+            // Save function to symtable
+            function_ptr function = function_create();
+            sym_insert(sym_global, func_id->value.string, function, NULL);
+
+            DEBUG_PSEUDO("%s(...)", func_id->value.string);
+        }
+        else if (strcmp("write", func_id->value.string))
+        {
+
+            function_ptr function = function_create();
+            sym_insert(sym_global, func_id->value.string, function, NULL);
+
+            DEBUG_PSEUDO("%s(...)", func_id->value.string);
+
+            rule_parameter_list(in_stack, sym_global, function, 0);
         }
 
-        token_dispose(func_id);
+        if (!is_builtin) // neni
+        {
+            if (function == NULL) // je defined
+            {
+                fprintf(stderr, "Function %s not defined.\n", func_id->value.string);
+                exit(FAIL_SEMANTIC_FUNC_DEF);
+            }
 
-        rule_parameter_list(in_stack, sym_global, function, 0);
+            rule_parameter_list(in_stack, sym_global, function, 0);
+        }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+        token_dispose(func_id);
     }
     else if (next->type == TOKEN_KEYWORD)
     {
@@ -373,7 +397,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
         }
         case KEYWORD_FUNCTION:
         {
-            // <statement> -> function id(<argument-list>) {<statement-list>}
+            // <statement> -> function id(<argument-list>) : type {<statement-list>}
 
             // Save function to symtable
             token_ptr function_id = assert_next_token_get(in_stack, TOKEN_ID);
@@ -472,23 +496,6 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                 function->has_return = true;
                 ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
             }
-            break;
-        }
-        case KEYWORD_WRITE:
-        {
-            // write("Hello\n");
-            //<statement> -> write ( <expression> );
-
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
-
-            type_t result_type = parse_expression(in_stack, sym_global);
-
-            DEBUG_PSEUDO("write(%s)", type_to_name(result_type));
-
-            INSTRUCTION_OPS(instr_buffer, INSTR_WRITE, 1, "string@Hello\\032world!\\010");
-
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
             break;
         }
         default:
@@ -664,6 +671,7 @@ void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
     }
     case TOKEN_STRING_LIT:
     {
+
         if (expected_parameter.type != TYPE_STRING)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_STRING");
