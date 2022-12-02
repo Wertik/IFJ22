@@ -481,11 +481,11 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
-            DEBUG_PSEUDO("write");
+            type_t result_type = parse_expression(in_stack, sym_global);
 
-            parse_expression(in_stack, sym_global);
+            DEBUG_PSEUDO("write(%s)", type_to_name(result_type));
 
-            DEBUG_PSEUDO("end write");
+            INSTRUCTION_OPS(instr_buffer, INSTR_WRITE, 1, "string@Hello\\032world!\\010");
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);

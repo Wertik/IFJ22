@@ -251,6 +251,9 @@ void instr_buffer_print(instr_buffer_ptr instr_buffer)
 void instr_buffer_out(instr_buffer_ptr instr_buffer)
 {
     printf(".ifjcode22\n"); // Header
+
+    // TODO: Generate built-ins
+
     for (int i = 0; i < instr_buffer->len; i++)
     {
         printf("%s\n", instr_buffer->instructions[i]);
