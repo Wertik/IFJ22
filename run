@@ -1,4 +1,10 @@
 #!/bin/bash
 
 make main
-cat "$1" | ./main > prog.out | ./ic22int_2022-11-14 prog.out
+cat "$1" | ./main > prog.out
+
+if [ "$?" == 0 ]; then
+    ./ic22int_2022-11-14 prog.out
+else
+    echo "Compiler exited with errors."
+fi
