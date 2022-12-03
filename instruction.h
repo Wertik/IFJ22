@@ -4,38 +4,38 @@
 #include <string.h>
 
 #define INSTRUCTION(buffer, instr)                                \
-    do                                                                  \
-    {                                                                   \
+    do                                                            \
+    {                                                             \
         instr_buffer_append(buffer, generate_instruction(instr)); \
     } while (0);
 
-#define INSTRUCTION_OPS(buffer, instr, count, ...)                  \
+#define INSTRUCTION_OPS(buffer, instr, count, ...)                        \
     do                                                                    \
     {                                                                     \
         char *call = generate_instruction_ops(instr, count, __VA_ARGS__); \
-        instr_buffer_append(buffer, call);                          \
+        instr_buffer_append(buffer, call);                                \
     } while (0);
 
 #define TERM(frame, var) (#frame "@" #var)
 
 #define FUNCTION_HEADER(buffer, name)                              \
-    do                                                                   \
-    {                                                                    \
+    do                                                             \
+    {                                                              \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str(#name)); \
         INSTRUCTION(buffer, INSTR_CREATE_FRAME);                   \
         INSTRUCTION(buffer, INSTR_PUSH_FRAME);                     \
     } while (0);
 
 #define FUNCTION_RETVAL(buffer)                                                     \
-    do                                                                                    \
-    {                                                                                     \
+    do                                                                              \
+    {                                                                               \
         INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                    \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval")); \
     } while (0);
 
 #define FUNCTION_RETURN(buffer)            \
-    do                                           \
-    {                                            \
+    do                                     \
+    {                                      \
         INSTRUCTION(buffer, INSTR_RETURN); \
     } while (0);
 
