@@ -543,8 +543,8 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
     }
 }
 
-// <statement-list> -> <statement><statement-list>
 // <statement-list> -> eps
+// <statement-list> -> <statement><statement-list>
 void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer)
 {
     DEBUG_RULE();
@@ -558,13 +558,12 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
         return;
     }
 
-    // TODO: Use is_one_of
-    if ((next->type == TOKEN_KEYWORD) ||
-        next->type == TOKEN_VAR_ID ||
-        next->type == TOKEN_ID ||
-        next->type == TOKEN_CONST_INT ||
-        next->type == TOKEN_CONST_DOUBLE ||
-        next->type == TOKEN_STRING_LIT)
+    if (is_one_of(next, TOKEN_KEYWORD,
+                  TOKEN_VAR_ID,
+                  TOKEN_ID,
+                  TOKEN_CONST_INT,
+                  TOKEN_CONST_DOUBLE,
+                  TOKEN_STRING_LIT))
     {
         // <statement-list> -> <statement><statement-list>
         rule_statement(in_stack, sym_global, function, instr_buffer);
