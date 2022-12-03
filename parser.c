@@ -379,7 +379,8 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             // Check if the function is already defined
 
-            if (sym_search(sym_global, function_id->value.string) != NULL) {
+            if (sym_search(sym_global, function_id->value.string) != NULL)
+            {
                 fprintf(stderr, "Function %s already defined.\n", function_id->value.string);
                 exit(FAIL_SEMANTIC_FUNC_DEF);
             }
@@ -601,24 +602,22 @@ void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
     token_ptr next = peek_top(in_stack);
 
     // Ignore argument count checks with variadic functions
-    if (variadic != true)
-    {
-        if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
-        {
-            // <par-list> -> eps
-            if (current_parameter < function->parameter_count - 1)
-            {
-                fprintf(stderr, "Not enough parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter);
-                exit(FAIL_SEMANTIC_BAD_ARGS);
-            }
-            return;
-        }
 
-        if (current_parameter + 1 > function->parameter_count)
+    // <par-list> -> eps
+    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    {
+        if (!variadic && current_parameter < function->parameter_count - 1)
         {
-            fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+            fprintf(stderr, "Not enough parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter);
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
+        return;
+    }
+
+    if (!variadic && current_parameter + 1 > function->parameter_count)
+    {
+        fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
     parameter_t expected_parameter = function->parameters[current_parameter];
