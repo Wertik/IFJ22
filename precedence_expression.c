@@ -42,7 +42,7 @@ int get_pos_in_t(token_ptr TOKEN)
 {
     switch (TOKEN->type)
     {
-    case TOKEN_OPENING_TAG:
+    case TOKEN_SEMICOLON :
         return 5;
         break;
     case TOKEN_PLUS:
@@ -101,8 +101,7 @@ void perform_reduction(item_ptr *push_down_stack, sym_table_ptr table)
     if (next->type == TOKEN_CONST_EXP)
     {
         token_ptr second_next = get_next_token(push_down_stack);
-        if (second_next->type != TOKEN_OPENING_TAG)
-        {
+        if (second_next->type != TOKEN_SEMICOLON){
             stack_pop(push_down_stack);
             symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
             DEBUG_PSEUDO("$");
@@ -114,21 +113,19 @@ void perform_reduction(item_ptr *push_down_stack, sym_table_ptr table)
     fprintf(stderr, "NOT POSSIBLE TO REDUCE");
 }
 
-void perform_addition(item_ptr *push_down_stack, table_node_ptr *tree, item_ptr *in_stack)
-{
+void perform_addition(item_ptr *push_down_stack, sym_table_ptr *tree , item_ptr *in_stack){
     token_ptr next = get_next_token(in_stack);
     symbol_ptr symbol = create_terminal(next);
     stack_push(push_down_stack, symbol);
 }
 
-int expression(item_ptr *in_stack, table_node_ptr *tree)
-{
-
+int expression(item_ptr *in_stack, sym_table_ptr *tree){
+    
     item_ptr push_down_stack = stack_init();
 
     // represents dollar
     token_value_t value;
-    token_ptr dollar = token_create(TOKEN_OPENING_TAG, NONE, value);
+    token_ptr dollar = token_create(TOKEN_SEMICOLON, NONE, value);
     symbol_ptr symbol = create_terminal(dollar);
 
     // dollar = create_terminal(dollar);
