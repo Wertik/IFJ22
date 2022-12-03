@@ -3,20 +3,64 @@
 
 #include <string.h>
 
-#define INSTRUCTION(instr_buffer, instr)                                \
+#define INSTRUCTION(buffer, instr)                                \
     do                                                                  \
     {                                                                   \
-        instr_buffer_append(instr_buffer, generate_instruction(instr)); \
+        instr_buffer_append(buffer, generate_instruction(instr)); \
     } while (0);
 
-#define INSTRUCTION_OPS(instr_buffer, instr, count, ...)                  \
+#define INSTRUCTION_OPS(buffer, instr, count, ...)                  \
     do                                                                    \
     {                                                                     \
         char *call = generate_instruction_ops(instr, count, __VA_ARGS__); \
-        instr_buffer_append(instr_buffer, call);                          \
+        instr_buffer_append(buffer, call);                          \
     } while (0);
 
 #define TERM(frame, var) (#frame "@" #var)
+
+#define FUNCTION_HEADER(buffer, name)                              \
+    do                                                                   \
+    {                                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str(#name)); \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                   \
+        INSTRUCTION(buffer, INSTR_PUSH_FRAME);                     \
+    } while (0);
+
+#define FUNCTION_RETVAL(buffer)                                                     \
+    do                                                                                    \
+    {                                                                                     \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                    \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval")); \
+    } while (0);
+
+#define FUNCTION_RETURN(buffer)            \
+    do                                           \
+    {                                            \
+        INSTRUCTION(buffer, INSTR_RETURN); \
+    } while (0);
+
+#define BUILT_IN_WRITE(buffer)                                                 \
+    do                                                                         \
+    {                                                                          \
+        FUNCTION_HEADER(buffer, write)                                         \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));     \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));      \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));          \
+        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));         \
+        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("string@\\010"));    \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));           \
+        INSTRUCTION(buffer, INSTR_SUBS);                                       \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));           \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQS, 1, alloc_str("_writeloop")); \
+        FUNCTION_RETURN(buffer);                                               \
+    } while (0);
+
+// TODO: Other built-in functions
 
 typedef enum
 {
@@ -183,5 +227,6 @@ void instr_buffer_dispose(instr_buffer_ptr instr_buffer);
 void instr_buffer_out(instr_buffer_ptr instr_buffer);
 
 char *instr_var(frame_t frame, char *name);
+char *instr_const_int(int val);
 
 #endif

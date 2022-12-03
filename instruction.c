@@ -120,7 +120,8 @@ const char *instruction_to_str(instruction_t instruction)
     case INSTR_DPRINT:
         return "DPRINT";
     default:
-        return "#invalid-instruction";
+        fprintf(stderr, "Invalid instruction %d.\n", instruction);
+        exit(FAIL_INTERNAL);
     }
 }
 
@@ -171,6 +172,8 @@ char *generate_instruction_ops(instruction_t instruction, int n, ...)
         call_str = strcat(call_str, " ");
 
         call_str = strcat(call_str, s);
+
+        free(s);
     }
 
     va_end(val);
@@ -205,6 +208,15 @@ char *instr_var(frame_t frame, char *var)
 
     sprintf(s, "%s@%s", frame_formal, var);
 
+    return s;
+}
+
+char *instr_const_int(int val)
+{
+    size_t len = snprintf(NULL, 0, "int@%d", val);
+    char *s = malloc(sizeof(char) * (len + 1));
+    MALLOC_CHECK(s);
+    sprintf(s, "int@%d", val);
     return s;
 }
 
@@ -250,10 +262,6 @@ void instr_buffer_print(instr_buffer_ptr instr_buffer)
 
 void instr_buffer_out(instr_buffer_ptr instr_buffer)
 {
-    printf(".ifjcode22\n"); // Header
-
-    // TODO: Generate built-ins
-
     for (int i = 0; i < instr_buffer->len; i++)
     {
         printf("%s\n", instr_buffer->instructions[i]);

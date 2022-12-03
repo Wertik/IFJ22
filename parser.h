@@ -82,11 +82,11 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
 void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
 void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
 
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool isWrite);
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool isWrite);
+int rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic);
+int rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic);
 
-type_t parse_expression(stack_ptr in_stack, sym_table_ptr tree);
-void rule_expression_next(stack_ptr in_stack, sym_table_ptr tree);
+type_t parse_expression(stack_ptr in_stack, sym_table_ptr tree, instr_buffer_ptr instr_buffer);
+void rule_expression_next(stack_ptr in_stack, sym_table_ptr tree, instr_buffer_ptr instr_buffer);
 
 void parse(stack_ptr tokens);
 #endif

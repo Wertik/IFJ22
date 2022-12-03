@@ -9,6 +9,12 @@ typedef struct buffer_t
     char *data;
 } * buffer_ptr;
 
+// Make an allocated string copy of a constant string
+char *alloc_str(const char *str);
+
+char *int_to_str(int i);
+char *float_to_str(double d);
+
 // Initialize an empty buffer
 buffer_ptr buffer_init();
 
