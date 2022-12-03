@@ -651,7 +651,7 @@ int rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_p
     // Ignore argument count checks with variadic functions
 
     // <par-list> -> eps
-    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT) && variadic != true)
     {
         if (!variadic && current_parameter < function->parameter_count - 1)
         {
