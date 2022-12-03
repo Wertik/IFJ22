@@ -175,7 +175,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_VAR_ID_START);
             buffer_append(buffer, c);
         }
-        else if (c == EOF || c == '\n' || c == ' ')
+         //TODO: magic number
+        else if (c == EOF || c == '\n' || c == ' ' || c == 13 )
         {
             break;
         }
@@ -369,15 +370,18 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else if (c == '"')
         {
-            // TODO:
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '"';
         }
         else if (c == '\\')
         {
-            // TODO:
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '\\';
         }
         else if (c == '$')
         {
-            // TODO:
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '$';
         }
         else if (c == 'n')
         {
@@ -612,7 +616,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
     }
     case (SCANNER_LINE_COMM):
     {
-        if (c == EOF || c == '\n')
+         //TODO: magic number
+        if (c == EOF || c == '\n'|| c == 13)
         {
             CHANGE_STATE(SCANNER_START);
         }
@@ -714,7 +719,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
     }
     case (SCANNER_EPILOG):
     {
-        if (c != EOF && c != '\n')
+        //TODO: magic number
+        if (c != EOF && c != '\n' && c != 13 )
         {
             fprintf(stderr, "Character %d (%c) after epilog.\n", c, c);
             exit(FAIL_LEXICAL);
