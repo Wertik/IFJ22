@@ -49,7 +49,6 @@
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));      \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));          \
         INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));         \
-        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("string@\\010"));    \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));           \
         INSTRUCTION(buffer, INSTR_SUBS);                                       \
@@ -228,5 +227,6 @@ void instr_buffer_out(instr_buffer_ptr instr_buffer);
 
 char *instr_var(frame_t frame, char *name);
 char *instr_const_int(int val);
+char *instr_const_str(char *str);
 
 #endif

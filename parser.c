@@ -118,24 +118,26 @@ type_t parse_expression(stack_ptr in_stack, sym_table_ptr sym_global, instr_buff
     case TOKEN_CONST_INT:
         next = assert_next_token_get(in_stack, TOKEN_CONST_INT);
         result_type = TYPE_INT;
-        rule_expression_next(in_stack, sym_global, instr_buffer);
 
         // TODO: Remove later, just for demo.
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer));
+
+        rule_expression_next(in_stack, sym_global, instr_buffer);
 
         token_dispose(next);
         break;
     case TOKEN_STRING_LIT:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
-        // value = parse_expression(in_stack);
-
-        // how to return string
-        // value = next->value.string;
+        next = assert_next_token_get(in_stack, TOKEN_STRING_LIT);
 
         result_type = TYPE_STRING;
 
+        // TODO: Remove later, just for demo.
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
+
         rule_expression_next(in_stack, sym_global, instr_buffer);
+
+        token_dispose(next);
         break;
     case TOKEN_VAR_ID:
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
@@ -318,7 +320,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
         }
 
         // Function call code
-        INSTRUCTION_OPS(function == NULL ? instr_buffer : function->instr_buffer, INSTR_CALL, 1, called_function->name);
+        INSTRUCTION_OPS(function == NULL ? instr_buffer : function->instr_buffer, INSTR_CALL, 1, alloc_str(called_function->name));
         // TODO: Maybe generate some retval code?
         INSTRUCTION(function == NULL ? instr_buffer : function->instr_buffer, INSTR_POP_FRAME);
 
@@ -712,8 +714,10 @@ int rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_p
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
+        next = assert_next_token_get(in_stack, TOKEN_STRING_LIT);
         current_parameter = rule_parameter_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
+        token_dispose(next);
         break;
     }
     default:

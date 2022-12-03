@@ -220,6 +220,41 @@ char *instr_const_int(int val)
     return s;
 }
 
+// Replace a character by a series of characters
+char *str_rep(char *str, char target, char *replacement)
+{
+    for (int i = 0; str[i] != '\0'; i++) {
+        if (str[i] == target) {
+            // realloc with new size
+            int size = strlen(str) + strlen(replacement);
+            char *s = malloc(sizeof(char) * (size + 1));
+
+            MALLOC_CHECK(s);
+
+            memcpy(s, str, i);
+            memcpy(s + i, replacement, strlen(replacement));
+            memcpy(s + i + strlen(replacement), str + i + 1, strlen(str) - i);
+            s[size] = '\0';
+
+            return str_rep(s, target, replacement);
+       }
+    }
+    return str;
+}
+
+char *instr_const_str(char *str)
+{
+    size_t len = snprintf(NULL, 0, "string@%s", str);
+    char *s = malloc(sizeof(char) * (len + 1));
+    MALLOC_CHECK(s);
+    sprintf(s, "string@%s", str);
+
+    s = str_rep(s, ' ', "\\032");
+    s = str_rep(s, '\n', "\\010");
+    
+    return s;
+}
+
 instr_buffer_ptr instr_buffer_init()
 {
     instr_buffer_ptr instr_buffer = malloc(sizeof(struct instr_buffer_t));
