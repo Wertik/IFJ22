@@ -312,7 +312,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
         called_function->called = true;
 
-        int parameter_count = rule_parameter_list(in_stack, sym_global, called_function, function == NULL ? instr_buffer : function->instr_buffer, 0, called_function->variadic);
+        int parameter_count = rule_argument_list(in_stack, sym_global, called_function, function == NULL ? instr_buffer : function->instr_buffer, called_function->variadic);
 
         if (called_function->variadic)
         {
@@ -413,7 +413,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
-            rule_argument_list(in_stack, sym_global, function);
+            rule_parameter_list(in_stack, sym_global, function);
 
             for (int i = 0; i < function->parameter_count; i++)
             {
@@ -558,6 +558,7 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
         return;
     }
 
+    // TODO: Use is_one_of
     if ((next->type == TOKEN_KEYWORD) ||
         next->type == TOKEN_VAR_ID ||
         next->type == TOKEN_ID ||
@@ -577,9 +578,30 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
     }
 }
 
-// <arg-list> -> eps
-// <arg-list> -> type var_id <arg-next>
-void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
+// <par> -> type var_id
+void rule_parameter(stack_ptr in_stack, function_ptr function)
+{
+    token_ptr par_type = assert_next_token_get(in_stack, TOKEN_TYPE);
+    token_ptr par_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
+
+    // cannot use void as parameter type
+    if (par_type->value.type == TYPE_VOID)
+    {
+        fprintf(stderr, "VOID is not a valid parameter type.\n");
+        exit(FAIL_SYNTAX);
+    }
+
+    // Append parameter
+    // TODO: Nullable?
+    append_parameter(function, par_id->value.string, par_type->value.type, false);
+
+    token_dispose(par_type);
+    token_dispose(par_id);
+}
+
+// <par-list> -> eps
+// <par-list> -> <par> <par-next>
+void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -587,26 +609,9 @@ void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_p
 
     if (next->type == TOKEN_TYPE)
     {
-        // <arg-list> -> type var_id <arg-next>
-
-        token_ptr arg_type = assert_next_token_get(in_stack, TOKEN_TYPE);
-        token_ptr arg_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
-
-        // cannot use void as parameter type
-        if (arg_type->value.type == TYPE_VOID)
-        {
-            fprintf(stderr, "VOID is not a valid type of arguments.\n");
-            exit(FAIL_SYNTAX);
-        }
-
-        // Append parameter
-        // TODO: Nullable?
-        append_parameter(function, arg_id->value.string, arg_type->value.type, false);
-
-        token_dispose(arg_type);
-        token_dispose(arg_id);
-
-        rule_argument_next(in_stack, sym_global, function);
+        // <par-list> -> <par> <par-next>
+        rule_parameter(in_stack, function);
+        rule_parameter_next(in_stack, sym_global, function);
     }
     else
     {
@@ -615,9 +620,9 @@ void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_p
     }
 }
 
-// <arg-next> -> eps
-// <arg-next> -> , <arg-list>
-void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
+// <par-next> -> eps
+// <par-next> -> , <par> <par-next>
+void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
 {
     DEBUG_RULE();
 
@@ -625,10 +630,10 @@ void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_p
 
     if (next->type == TOKEN_COMMA)
     {
-        // <arg-next> -> , <arg-list>
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
+        // <par-next> -> , <par> <par-next>
+        STACK_THROW(in_stack);
 
-        rule_argument_list(in_stack, sym_global, function);
+        rule_parameter_list(in_stack, sym_global, function);
     }
     else
     {
@@ -637,12 +642,72 @@ void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_p
     }
 }
 
-// <par-list> -> eps
-// <par-list> -> var_id <par-next>
-// <par-list> -> const_int <par-next>
-// <par-list> -> const_float <par-next>
-// <par-list> -> string_list <par-next>
-int rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic)
+// <arg> -> var_id
+// <arg> -> const_int
+// <arg> -> string_lit
+// <arg> -> const_float
+void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter, instr_buffer_ptr instr_buffer)
+{
+    token_ptr next = get_next_token(stack);
+
+    switch (next->type)
+    {
+    case TOKEN_VAR_ID:
+    {
+        variable_ptr var = sym_get_variable(table, next->value.string);
+
+        if (var == NULL)
+        {
+            fprintf(stderr, "Unknown variable %s.\n", next->value.string);
+            exit(FAIL_SEMANTIC_VAR_UNDEFINED);
+        }
+
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, next->value.string));
+        break;
+    }
+    case TOKEN_CONST_INT:
+    {
+        if (parameter != NULL && parameter->type != TYPE_INT)
+        {
+            fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_INT");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer));
+        break;
+    }
+    case TOKEN_CONST_DOUBLE:
+    {
+        if (parameter != NULL && parameter->type != TYPE_FLOAT)
+        {
+            fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_FLOAT");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+        // TODO: Push float value on stack (hex format)
+        break;
+    }
+    case TOKEN_STRING_LIT:
+    {
+
+        if (parameter != NULL && parameter->type != TYPE_STRING)
+        {
+            fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_STRING");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
+        break;
+    }
+    default:
+        fprintf(stderr, "Invalid token %s in function argument.\n", token_type_to_name(next->type));
+        exit(FAIL_SYNTAX);
+    }
+
+    token_dispose(next);
+}
+
+// <arg-list> -> eps
+// <arg-list> -> <arg> <arg-next>
+int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, bool variadic)
 {
     DEBUG_RULE();
 
@@ -650,16 +715,28 @@ int rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_p
 
     // Ignore argument count checks with variadic functions
 
-    // <par-list> -> eps
-    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT) && variadic != true)
+    // <arg-list> -> eps
+    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
     {
-        if (!variadic && current_parameter < function->parameter_count - 1)
+        // expected more than zero argumnets
+        if (!variadic && function->parameter_count > 0)
         {
-            fprintf(stderr, "Not enough parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter);
+            fprintf(stderr, "Not enough arguments for function. Expected %d but got %d.\n", function->parameter_count, 0);
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
-        return current_parameter;
+        return 0;
     }
+
+    // Create a side buffer, save push instruction there, append after the recursive call.
+    // We do this to push arguments from last to first.
+    // hello(1, 2) -> PUSHS 2, PUSHS 1
+
+    instr_buffer_ptr arg_buffer = instr_buffer_init();
+
+    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[0]);
+    rule_argument(in_stack, sym_global, expected_parameter, arg_buffer);
+
+    int current_parameter = rule_argument_next(in_stack, sym_global, function, instr_buffer, 0, variadic);
 
     if (!variadic && current_parameter + 1 > function->parameter_count)
     {
@@ -667,86 +744,73 @@ int rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_p
         exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
-    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[current_parameter]);
-
-    switch (next->type)
+    if (!variadic && function->parameter_count > current_parameter + 1)
     {
-    case TOKEN_VAR_ID:
-    {
-        next = assert_next_token_get(in_stack, TOKEN_VAR_ID);
-        current_parameter = rule_parameter_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, next->value.string));
-        token_dispose(next);
-        break;
+        fprintf(stderr, "Not enough arguments for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        exit(FAIL_SEMANTIC_BAD_ARGS);
     }
-    case TOKEN_CONST_INT:
-    {
-        if (expected_parameter != NULL && expected_parameter->type != TYPE_INT && variadic != true)
-        {
-            fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter->name, type_to_name(expected_parameter->type), "TYPE_INT");
-            exit(FAIL_SEMANTIC_BAD_ARGS);
-        }
 
-        next = assert_next_token_get(in_stack, TOKEN_CONST_INT);
-        current_parameter = rule_parameter_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer));
-        token_dispose(next);
-        break;
-    }
-    case TOKEN_CONST_DOUBLE:
+    // append argument instructions
+    for (int i = 0; i < arg_buffer->len; i++)
     {
-        if (expected_parameter != NULL && expected_parameter->type != TYPE_FLOAT && variadic != true)
-        {
-            fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter->name, type_to_name(expected_parameter->type), "TYPE_FLOAT");
-            exit(FAIL_SEMANTIC_BAD_ARGS);
-        }
-
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
-        current_parameter = rule_parameter_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
-        break;
+        instr_buffer_append(instr_buffer, arg_buffer->instructions[i]);
     }
-    case TOKEN_STRING_LIT:
-    {
-
-        if (expected_parameter != NULL && expected_parameter->type != TYPE_STRING && variadic != true)
-        {
-            fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter->name, type_to_name(expected_parameter->type), "TYPE_STRING");
-            exit(FAIL_SEMANTIC_BAD_ARGS);
-        }
-
-        next = assert_next_token_get(in_stack, TOKEN_STRING_LIT);
-        current_parameter = rule_parameter_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
-        token_dispose(next);
-        break;
-    }
-    default:
-        fprintf(stderr, "Invalid token in function parameter.\n");
-        exit(FAIL_SYNTAX);
-    }
+    free(arg_buffer);
 
     return current_parameter;
 }
 
-// <par-next> -> eps
-// <par-next> -> , <par-list>
-int rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic)
+// <arg-next> -> eps
+// <arg-next> -> , <arg> <arg-next>
+int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic)
 {
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
 
-    if (next->type == TOKEN_COMMA)
+    if (next->type != TOKEN_COMMA)
     {
-        // <par-next> -> , <par-list>
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
-        return rule_parameter_list(in_stack, sym_global, function, instr_buffer, current_parameter + 1, variadic);
-    }
-    else
-    {
-        // <par-next> -> eps
+        // <arg-next> -> eps
         return current_parameter;
     }
+
+    STACK_THROW(in_stack);
+
+    current_parameter += 1;
+
+    next = peek_top(in_stack);
+
+    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    {
+        fprintf(stderr, "Expected an argument.\n");
+        exit(FAIL_SEMANTIC_BAD_ARGS);
+    }
+
+    if (!variadic && current_parameter + 1 > function->parameter_count)
+    {
+        fprintf(stderr, "Too many arguments for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        exit(FAIL_SEMANTIC_BAD_ARGS);
+    }
+
+    // Create a side buffer, save push instruction there, append after the recursive call.
+    // We do this to push arguments from last to first.
+    // hello(1, 2) -> PUSHS 2, PUSHS 1
+
+    instr_buffer_ptr param_buffer = instr_buffer_init();
+
+    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[current_parameter]);
+    rule_argument(in_stack, sym_global, expected_parameter, param_buffer);
+
+    current_parameter = rule_argument_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
+
+    // append argument instructions
+    for (int i = 0; i < param_buffer->len; i++)
+    {
+        instr_buffer_append(instr_buffer, param_buffer->instructions[i]);
+    }
+    free(param_buffer);
+
+    return current_parameter;
 }
 
 // <prog> -> <?php <statement-list> ?>
@@ -811,7 +875,6 @@ void parse(stack_ptr stack)
 
     if (LOG_ENABLED(SYMTABLE))
     {
-        printf("Final symbolic table:");
         sym_print(sym_global);
     }
 
