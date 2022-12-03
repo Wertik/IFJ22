@@ -292,44 +292,18 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
         // Check that the function exists.
         token_ptr func_id = assert_next_token_get(in_stack, TOKEN_ID);
-        bool is_builtin = false;
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
 
         function_ptr function = sym_get_function(sym_global, func_id->value.string);
 
-        if (!(strcmp("reads", func_id->value.string)) || !(strcmp("readi", func_id->value.string)) || !(strcmp("readf", func_id->value.string)))
+        if (function == NULL)
         {
-            is_builtin = true;
-
-            // Save function to symtable
-            function_ptr function = function_create();
-            sym_insert(sym_global, func_id->value.string, function, NULL);
-
-            DEBUG_PSEUDO("%s(...)", func_id->value.string);
+            fprintf(stderr, "Function %s not defined.\n", func_id->value.string);
+            exit(FAIL_SEMANTIC_FUNC_DEF);
         }
 
-        if (!(strcmp("write", func_id->value.string)))
-        {
-            is_builtin = true;
-            function_ptr function = function_create();
-            sym_insert(sym_global, func_id->value.string, function, NULL);
-
-            DEBUG_PSEUDO("%s(...)", func_id->value.string);
-
-            rule_parameter_list(in_stack, sym_global, function, 0, true);
-        }
-
-        if (!is_builtin) // neni
-        {
-            if (function == NULL) // je defined
-            {
-                fprintf(stderr, "Function %s not defined.\n", func_id->value.string);
-                exit(FAIL_SEMANTIC_FUNC_DEF);
-            }
-
-            rule_parameter_list(in_stack, sym_global, function, 0, false);
-        }
+        rule_parameter_list(in_stack, sym_global, function, 0, function->variadic);
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
@@ -402,6 +376,13 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             // Save function to symtable
             token_ptr function_id = assert_next_token_get(in_stack, TOKEN_ID);
+
+            // Check if the function is already defined
+
+            if (sym_search(sym_global, function_id->value.string) != NULL) {
+                fprintf(stderr, "Function %s already defined.\n", function_id->value.string);
+                exit(FAIL_SEMANTIC_FUNC_DEF);
+            }
 
             function_ptr function = function_create();
             sym_insert(sym_global, function_id->value.string, function, NULL);
@@ -486,14 +467,10 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                 {
                     type_t result_type = parse_expression(in_stack, sym_global);
 
-                    fprintf(stderr, "%s\n", type_to_name(result_type));
-                    //exit(99);
-
                     if (function->return_type != result_type)
                     {
-                        fprintf(stderr, "Invalid function return type.\n");
+                        fprintf(stderr, "Invalid function return type. Expected %s, got %s.\n", type_to_name(function->return_type), type_to_name(result_type));
                         exit(FAIL_SEMANTIC_INVALID_RETURN_TYPE);
-                        //exit(FAIL_SEMANTIC_BAD_ARGS);
                     }
 
                     DEBUG_PSEUDO("return %s;", type_to_name(result_type));
@@ -617,13 +594,14 @@ void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_p
 // <par-list> -> const_int <par-next>
 // <par-list> -> const_float <par-next>
 // <par-list> -> string_list <par-next>
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool isWrite)
+void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool variadic)
 {
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
 
-    if (isWrite != true)
+    // Ignore argument count checks with variadic functions
+    if (variadic != true)
     {
         if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
         {
@@ -650,56 +628,55 @@ void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
     case TOKEN_VAR_ID:
     {
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, variadic);
         break;
     }
     case TOKEN_CONST_INT:
     {
-        if (expected_parameter.type != TYPE_INT && isWrite != true)
+        if (expected_parameter.type != TYPE_INT && variadic != true)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_INT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_INT);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, variadic);
         break;
     }
     case TOKEN_CONST_DOUBLE:
     {
-        if (expected_parameter.type != TYPE_FLOAT && isWrite != true)
+        if (expected_parameter.type != TYPE_FLOAT && variadic != true)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_FLOAT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, variadic);
         break;
     }
     case TOKEN_STRING_LIT:
     {
 
-        if (expected_parameter.type != TYPE_STRING && isWrite != true)
+        if (expected_parameter.type != TYPE_STRING && variadic != true)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_STRING");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, variadic);
         break;
     }
     default:
         fprintf(stderr, "Invalid token in function parameter.\n");
-        //exit(FAIL_SEMANTIC_BAD_ARGS);
         exit(FAIL_SYNTAX);
     }
 }
 
 // <par-next> -> eps
 // <par-next> -> , <par-list>
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool isWrite)
+void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool variadic)
 {
     DEBUG_RULE();
 
@@ -709,7 +686,7 @@ void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_
     {
         // <par-next> -> , <par-list>
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
-        rule_parameter_list(in_stack, sym_global, function, current_parameter + 1, isWrite);
+        rule_parameter_list(in_stack, sym_global, function, current_parameter + 1, variadic);
     }
     else
     {
@@ -746,6 +723,29 @@ void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr in
 void parse(stack_ptr stack)
 {
     sym_table_ptr sym_global = sym_init();
+
+    // Add built in functions to symtable
+
+    function_ptr fn_write = function_create();
+    fn_write->variadic = true;
+    sym_insert(sym_global, "write", fn_write, NULL);
+
+    function_ptr fn_reads = function_create();
+    fn_reads->return_type = TYPE_STRING;
+    fn_reads->return_type_nullable = true;
+    sym_insert(sym_global, "reads", fn_reads, NULL);
+
+    function_ptr fn_readi = function_create();
+    fn_readi->return_type = TYPE_INT;
+    fn_readi->return_type_nullable = true;
+    sym_insert(sym_global, "readi", fn_readi, NULL);
+
+    function_ptr fn_readf = function_create();
+    fn_readf->return_type = TYPE_FLOAT;
+    fn_readf->return_type_nullable = true;
+    sym_insert(sym_global, "readf", fn_readf, NULL);
+
+    // Initialize instruction buffer
 
     instr_buffer_ptr instr_buffer = instr_buffer_init();
 

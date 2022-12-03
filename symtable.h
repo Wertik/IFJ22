@@ -31,6 +31,9 @@ typedef struct function_t
 
   // Local symtable for the function
   struct sym_table_t *symtable;
+
+  // Function has variadic arguments
+  bool variadic;
 } * function_ptr;
 
 typedef struct sym_node_t

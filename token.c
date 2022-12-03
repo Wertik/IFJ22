@@ -239,6 +239,14 @@ char *value_to_string(token_value_type_t type, token_value_t value)
 {
     switch (type)
     {
+    case NONE:
+    {
+        size_t len = snprintf(NULL, 0, "NONE");
+        char *s = malloc(sizeof(char) * (len + 1));
+        MALLOC_CHECK(s);
+        sprintf(s, "NONE");
+        return s;
+    }
     case STRING:
         return value.string;
     case INTEGER:

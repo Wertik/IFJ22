@@ -123,6 +123,8 @@ function_ptr function_create()
 
     function->return_type = TYPE_VOID;
     function->return_type_nullable = false;
+    function->variadic = false;
+    function->has_return = false;
 
     function->parameter_count = 0;
     function->parameters = malloc(0);
