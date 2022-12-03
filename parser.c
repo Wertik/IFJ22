@@ -298,7 +298,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
         function_ptr function = sym_get_function(sym_global, func_id->value.string);
 
-        if (strcmp("reads", func_id->value.string) || strcmp("readi", func_id->value.string) || strcmp("readf", func_id->value.string))
+        if (!(strcmp("reads", func_id->value.string)) || !(strcmp("readi", func_id->value.string)) || !(strcmp("readf", func_id->value.string)))
         {
             is_builtin = true;
 
@@ -308,15 +308,16 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             DEBUG_PSEUDO("%s(...)", func_id->value.string);
         }
-        else if (strcmp("write", func_id->value.string))
-        {
 
+        if (!(strcmp("write", func_id->value.string)))
+        {
+            is_builtin = true;
             function_ptr function = function_create();
             sym_insert(sym_global, func_id->value.string, function, NULL);
 
             DEBUG_PSEUDO("%s(...)", func_id->value.string);
 
-            rule_parameter_list(in_stack, sym_global, function, 0);
+            rule_parameter_list(in_stack, sym_global, function, 0, true);
         }
 
         if (!is_builtin) // neni
@@ -327,7 +328,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                 exit(FAIL_SEMANTIC_FUNC_DEF);
             }
 
-            rule_parameter_list(in_stack, sym_global, function, 0);
+            rule_parameter_list(in_stack, sym_global, function, 0, false);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
@@ -442,8 +443,8 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             if (function->return_type != TYPE_VOID && function->has_return == false)
             {
-                fprintf(stderr, "Missing return statement for non-void function %s.", function_id->value.string);
-                exit(FAIL_SEMANTIC_BAD_RETURN);
+                fprintf(stderr, "Missing return statement for non-void function %s.\n", function_id->value.string);
+                exit(FAIL_SEMANTIC_INVALID_RETURN_COUNT);
             }
 
             ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
@@ -485,10 +486,14 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                 {
                     type_t result_type = parse_expression(in_stack, sym_global);
 
+                    fprintf(stderr, "%s\n", type_to_name(result_type));
+                    //exit(99);
+
                     if (function->return_type != result_type)
                     {
                         fprintf(stderr, "Invalid function return type.\n");
-                        exit(FAIL_SEMANTIC_BAD_RETURN);
+                        exit(FAIL_SEMANTIC_INVALID_RETURN_TYPE);
+                        //exit(FAIL_SEMANTIC_BAD_ARGS);
                     }
 
                     DEBUG_PSEUDO("return %s;", type_to_name(result_type));
@@ -612,27 +617,30 @@ void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_p
 // <par-list> -> const_int <par-next>
 // <par-list> -> const_float <par-next>
 // <par-list> -> string_list <par-next>
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter)
+void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool isWrite)
 {
     DEBUG_RULE();
 
     token_ptr next = peek_top(in_stack);
 
-    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    if (isWrite != true)
     {
-        // <par-list> -> eps
-        if (current_parameter < function->parameter_count - 1)
+        if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
         {
-            fprintf(stderr, "Not enough parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter);
+            // <par-list> -> eps
+            if (current_parameter < function->parameter_count - 1)
+            {
+                fprintf(stderr, "Not enough parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter);
+                exit(FAIL_SEMANTIC_BAD_ARGS);
+            }
+            return;
+        }
+
+        if (current_parameter + 1 > function->parameter_count)
+        {
+            fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
-        return;
-    }
-
-    if (current_parameter + 1 > function->parameter_count)
-    {
-        fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
-        exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
     parameter_t expected_parameter = function->parameters[current_parameter];
@@ -642,55 +650,56 @@ void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
     case TOKEN_VAR_ID:
     {
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
         break;
     }
     case TOKEN_CONST_INT:
     {
-        if (expected_parameter.type != TYPE_INT)
+        if (expected_parameter.type != TYPE_INT && isWrite != true)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_INT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_INT);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
         break;
     }
     case TOKEN_CONST_DOUBLE:
     {
-        if (expected_parameter.type != TYPE_FLOAT)
+        if (expected_parameter.type != TYPE_FLOAT && isWrite != true)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_FLOAT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
         break;
     }
     case TOKEN_STRING_LIT:
     {
 
-        if (expected_parameter.type != TYPE_STRING)
+        if (expected_parameter.type != TYPE_STRING && isWrite != true)
         {
             fprintf(stderr, "Bad parameter type for %s. Expected %s but got %s.\n", expected_parameter.name, type_to_name(expected_parameter.type), "TYPE_STRING");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
 
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_STRING_LIT);
-        rule_parameter_next(in_stack, sym_global, function, current_parameter);
+        rule_parameter_next(in_stack, sym_global, function, current_parameter, isWrite);
         break;
     }
     default:
         fprintf(stderr, "Invalid token in function parameter.\n");
-        exit(FAIL_SEMANTIC_BAD_ARGS);
+        //exit(FAIL_SEMANTIC_BAD_ARGS);
+        exit(FAIL_SYNTAX);
     }
 }
 
 // <par-next> -> eps
 // <par-next> -> , <par-list>
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter)
+void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter, bool isWrite)
 {
     DEBUG_RULE();
 
@@ -700,7 +709,7 @@ void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_
     {
         // <par-next> -> , <par-list>
         ASSERT_NEXT_TOKEN(in_stack, TOKEN_COMMA);
-        rule_parameter_list(in_stack, sym_global, function, current_parameter + 1);
+        rule_parameter_list(in_stack, sym_global, function, current_parameter + 1, isWrite);
     }
     else
     {
