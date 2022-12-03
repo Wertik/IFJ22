@@ -5,6 +5,8 @@
 #include "stack.h"
 #include "buffer.h"
 
+
+#define CR 13
 /* States */
 #define SCANNER_START 1
 #define SCANNER_STRING 2

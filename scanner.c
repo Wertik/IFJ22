@@ -77,7 +77,7 @@ bool attempt_greedy(char *rest, bool ignore_whitespace)
     return false;
 }
 
-bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, char c)
+bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, char c, int line, int character)
 {
     DEBUG("Scanning character: %c (%d)\n", c, c);
 
@@ -175,13 +175,14 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_VAR_ID_START);
             buffer_append(buffer, c);
         }
-        else if (c == EOF || c == '\n' || c == ' ')
+        // TODO: magic number
+        else if (c == EOF || c == '\n' || c == ' ' || c == CR)
         {
             break;
         }
         else
         {
-            fprintf(stderr, "Unexpected character %c (%d).\n", c, c);
+            fprintf(stderr, "Unexpected character (%c) (%d).\n", c, c);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -198,7 +199,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_START);
             APPEND_EMPTY(stack, TOKEN_NULLABLE);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
@@ -229,7 +230,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
 
             buffer_reset(buffer);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
@@ -242,8 +243,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else
         {
-            // TODO: do better
-            fprintf(stderr, "Syntax error.\n");
+            fprintf(stderr, "Integer expected got (%c) instead. \n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -263,14 +264,13 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         {
             CHANGE_STATE(SCANNER_START);
 
-            // TODO: Parse better
             double val = atof(buffer->data);
 
             APPEND_FLOAT(stack, TOKEN_CONST_DOUBLE, val);
 
             buffer_reset(buffer);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
 
         break;
@@ -289,8 +289,9 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else
         {
-            // TODO: do better
-            fprintf(stderr, "Syntax error.\n");
+
+            fprintf(stderr, "Expected integer or sign got (%c).\n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -304,8 +305,9 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else
         {
-            // TODO: do better
-            fprintf(stderr, "Syntax error.\n");
+
+            fprintf(stderr, "Expected integer got (%c) instead.\n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -327,7 +329,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
 
             buffer_reset(buffer);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
 
         break;
@@ -369,15 +371,18 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else if (c == '"')
         {
-            // TODO:
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '"';
         }
         else if (c == '\\')
         {
-            // TODO:
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '\\';
         }
         else if (c == '$')
         {
-            // TODO:
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '$';
         }
         else if (c == 'n')
         {
@@ -411,6 +416,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         else
@@ -437,6 +443,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         else
@@ -461,6 +468,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         else
@@ -486,6 +494,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else if (c == '$')
         {
             fprintf(stderr, "Symbol (%c) cannot be used unescaped. \n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         else
@@ -507,7 +516,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_START);
             APPEND_EMPTY(stack, TOKEN_MORE);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
@@ -529,7 +538,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else
         {
             APPEND_EMPTY(stack, TOKEN_LESS);
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
@@ -544,7 +553,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_START);
             APPEND_EMPTY(stack, TOKEN_ASSIGN);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
@@ -558,6 +567,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else
         {
             fprintf(stderr, "Equality is compared via \"===\". \n");
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -570,8 +580,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else
         {
-            // TODO: do better
-            fprintf(stderr, "Syntax error.\n");
+            fprintf(stderr, "Expected (=) got (%c) instead.\n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -585,7 +595,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         }
         else
         {
-            fprintf(stderr, "Equality is compared via \"!==\". \n");
+            fprintf(stderr, "Expected (=) got (%c) instead.\n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
 
@@ -606,13 +617,13 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_START);
             APPEND_EMPTY(stack, TOKEN_DIVIDE);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
     case (SCANNER_LINE_COMM):
     {
-        if (c == EOF || c == '\n')
+        if (c == EOF || c == '\n' || c == CR)
         {
             CHANGE_STATE(SCANNER_START);
         }
@@ -673,11 +684,11 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             {
                 // none of the keywords matched, create a token id from this
                 APPEND_STRING(stack, TOKEN_ID, buffer);
-                parse_character(stack, buffer, scanner_state, c);
+                parse_character(stack, buffer, scanner_state, c, line, character);
             }
             else
             {
-                parse_character(stack, buffer, scanner_state, c);
+                parse_character(stack, buffer, scanner_state, c, line, character);
             }
         }
         break;
@@ -692,6 +703,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         else
         {
             fprintf(stderr, "Variables have to start with alphanumeric chatacters. (%c)\n", c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -707,15 +719,16 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_START);
             APPEND_STRING(stack, TOKEN_VAR_ID, buffer);
 
-            parse_character(stack, buffer, scanner_state, c);
+            parse_character(stack, buffer, scanner_state, c, line, character);
         }
         break;
     }
     case (SCANNER_EPILOG):
     {
-        if (c != EOF && c != '\n')
+        if (c != EOF && c != '\n' && c != CR)
         {
             fprintf(stderr, "Character %d (%c) after epilog.\n", c, c);
+            fprintf(stderr, "Error on line %d character %d \n", line, character);
             exit(FAIL_LEXICAL);
         }
         break;
@@ -737,10 +750,20 @@ stack_ptr tokenize()
     buffer_ptr buffer = buffer_init();
 
     stack_ptr stack = stack_init();
-
-    while (!parse_character(stack, buffer, &scanner_state, (c = fgetc(stdin))))
+    int line = 1;
+    int character = 1;
+    while (!parse_character(stack, buffer, &scanner_state, (c = fgetc(stdin)), line, character))
     {
-        //
+        // Line count may not optimalized for ios
+        if (c == '\n')
+        {
+            line++;
+            character = 1;
+        }
+        else
+        {
+            character++;
+        }
     }
 
     // scanner cannot end on anything else than start and epilog
@@ -749,6 +772,7 @@ stack_ptr tokenize()
     {
         DEBUG_STACK(stack);
         fprintf(stderr, "Didn't finish scanning. Left on state: %d\n", scanner_state);
+        fprintf(stderr, "Error on line %d character %d \n", line, character);
         exit(FAIL_LEXICAL);
     }
 
