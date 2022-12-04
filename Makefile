@@ -1,5 +1,5 @@
-OBJS=main.o token.o scanner.o buffer.o symtable.o stack.o symbol.o parser.o instruction.o preparser.o
-HEADER=scanner.h token.h buffer.h symtable.h symbol.h stack.h parser.h utils.h instruction.h preparser.h
+OBJS=main.o token.o scanner.o buffer.o symtable.o stack.o symbol.o parser.o instruction.o preparser.o precedence_expression.o
+HEADER=scanner.h token.h buffer.h symtable.h symbol.h stack.h parser.h utils.h instruction.h preparser.h precedence_expression.h
 OUT=main sym stack instr
 CC=gcc
 CFLAGS=--std=c99 -pedantic -Wall -Werror
