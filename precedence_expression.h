@@ -8,7 +8,7 @@
 #ifndef _EXPRESSION_H
 #define _EXPRESSION_H
 
-#include "array.h"
+//#include "array.h"
 #include "symtable.h"
 #include "stack.h"
 #include "token.h"
@@ -18,5 +18,5 @@ void perform_addition(stack_ptr push_down_stack, sym_table_ptr tree , stack_ptr 
 void perform_reduction(stack_ptr push_down_stack, sym_table_ptr tree);
 
 token_ptr get_first_non_E(item_ptr stack);
-int expression(stack_ptr push_down_stack, sym_table_ptr tree);
+int expression_prec(stack_ptr in_stack, sym_table_ptr tree, stack_ptr push_down_stack);
 #endif
