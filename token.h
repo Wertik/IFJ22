@@ -1,3 +1,11 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ * @author xdobes22 Kristián Dobeš
+ */
+
 #ifndef _TOKEN_H
 #define _TOKEN_H
 

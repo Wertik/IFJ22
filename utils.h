@@ -1,5 +1,12 @@
-#ifndef UTILS_H
-#define UTILS_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xdobes22 Kristián Dobeš
+ */
+
+#ifndef _UTILS_H
+#define _UTILS_H
 
 #include <string.h>
 

@@ -1,5 +1,13 @@
-#ifndef PARSER_H
-#define PARSER_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xsynak03 Maroš Synák
+ * @author xdobes22 Kristián Dobeš
+ */
+
+#ifndef _PARSER_H
+#define _PARSER_H
 
 #include "symtable.h"
 #include "stack.h"
@@ -84,6 +92,7 @@ void assert_n_tokens(stack_ptr stack, int count, ...);
 // -- rule functions
 
 void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr instr_buffer);
+
 void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
 void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
 

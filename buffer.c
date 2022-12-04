@@ -1,3 +1,9 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
 #include "buffer.h"
 #include "utils.h"
 #include <stdio.h>

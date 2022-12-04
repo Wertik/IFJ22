@@ -1,3 +1,9 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
 #ifndef _INSTRUCTION_H
 #define _INSTRUCTION_H
 

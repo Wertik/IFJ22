@@ -1,3 +1,9 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "scanner.h"

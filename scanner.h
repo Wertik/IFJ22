@@ -1,5 +1,12 @@
-#ifndef SCANNER_H
-#define SCANNER_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ */
+
+#ifndef _SCANNER_H
+#define _SCANNER_H
 
 #include "token.h"
 #include "stack.h"

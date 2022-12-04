@@ -6,20 +6,20 @@ CFLAGS=--std=c99 -pedantic -Wall -Werror
 LFLAGS=-lm
 LEADER=xdobes22
 
-.PHONY: all run clean pack main
+.PHONY: all run clean pack main instr sym stack
 
 all: main
 
 main: $(OBJS)
 	$(CC) -o $@ $^ $(LFLAGS)
 
-sym: symtable_test.o symtable.o token.o
+sym: symtable_test.o symtable.o token.o instruction.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 stack: stack_test.o stack.o token.o symbol.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
-instr: instruction_test.o instruction.o
+instr: instruction_test.o instruction.o buffer.o
 	$(CC) -o $@ $^ $(LFLAGS)
 
 run: $(OUT)

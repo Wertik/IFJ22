@@ -1,5 +1,12 @@
-#ifndef STACK_H
-#define STACK_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ */
+
+#ifndef _STACK_H
+#define _STACK_H
 
 #include "symbol.h"
 

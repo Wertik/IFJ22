@@ -1,5 +1,11 @@
-#ifndef _GRAMMAR_H
-#define _GRAMMAR_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
+#ifndef _SYMBOL_H
+#define _SYMBOL_H
 
 #include <stdbool.h>
 #include "token.h"

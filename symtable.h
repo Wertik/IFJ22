@@ -1,5 +1,12 @@
-#ifndef SYMTABLE_H
-#define SYMTABLE_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ */
+
+#ifndef _SYMTABLE_H
+#define _SYMTABLE_H
 
 #define SPACE_SIZE 4
 

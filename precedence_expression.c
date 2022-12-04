@@ -1,3 +1,10 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xsynak03 Maroš Synák
+ * @author xotrad00 Martin Otradovec
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>

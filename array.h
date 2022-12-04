@@ -1,5 +1,11 @@
-#ifndef ARRAY_H
-#define ARRAY_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
+#ifndef _ARRAY_H
+#define _ARRAY_H
 
 #include "token.h"
 

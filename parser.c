@@ -1,3 +1,12 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek02 Miroslav Bálek
+ * @author xdobes22 Kristán Dobeš
+ * @author xsynak03 Maroš Synák
+ */
+
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -243,6 +252,7 @@ void rule_expression_next(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr
 }
 
 // <statement> -> var_id = <expression>;
+// <statement> -> var_id = id(<arg-list>);
 // <statement> -> return <expression>;
 // <statement> -> if (<expression>) {<statement-list>} else {<statement-list>}
 // <statement> -> while (<expression>) {<statement-list>}
@@ -259,38 +269,97 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
     // <statement> -> var_id = <expression>;
     if (next->type == TOKEN_VAR_ID && after_next != NULL && after_next->type == TOKEN_ASSIGN)
     {
-        next = get_next_token(stack);
+        token_ptr var_id = get_next_token(stack);
         // throw away assign
         STACK_THROW(stack);
 
-        // l-side
-        variable_ptr var = sym_get_variable(table, next->value.string);
+        variable_ptr var = sym_get_variable(table, var_id->value.string);
 
-        // parse r-side
-        type_t result_type = parse_expression(stack, table, instr);
-
-        // Create symboltable entry if not already present
         if (var == NULL)
         {
-            // TODO: Handle nullable
-            var = variable_create(next->value.string, result_type, true);
+            // default values for type, gets filled in later
+            var = variable_create(var_id->value.string, TYPE_VOID, true);
             sym_insert_var(table, var);
 
+            // defvar
             INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name));
+        }
+
+        next = peek_top(stack);
+
+        type_t result_type;
+        bool result_type_nullable;
+
+        if (next->type == TOKEN_ID)
+        {
+            // <statement> -> var_id = id(<arg-list>);
+
+            token_ptr func_id = get_next_token(stack);
+
+            ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
+
+            function_ptr called_function = sym_get_function(global_table, func_id->value.string);
+
+            // check if the function exists
+            if (called_function == NULL)
+            {
+                fprintf(stderr, "Function %s not defined.\n", func_id->value.string);
+                exit(FAIL_SEMANTIC_FUNC_DEF);
+            }
+
+            DEBUG_PSEUDO("%s = %s(...)", var_id->value.string, func_id->value.string);
+
+            result_type = called_function->return_type;
+            result_type_nullable = called_function->return_type_nullable;
+
+            called_function->called = true;
+
+            int parameter_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
+
+            // Push count of arguments for variadic functions
+            if (called_function->variadic)
+            {
+                INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
+            }
+
+            // Function call code
+            INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
+
+            // Move return value to variable
+            // TODO: Check runtime return type
+            if (called_function->return_type == TYPE_VOID)
+            {
+                INSTRUCTION_OPS(instr, INSTR_MOVE, 2, instr_var(FRAME_LOCAL, var_id->value.string), alloc_str("nil@nil"));
+            }
+            else
+            {
+                INSTRUCTION_OPS(instr, INSTR_MOVE, 2, instr_var(FRAME_LOCAL, var_id->value.string), instr_var(FRAME_TEMP, "_retval"));
+            }
+
+            INSTRUCTION(instr, INSTR_POP_FRAME);
         }
         else
         {
-            // The entry exists, change the type
-            var->type = result_type;
+            // <statement> -> var_id = <expression>;
+
+            // parse r-side
+            result_type = parse_expression(stack, table, instr);
+
+            // Get the expression result from stack
+            // TODO: Runtime type check
+            INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var->name));
+
+            // TODO: Figure this one out
+            result_type_nullable = true;
         }
 
-        // instructions to get the result
-        INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var->name));
+        var->type = result_type;
+        var->type_nullable = result_type_nullable;
 
-        DEBUG_PSEUDO("%s <- %s", next->value.string, type_to_name(result_type));
+        DEBUG_PSEUDO("%s <- %s%s", var_id->value.string, result_type_nullable ? "?" : "", type_to_name(result_type));
 
         ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
-        token_dispose(next);
+        token_dispose(var_id);
     }
     else if (next->type == TOKEN_ID)
     {
@@ -315,6 +384,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         int parameter_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
 
+        // Push count of arguments for variadic functions
         if (called_function->variadic)
         {
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
@@ -322,7 +392,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         // Function call code
         INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
-        // TODO: Maybe generate some retval code?
+        // No need to return the value here
         INSTRUCTION(instr, INSTR_POP_FRAME);
 
         ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);

@@ -1,3 +1,12 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek02 Miroslav Bálek
+ * @author xdobes22 Kristán Dobeš
+ * @author xsynak03 Maroš Synák
+ */
+
 #include "scanner.h"
 #include "token.h"
 #include "utils.h"
