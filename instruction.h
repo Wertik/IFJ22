@@ -9,12 +9,14 @@
 
 #include <string.h>
 
+// Generate an instruction with no operands
 #define INSTRUCTION(buffer, instr)                                \
     do                                                            \
     {                                                             \
         instr_buffer_append(buffer, generate_instruction(instr)); \
     } while (0);
 
+// Generate an instruction with count operands
 #define INSTRUCTION_OPS(buffer, instr, count, ...)                        \
     do                                                                    \
     {                                                                     \
@@ -22,8 +24,10 @@
         instr_buffer_append(buffer, call);                                \
     } while (0);
 
-#define TERM(frame, var) (#frame "@" #var)
-
+// Generate a function header
+// LABEL <function>
+// CREATEFRAME
+// PUSHFRAME
 #define FUNCTION_HEADER(buffer, name)                  \
     do                                                 \
     {                                                  \
@@ -32,6 +36,9 @@
         INSTRUCTION(buffer, INSTR_PUSH_FRAME);         \
     } while (0);
 
+// Generate a retval definition and temporary frame
+// CREATEFRAME
+// DEFVAR TF@_retval
 #define FUNCTION_RETVAL(buffer)                                                     \
     do                                                                              \
     {                                                                               \
@@ -39,12 +46,21 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval")); \
     } while (0);
 
+// Generate a function return
+// RETURN
 #define FUNCTION_RETURN(buffer)            \
     do                                     \
     {                                      \
         INSTRUCTION(buffer, INSTR_RETURN); \
     } while (0);
 
+// Generate a full function begin header.
+// LABEL <function>
+// CREATEFRAME
+// PUSHFRAME
+// (retval for non-void)
+// DEFVAR TF@<param-name> (for each parameter)
+// POPS TF@<param-name> (for each parameter)
 #define FUNCTION_BEGIN(function)                                                                              \
     do                                                                                                        \
     {                                                                                                         \
@@ -61,6 +77,9 @@
         }                                                                                                     \
     } while (0);
 
+// Generate a full function end.
+// POPS TF@_retval (for non-void)
+// RETURN
 #define FUNCTION_END(function)                                                               \
     do                                                                                       \
     {                                                                                        \
@@ -71,6 +90,7 @@
         FUNCTION_RETURN(function->instr_buffer);                                             \
     } while (0);
 
+// Generate the built-in write function
 #define BUILT_IN_WRITE(buffer)                                                 \
     do                                                                         \
     {                                                                          \
@@ -239,26 +259,54 @@ typedef struct instr_buffer_t
     size_t len;
 } * instr_buffer_ptr;
 
-// Convert enum instruction to instruction keyword
+// Helper functions
+
+// Convert enum instruction to a valid ifjcode22 instruction.
 const char *instruction_to_str(instruction_t instr);
 
+// Convert frame enum into a formal name (GF, TF, TF) for ifjcode22
+const char *frame_to_formal(frame_t frame);
+
+// Create a valid variable string for ifjcode22
+char *instr_var(frame_t frame, char *name);
+
+// Create a valid int constant string for ifjcode22
+char *instr_const_int(int val);
+
+// Replace a target character in str with given replacement.
+// Used to replace control characters inside strings with ifjcode22 escape sequences.
+char *str_rep(char *str, char target, char *replacement);
+
+// Create a valid string literal string for ifjcode22
+// Replaces control characters with correct escape senquences.
+// ex.: "Hello world!\n" -> "string@Hello\032world!\010"
+char *instr_const_str(char *str);
+
+// Generate an instruction with no operands.
 char *generate_instruction(instruction_t instr);
 
 // Generate an instruction call with n operands.
+// Result: <INSTR> <OP1> <OP2> ...<OPN>
+// varargs have to be alloc'd strings, they are freed inside the function.
 char *generate_instruction_ops(instruction_t instr, int n, ...);
 
 // Instruction buffer
 
+// Initialize an empty buffer
 instr_buffer_ptr instr_buffer_init();
-void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr);
-void instr_buffer_print(instr_buffer_ptr instr_buffer);
-void instr_buffer_dispose(instr_buffer_ptr instr_buffer);
 
-// Write the buffer to stdout
+// Append an instruction to the buffer
+// instr has to be an alloc'd string, it's free'd when isntruction buffer gets disposed
+void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr);
+
+// Print the instruction buffer in an array fashion.
+// instr_buffer(size)[instr1, ..., instrN]
+void instr_buffer_print(instr_buffer_ptr instr_buffer);
+
+// Output the instruction buffer to stdout as valid ifjcode22
 void instr_buffer_out(instr_buffer_ptr instr_buffer);
 
-char *instr_var(frame_t frame, char *name);
-char *instr_const_int(int val);
-char *instr_const_str(char *str);
+// Dispose of the instruction buffer, free memory and instructions
+void instr_buffer_dispose(instr_buffer_ptr instr_buffer);
 
 #endif

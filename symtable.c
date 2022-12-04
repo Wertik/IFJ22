@@ -13,12 +13,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MIN(a, b) (a > b ? b : a)
-
 int compare_keys(char *key1, char *key2)
 {
-    // compare keys by alphabet order? ascii value
-    int len = MIN(strlen(key1), strlen(key2));
+    int len = SYMTABLE_MIN(strlen(key1), strlen(key2));
 
     for (int i = 0; i < len; i++)
     {
@@ -151,15 +148,15 @@ function_ptr function_create(char *name, type_t return_type, bool return_type_nu
     return function;
 }
 
-void get_variables_rec(sym_node_ptr root, variable_ptr **vars, int *count)
+void sym_get_variables_rec(sym_node_ptr root, variable_ptr **vars, int *count)
 {
     if (root == NULL)
     {
         return;
     }
 
-    get_variables_rec(root->left, vars, count);
-    get_variables_rec(root->right, vars, count);
+    sym_get_variables_rec(root->left, vars, count);
+    sym_get_variables_rec(root->right, vars, count);
 
     if (root->variable != NULL)
     {
@@ -178,20 +175,20 @@ variable_ptr *sym_get_variables(sym_table_ptr table, int *count)
 
     MALLOC_CHECK(vars);
 
-    get_variables_rec(table->root, &vars, count);
+    sym_get_variables_rec(table->root, &vars, count);
 
     return vars;
 }
 
-void get_functions_rec(sym_node_ptr root, function_ptr **fns, int *count)
+void sym_get_functions_rec(sym_node_ptr root, function_ptr **fns, int *count)
 {
     if (root == NULL)
     {
         return;
     }
 
-    get_functions_rec(root->left, fns, count);
-    get_functions_rec(root->right, fns, count);
+    sym_get_functions_rec(root->left, fns, count);
+    sym_get_functions_rec(root->right, fns, count);
 
     if (root->function != NULL)
     {
@@ -213,7 +210,7 @@ function_ptr *sym_get_functions(sym_table_ptr table, int *count)
 
     *count = 0;
 
-    get_functions_rec(table->root, &fns, count);
+    sym_get_functions_rec(table->root, &fns, count);
 
     return fns;
 }

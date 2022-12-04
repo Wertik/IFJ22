@@ -46,6 +46,7 @@
 #define SCANNER_NULLABLE 28
 #define SCANNER_EPILOG 29
 
+// Change the scanner state
 #define CHANGE_STATE(state)                 \
     do                                      \
     {                                       \
@@ -53,6 +54,7 @@
         *scanner_state = state;             \
     } while (0);
 
+// Append a token with empty value
 #define APPEND_EMPTY(stack, token_type)                          \
     do                                                           \
     {                                                            \
@@ -62,7 +64,8 @@
         stack_add(stack, symbol);                                \
     } while (0);
 
-// Add string token to stack, clean the buffer
+// Append a token with string value to the stack
+// Reset the buffer
 #define APPEND_STRING(stack, token_type, buffer)                                            \
     do                                                                                      \
     {                                                                                       \
@@ -71,6 +74,7 @@
         buffer_reset(buffer);                                                               \
     } while (0);
 
+// Append a token with integer value to the stack
 #define APPEND_INT(stack, token_type, value)                                                 \
     do                                                                                       \
     {                                                                                        \
@@ -79,6 +83,7 @@
         stack_add(stack, symbol);                                                            \
     } while (0);
 
+// Append a token with float value to the stack
 #define APPEND_FLOAT(stack, token_type, value)                                             \
     do                                                                                     \
     {                                                                                      \
@@ -87,13 +92,15 @@
         stack_add(stack, symbol);                                                          \
     } while (0);
 
+// Append a keyword token the the stack
 #define APPEND_KEYWORD(stack, keyword_type)                                      \
     do                                                                           \
     {                                                                            \
-    symbol_ptr symbol = create_terminal(token_create_keyword(keyword_type)); \
+        symbol_ptr symbol = create_terminal(token_create_keyword(keyword_type)); \
         stack_add(stack, symbol);                                                \
     } while (0);
 
+// Append a type token to the stack
 #define APPEND_TYPE(stack, type)                                      \
     do                                                                \
     {                                                                 \
@@ -101,15 +108,23 @@
         stack_add(stack, symbol);                                     \
     } while (0);
 
-/* Read from stdin, parse into tokens. */
+// Read stdin and parse input into tokens, save them onto a stack and return it.
 stack_ptr tokenize();
 
-// Attempt to parse keyword from buffer. Return true if successful.
+// Parse a single character c.
+// Work with the state of the scanner and parse into tokens, append them to stack.
+bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, char c, int line, int character);
+
+// Attempt to parse keyword from buffer.
+// Reset the buffer and return true if successful.
 bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyword_t keyword);
 
-// Attempt to parse type from buffer. Return true if successful.
+// Attempt to parse type from buffer.
+// Reset the buffer and return true if successful.
 bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type);
 
+// Attempt to "greedily" (reads extra characters and rolls back if unsuccessful) parse a string from stdin.
+// Returns true if successful.
 bool attempt_greedy(char *rest, bool ignore_whitespace);
 
 #endif

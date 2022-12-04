@@ -131,61 +131,6 @@ const char *instruction_to_str(instruction_t instruction)
     }
 }
 
-char *generate_instruction(instruction_t instruction)
-{
-    const char *instruction_str = instruction_to_str(instruction);
-
-    // +1 for null byte
-    size_t len = (strlen(instruction_str) + 1);
-    char *call_str = malloc(sizeof(char) * len);
-
-    MALLOC_CHECK(call_str);
-
-    strcpy(call_str, instruction_str);
-
-    return call_str;
-}
-
-// Generate an instruction call with n operands
-// <INSTR> <OP1> <OP2> <OP3>
-char *generate_instruction_ops(instruction_t instruction, int n, ...)
-{
-    const char *instruction_str = instruction_to_str(instruction);
-
-    va_list val;
-    va_start(val, n);
-
-    // +1 for null byte
-    size_t len = (strlen(instruction_str) + 1);
-    char *call_str = malloc(sizeof(char) * len);
-
-    MALLOC_CHECK(call_str);
-
-    strcpy(call_str, instruction_str);
-
-    for (int i = 0; i < n; i++)
-    {
-        char *s = va_arg(val, char *);
-
-        // +1 for a space
-        len += strlen(s) + 1;
-
-        // +1 for a space
-        call_str = realloc(call_str, sizeof(char) * (len + 1));
-
-        MALLOC_CHECK(call_str);
-
-        call_str = strcat(call_str, " ");
-
-        call_str = strcat(call_str, s);
-
-        free(s);
-    }
-
-    va_end(val);
-    return call_str;
-}
-
 const char *frame_to_formal(frame_t frame)
 {
     switch (frame)
@@ -259,6 +204,59 @@ char *instr_const_str(char *str)
     s = str_rep(s, '\n', "\\010");
     
     return s;
+}
+
+char *generate_instruction(instruction_t instruction)
+{
+    const char *instruction_str = instruction_to_str(instruction);
+
+    // +1 for null byte
+    size_t len = (strlen(instruction_str) + 1);
+    char *call_str = malloc(sizeof(char) * len);
+
+    MALLOC_CHECK(call_str);
+
+    strcpy(call_str, instruction_str);
+
+    return call_str;
+}
+
+char *generate_instruction_ops(instruction_t instruction, int n, ...)
+{
+    const char *instruction_str = instruction_to_str(instruction);
+
+    va_list val;
+    va_start(val, n);
+
+    // +1 for null byte
+    size_t len = (strlen(instruction_str) + 1);
+    char *call_str = malloc(sizeof(char) * len);
+
+    MALLOC_CHECK(call_str);
+
+    strcpy(call_str, instruction_str);
+
+    for (int i = 0; i < n; i++)
+    {
+        char *s = va_arg(val, char *);
+
+        // +1 for a space
+        len += strlen(s) + 1;
+
+        // +1 for a space
+        call_str = realloc(call_str, sizeof(char) * (len + 1));
+
+        MALLOC_CHECK(call_str);
+
+        call_str = strcat(call_str, " ");
+
+        call_str = strcat(call_str, s);
+
+        free(s);
+    }
+
+    va_end(val);
+    return call_str;
 }
 
 instr_buffer_ptr instr_buffer_init()

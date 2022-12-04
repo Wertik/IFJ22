@@ -34,7 +34,7 @@ symbol_ptr create_terminal(token_ptr token)
     return symbol;
 }
 
-char *nonterminal_to_string(nonterminal_t type)
+const char *nonterminal_to_string(nonterminal_t type)
 {
     switch (type)
     {
@@ -68,7 +68,7 @@ char *symbol_to_string(symbol_ptr symbol)
     }
     else
     {
-        char *nonterminal_s = nonterminal_to_string(symbol->nonterminal_type);
+        const char *nonterminal_s = nonterminal_to_string(symbol->nonterminal_type);
         size_t len = snprintf(NULL, 0, "symbol(nonterminal, %s)", nonterminal_s);
 
         char *s = malloc((sizeof(char) * len) + 1);

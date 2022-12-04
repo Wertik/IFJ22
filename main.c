@@ -12,7 +12,7 @@
 #include "symtable.h"
 #include "utils.h"
 
-int main(int argc, char const *argv[])
+int main()
 {
     // Tokenize stdin
     stack_ptr stack = tokenize();
