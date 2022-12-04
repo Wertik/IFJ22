@@ -14,10 +14,9 @@
 #include "token.h"
 
 int get_pos_in_t(token_ptr TOKEN);
-void perform_addition(item_ptr *push_down_stack, sym_table_ptr *tree , item_ptr *in_stack);
-void perform_reduction(item_ptr *push_down_stack, sym_table_ptr *tree);
+void perform_addition(stack_ptr push_down_stack, sym_table_ptr tree , stack_ptr in_stack);
+void perform_reduction(stack_ptr push_down_stack, sym_table_ptr tree);
 
-token_ptr get_first_non_E(item_ptr *stack);
-
-int expression(item_ptr *push_down_stack, sym_table_ptr *tree);
+token_ptr get_first_non_E(item_ptr stack);
+int expression(stack_ptr push_down_stack, sym_table_ptr tree);
 #endif
