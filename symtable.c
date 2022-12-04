@@ -131,6 +131,7 @@ function_ptr function_create(char *name, type_t return_type, bool return_type_nu
     function->variadic = false;
     function->has_return = false;
     function->called = false;
+    function->defined = false;
 
     function->parameter_count = 0;
     function->parameters = malloc(0);

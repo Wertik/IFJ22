@@ -8,6 +8,7 @@
 #include "stack.h"
 #include "utils.h"
 #include "instruction.h"
+#include "preparser.h"
 
 sym_table_ptr global_table = NULL;
 
@@ -396,16 +397,17 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             // Save function to symtable
             token_ptr function_id = assert_next_token_get(stack, TOKEN_ID);
 
-            // Check if the function is already defined
+            // Get function from global table
+            // We already should have parameters pre-parsed.
 
-            if (sym_search(table, function_id->value.string) != NULL)
+            function_ptr function = sym_get_function(global_table, function_id->value.string);
+
+            // This shouldn't happen
+            if (function == NULL)
             {
-                fprintf(stderr, "Function %s already defined.\n", function_id->value.string);
-                exit(FAIL_SEMANTIC_FUNC_DEF);
+                fprintf(stderr, "Function %s not preparsed. Something went wrong.\n", function_id->value.string);
+                exit(FAIL_INTERNAL);
             }
-
-            function_ptr function = function_create(function_id->value.string, TYPE_VOID, false);
-            sym_insert_fn(table, function);
 
             DEBUG_PSEUDO("function %s(...)", function_id->value.string);
 
@@ -413,8 +415,10 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
+            // Throw away the parameter tokens
             rule_parameter_list(stack, function);
 
+            // Add variables and generate code
             for (int i = 0; i < function->parameter_count; i++)
             {
                 parameter_t parameter = function->parameters[i];
@@ -430,13 +434,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_COLON);
 
-            // Save return type to symtable
-
-            token_ptr return_type = assert_next_token_get(stack, TOKEN_TYPE);
-
-            function->return_type = return_type->value.type;
-
-            DEBUG_PSEUDO("Returns %s", type_to_name(function->return_type));
+            ASSERT_NEXT_TOKEN(stack, TOKEN_TYPE);
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
 
@@ -461,7 +459,6 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             DEBUG_PSEUDO("end function %s", function_id->value.string);
 
             token_dispose(function_id);
-            token_dispose(return_type);
             break;
         }
         case KEYWORD_RETURN:
@@ -560,22 +557,8 @@ void rule_statement_list(stack_ptr stack, sym_table_ptr table, function_ptr func
 // <par> -> type var_id
 void rule_parameter(stack_ptr stack, function_ptr function)
 {
-    token_ptr par_type = assert_next_token_get(stack, TOKEN_TYPE);
-    token_ptr par_id = assert_next_token_get(stack, TOKEN_VAR_ID);
-
-    // cannot use void as parameter type
-    if (par_type->value.type == TYPE_VOID)
-    {
-        fprintf(stderr, "VOID is not a valid parameter type.\n");
-        exit(FAIL_SYNTAX);
-    }
-
-    // Append parameter
-    // TODO: Nullable?
-    append_parameter(function, par_id->value.string, par_type->value.type, false);
-
-    token_dispose(par_type);
-    token_dispose(par_id);
+    ASSERT_NEXT_TOKEN(stack, TOKEN_TYPE);
+    ASSERT_NEXT_TOKEN(stack, TOKEN_VAR_ID);
 }
 
 // <par-list> -> eps
@@ -762,7 +745,7 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
     {
         fprintf(stderr, "Expected an argument.\n");
-        exit(FAIL_SEMANTIC_BAD_ARGS);
+        exit(FAIL_SYNTAX);
     }
 
     if (!variadic && current_parameter + 1 > function->parameter_count)
@@ -839,6 +822,30 @@ void parse(stack_ptr stack)
 
     function_ptr fn_readf = function_create("readf", TYPE_FLOAT, true);
     sym_insert_fn(global_table, fn_readf);
+
+    DEBUG("Running preparser # parse_function_definitions");
+
+    parse_function_definitions(stack);
+
+    DEBUG("Preparsed functions and builtins:");
+
+    if (LOG_ENABLED(PREP))
+    {
+        sym_print(global_table);
+
+        int count_d = 0;
+        function_ptr *functions_d = sym_get_functions(global_table, &count_d);
+
+        for (int i = 0; i < count_d; i++)
+        {
+            function_ptr function = functions_d[i];
+
+            char *s = function_to_string(function);
+            printf("%s\n", s);
+        }
+    }
+
+    DEBUG("Running parser");
 
     // Initialize instruction buffer
 

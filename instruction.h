@@ -18,12 +18,12 @@
 
 #define TERM(frame, var) (#frame "@" #var)
 
-#define FUNCTION_HEADER(buffer, name)                              \
-    do                                                             \
-    {                                                              \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str(#name)); \
-        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                   \
-        INSTRUCTION(buffer, INSTR_PUSH_FRAME);                     \
+#define FUNCTION_HEADER(buffer, name)                  \
+    do                                                 \
+    {                                                  \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, name); \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);       \
+        INSTRUCTION(buffer, INSTR_PUSH_FRAME);         \
     } while (0);
 
 #define FUNCTION_RETVAL(buffer)                                                     \
@@ -68,7 +68,7 @@
 #define BUILT_IN_WRITE(buffer)                                                 \
     do                                                                         \
     {                                                                          \
-        FUNCTION_HEADER(buffer, write)                                         \
+        FUNCTION_HEADER(buffer, alloc_str("write"))                            \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));        \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));     \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \

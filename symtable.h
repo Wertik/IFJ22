@@ -43,6 +43,9 @@ typedef struct function_t
   // Whether the function is called somewhere in code
   bool called;
 
+  // Whether the function has been defined or just called.
+  bool defined;
+
   // Function has variadic arguments
   bool variadic;
 
