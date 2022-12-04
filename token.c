@@ -7,7 +7,6 @@
 
 #include "utils.h"
 #include "token.h"
-#include "array.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
