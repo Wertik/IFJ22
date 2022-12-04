@@ -397,6 +397,11 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_STRING);
             buffer->data[buffer->size - 1] = '\n';
         }
+        else if (c == 'r')
+        {
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '\r';
+        }
         else if (c == 't')
         {
             CHANGE_STATE(SCANNER_STRING);

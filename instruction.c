@@ -6,6 +6,7 @@
 
 #include "instruction.h"
 #include "utils.h"
+#include "scanner.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -201,6 +202,7 @@ char *instr_const_str(char *str)
     sprintf(s, "string@%s", str);
 
     s = str_rep(s, ' ', "\\032");
+    s = str_rep(s, '\r', "\\013");
     s = str_rep(s, '\n', "\\010");
     
     return s;
