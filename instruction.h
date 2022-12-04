@@ -36,16 +36,6 @@
         INSTRUCTION(buffer, INSTR_PUSH_FRAME);         \
     } while (0);
 
-// Generate a retval definition and temporary frame
-// CREATEFRAME
-// DEFVAR TF@_retval
-#define FUNCTION_RETVAL(buffer)                                                     \
-    do                                                                              \
-    {                                                                               \
-        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                    \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval")); \
-    } while (0);
-
 // Generate a function return
 // RETURN
 #define FUNCTION_RETURN(buffer)            \
@@ -65,10 +55,6 @@
     do                                                                                                        \
     {                                                                                                         \
         FUNCTION_HEADER(function->instr_buffer, alloc_str(function->name));                                   \
-        if (function->return_type != TYPE_VOID)                                                               \
-        {                                                                                                     \
-            FUNCTION_RETVAL(function->instr_buffer);                                                          \
-        }                                                                                                     \
         for (int i = 0; i < function->parameter_count; i++)                                                   \
         {                                                                                                     \
             parameter_t parameter = function->parameters[i];                                                  \
@@ -80,14 +66,10 @@
 // Generate a full function end.
 // POPS TF@_retval (for non-void)
 // RETURN
-#define FUNCTION_END(function)                                                               \
-    do                                                                                       \
-    {                                                                                        \
-        if (function->return_type != TYPE_VOID)                                              \
-        {                                                                                    \
-            INSTRUCTION_OPS(function->instr_buffer, INSTR_POPS, 1, alloc_str("TF@_retval")); \
-        }                                                                                    \
-        FUNCTION_RETURN(function->instr_buffer);                                             \
+#define FUNCTION_END(function)                   \
+    do                                           \
+    {                                            \
+        FUNCTION_RETURN(function->instr_buffer); \
     } while (0);
 
 // Generate the built-in write function

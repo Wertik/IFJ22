@@ -322,21 +322,14 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
             }
 
-            // Function call code
+            // Call the function
             INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
 
-            // Move return value to variable
-            // TODO: Check runtime return type
-            if (called_function->return_type == TYPE_VOID)
-            {
-                INSTRUCTION_OPS(instr, INSTR_MOVE, 2, instr_var(FRAME_LOCAL, var_id->value.string), alloc_str("nil@nil"));
-            }
-            else
-            {
-                INSTRUCTION_OPS(instr, INSTR_MOVE, 2, instr_var(FRAME_LOCAL, var_id->value.string), instr_var(FRAME_TEMP, "_retval"));
-            }
+            // Pop the return value from the stack into the variable
+            // TODO: Runtime check of the result type
+            INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var_id->value.string));
 
-            INSTRUCTION(instr, INSTR_POP_FRAME);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
         }
         else
         {
@@ -556,10 +549,13 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
                 if (function->return_type == TYPE_VOID)
                 {
+                    // Push null as the result of a void function
+                    INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, alloc_str("nil@nil"));
                     DEBUG_PSEUDO("return;");
                 }
                 else
                 {
+                    // The return value should be pushed onto the stack in expression
                     type_t result_type = parse_expression(stack, table, instr);
 
                     if (function->return_type != result_type)

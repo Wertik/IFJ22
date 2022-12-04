@@ -2,9 +2,9 @@
 declare(strict_types=1);
 
 function hello(int $x, int $y): int {
-    return 10;
+    return 30;
 }
 
 $x = hello(10, 20);
-write($x);
+write($x, "\n");
 ?>
