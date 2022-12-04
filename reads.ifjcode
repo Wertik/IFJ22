@@ -1,0 +1,26 @@
+.ifjcode22
+
+createframe
+pushframe
+
+call reads
+popframe
+
+exit int@0
+
+#reads function
+label reads
+
+createframe
+pushframe
+
+createframe 
+
+defvar TF@_retval
+defvar LF@$buffer
+read LF@$buffer string
+pushs LF@$buffer
+
+POPS TF@_retval
+
+return

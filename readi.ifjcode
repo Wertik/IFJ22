@@ -1,0 +1,28 @@
+.ifjcode22
+
+CREATEFRAME
+PUSHFRAME
+
+CALL readi 
+
+# DPRINT TF@_retval
+POPFRAME
+
+EXIT int@0
+
+LABEL readi 
+
+CREATEFRAME
+PUSHFRAME
+CREATEFRAME
+
+DEFVAR TF@_retval
+defvar LF@$buffer
+
+read LF@$buffer int
+
+pushs LF@$buffer
+
+POPS TF@_retval
+
+RETURN

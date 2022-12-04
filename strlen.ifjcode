@@ -1,0 +1,34 @@
+.ifjcode22
+
+CREATEFRAME
+PUSHFRAME
+
+#HOW DO I PUSH ARGUMENT instead of constant ??
+PUSHS string@\010234
+
+CALL strlen
+
+DPRINT TF@_retval
+POPFRAME
+
+EXIT int@0
+
+LABEL strlen
+
+CREATEFRAME
+PUSHFRAME
+CREATEFRAME
+
+DEFVAR TF@_retval
+
+DEFVAR LF@$count
+DEFVAR LF@$buffer
+
+
+POPS LF@$buffer
+
+strlen LF@$count LF@$buffer
+PUSHS LF@$count
+
+POPS TF@_retval
+RETURN
