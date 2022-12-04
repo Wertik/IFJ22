@@ -39,6 +39,32 @@
         INSTRUCTION(buffer, INSTR_RETURN); \
     } while (0);
 
+#define FUNCTION_BEGIN(function)                                                                              \
+    do                                                                                                        \
+    {                                                                                                         \
+        FUNCTION_HEADER(function->instr_buffer, alloc_str(function->name));                                   \
+        if (function->return_type != TYPE_VOID)                                                               \
+        {                                                                                                     \
+            FUNCTION_RETVAL(function->instr_buffer);                                                          \
+        }                                                                                                     \
+        for (int i = 0; i < function->parameter_count; i++)                                                   \
+        {                                                                                                     \
+            parameter_t parameter = function->parameters[i];                                                  \
+            INSTRUCTION_OPS(function->instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, parameter.name)); \
+            INSTRUCTION_OPS(function->instr_buffer, INSTR_POPS, 1, instr_var(FRAME_LOCAL, parameter.name));   \
+        }                                                                                                     \
+    } while (0);
+
+#define FUNCTION_END(function)                                                               \
+    do                                                                                       \
+    {                                                                                        \
+        if (function->return_type != TYPE_VOID)                                              \
+        {                                                                                    \
+            INSTRUCTION_OPS(function->instr_buffer, INSTR_POPS, 1, alloc_str("TF@_retval")); \
+        }                                                                                    \
+        FUNCTION_RETURN(function->instr_buffer);                                             \
+    } while (0);
+
 #define BUILT_IN_WRITE(buffer)                                                 \
     do                                                                         \
     {                                                                          \

@@ -9,7 +9,7 @@
 #include "utils.h"
 #include "instruction.h"
 
-int different_parse = 0;
+sym_table_ptr global_table = NULL;
 
 token_ptr peek(stack_ptr stack, int n)
 {
@@ -94,72 +94,72 @@ void assert_n_tokens(stack_ptr stack, int n, ...)
 }
 
 // treba asi zmenit
-type_t parse_expression(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr instr_buffer)
+type_t parse_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
 {
     DEBUG_RULE();
 
     type_t result_type;
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
 
     switch (next->type)
     {
     case TOKEN_L_PAREN:
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
-        result_type = parse_expression(in_stack, sym_global, instr_buffer);
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
+        result_type = parse_expression(stack, table, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
         break;
 
     case TOKEN_CONST_DOUBLE:
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CONST_DOUBLE);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_CONST_DOUBLE);
 
         result_type = TYPE_FLOAT;
-        rule_expression_next(in_stack, sym_global, instr_buffer);
+        rule_expression_next(stack, table, instr_buffer);
         break;
     case TOKEN_CONST_INT:
-        next = assert_next_token_get(in_stack, TOKEN_CONST_INT);
+        next = assert_next_token_get(stack, TOKEN_CONST_INT);
         result_type = TYPE_INT;
 
         // TODO: Remove later, just for demo.
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer));
 
-        rule_expression_next(in_stack, sym_global, instr_buffer);
+        rule_expression_next(stack, table, instr_buffer);
 
         token_dispose(next);
         break;
     case TOKEN_STRING_LIT:
 
-        next = assert_next_token_get(in_stack, TOKEN_STRING_LIT);
+        next = assert_next_token_get(stack, TOKEN_STRING_LIT);
 
         result_type = TYPE_STRING;
 
         // TODO: Remove later, just for demo.
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
 
-        rule_expression_next(in_stack, sym_global, instr_buffer);
+        rule_expression_next(stack, table, instr_buffer);
 
         token_dispose(next);
         break;
     case TOKEN_VAR_ID:
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_VAR_ID);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_VAR_ID);
 
         // TODO: Check if var exists in symtable, get the type.
 
         // WILL HAVE TO WORK WITH SYMBOL TABLE
-        // value = parse_expression(in_stack);
+        // value = parse_expression(stack);
         // value = next->value.string;
-        rule_expression_next(in_stack, sym_global, instr_buffer);
+        rule_expression_next(stack, table, instr_buffer);
         break;
     // Part of FUNEXP
     /* case TOKEN_ID:
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_ID);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_ID);
 
         // TODO: Check if function exists and get the return type from symtable.
 
-        // value = parse_expression(in_stack);
+        // value = parse_expression(stack);
         // value = next->value.string;
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
-        rule_argument_list(in_stack, sym_global);
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
+        rule_argument_list(stack, table);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
         break; */
     default:
         fprintf(stderr, "Not an expression.\n");
@@ -169,67 +169,67 @@ type_t parse_expression(stack_ptr in_stack, sym_table_ptr sym_global, instr_buff
     return result_type;
 }
 
-void rule_expression_next(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr instr_buffer)
+void rule_expression_next(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
 {
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
     // is it actually necessary?
     // int value;
     switch (next->type)
     {
     case TOKEN_PLUS:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_PLUS);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_PLUS);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_MINUS:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MINUS);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_MINUS);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_MULTIPLE:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MULTIPLE);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_MULTIPLE);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_DIVIDE:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_DIVIDE);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_DIVIDE);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_DOT:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_DOT);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_DOT);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_EQUAL:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_EQUAL);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_EQUAL);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_NOT_EQUAL:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_NOT_EQUAL);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_NOT_EQUAL);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_MORE:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MORE);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_MORE);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_MORE_EQUAL:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_MORE_EQUAL);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_MORE_EQUAL);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_LESS:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_LESS);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_LESS);
+        parse_expression(stack, table, instr_buffer);
         break;
     case TOKEN_LESS_EQUAL:
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_LESS_EQUAL);
-        parse_expression(in_stack, sym_global, instr_buffer);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_LESS_EQUAL);
+        parse_expression(stack, table, instr_buffer);
         break;
     default:
     {
@@ -248,34 +248,34 @@ void rule_expression_next(stack_ptr in_stack, sym_table_ptr sym_global, instr_bu
 // <statement> -> function id(<argument-list>) {<statement-list>}
 // <statement> -> id(<argument-list>);
 // <statement> -> <expression>;
-void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer)
+void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function, instr_buffer_ptr instr)
 {
     DEBUG_RULE();
 
-    token_ptr next = peek_top(in_stack);
-    token_ptr after_next = peek(in_stack, 1);
+    token_ptr next = peek_top(stack);
+    token_ptr after_next = peek(stack, 1);
 
     // <statement> -> var_id = <expression>;
     if (next->type == TOKEN_VAR_ID && after_next != NULL && after_next->type == TOKEN_ASSIGN)
     {
-        next = get_next_token(in_stack);
-        // already know the next token, just pop it from the stack
-        stack_pop(in_stack);
+        next = get_next_token(stack);
+        // throw away assign
+        STACK_THROW(stack);
 
         // l-side
-        variable_ptr var = sym_get_variable(sym_global, next->value.string);
+        variable_ptr var = sym_get_variable(table, next->value.string);
 
         // parse r-side
-        type_t result_type = parse_expression(in_stack, sym_global, function == NULL ? instr_buffer : function->instr_buffer);
+        type_t result_type = parse_expression(stack, table, instr);
 
         // Create symboltable entry if not already present
         if (var == NULL)
         {
-            // TODO: Infer type from value (requires PSA)
-            var = variable_create(next->value.string, TYPE_INT, true);
-            sym_insert_var(sym_global, var);
+            // TODO: Handle nullable
+            var = variable_create(next->value.string, result_type, true);
+            sym_insert_var(table, var);
 
-            INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name));
+            INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name));
         }
         else
         {
@@ -284,11 +284,11 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
         }
 
         // instructions to get the result
-        INSTRUCTION_OPS(function == NULL ? instr_buffer : function->instr_buffer, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var->name));
+        INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var->name));
 
         DEBUG_PSEUDO("%s <- %s", next->value.string, type_to_name(result_type));
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
         token_dispose(next);
     }
     else if (next->type == TOKEN_ID)
@@ -296,11 +296,11 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
         // <statement> -> id(<argument-list>);
 
         // Check that the function exists.
-        token_ptr func_id = assert_next_token_get(in_stack, TOKEN_ID);
+        token_ptr func_id = assert_next_token_get(stack, TOKEN_ID);
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
-        function_ptr called_function = sym_get_function(sym_global, func_id->value.string);
+        function_ptr called_function = sym_get_function(global_table, func_id->value.string);
 
         if (called_function == NULL)
         {
@@ -312,27 +312,27 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
         called_function->called = true;
 
-        int parameter_count = rule_argument_list(in_stack, sym_global, called_function, function == NULL ? instr_buffer : function->instr_buffer, called_function->variadic);
+        int parameter_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
 
         if (called_function->variadic)
         {
-            INSTRUCTION_OPS(function == NULL ? instr_buffer : function->instr_buffer, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
+            INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
         }
 
         // Function call code
-        INSTRUCTION_OPS(function == NULL ? instr_buffer : function->instr_buffer, INSTR_CALL, 1, alloc_str(called_function->name));
+        INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
         // TODO: Maybe generate some retval code?
-        INSTRUCTION(function == NULL ? instr_buffer : function->instr_buffer, INSTR_POP_FRAME);
+        INSTRUCTION(instr, INSTR_POP_FRAME);
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
         token_dispose(func_id);
     }
     else if (next->type == TOKEN_KEYWORD)
     {
         // if / function / while
 
-        next = assert_next_token_get(in_stack, TOKEN_KEYWORD);
+        next = assert_next_token_get(stack, TOKEN_KEYWORD);
 
         switch (next->value.keyword)
         {
@@ -342,31 +342,31 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 
             // if (<expression>) {<statement-list>}
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
-            type_t type = parse_expression(in_stack, sym_global, instr_buffer);
+            type_t type = parse_expression(stack, table, instr);
 
-            assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+            assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("if (%s)", type_to_name(type));
 
-            rule_statement_list(in_stack, sym_global, function, instr_buffer);
+            rule_statement_list(stack, table, function, instr);
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end if");
 
             // else { <statement-list> }
 
-            ASSERT_KEYWORD(in_stack, KEYWORD_ELSE);
+            ASSERT_KEYWORD(stack, KEYWORD_ELSE);
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_LC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("else");
 
-            rule_statement_list(in_stack, sym_global, function, instr_buffer);
+            rule_statement_list(stack, table, function, instr);
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end else");
             break;
@@ -374,17 +374,17 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
         case KEYWORD_WHILE:
         {
             // <statement> -> while (<expression>) {<statement-list>}
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
-            type_t type = parse_expression(in_stack, sym_global, instr_buffer);
+            type_t type = parse_expression(stack, table, instr);
 
-            assert_n_tokens(in_stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+            assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("while (%s)", type_to_name(type));
 
-            rule_statement_list(in_stack, sym_global, function, instr_buffer);
+            rule_statement_list(stack, table, function, instr);
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end while");
             break;
@@ -394,81 +394,59 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
             // <statement> -> function id(<argument-list>) : type {<statement-list>}
 
             // Save function to symtable
-            token_ptr function_id = assert_next_token_get(in_stack, TOKEN_ID);
+            token_ptr function_id = assert_next_token_get(stack, TOKEN_ID);
 
             // Check if the function is already defined
 
-            if (sym_search(sym_global, function_id->value.string) != NULL)
+            if (sym_search(table, function_id->value.string) != NULL)
             {
                 fprintf(stderr, "Function %s already defined.\n", function_id->value.string);
                 exit(FAIL_SEMANTIC_FUNC_DEF);
             }
 
             function_ptr function = function_create(function_id->value.string, TYPE_VOID, false);
-            sym_insert_fn(sym_global, function);
+            sym_insert_fn(table, function);
 
             DEBUG_PSEUDO("function %s(...)", function_id->value.string);
 
-            // Parse arguments
+            // Parse parameters
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_L_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
-            rule_parameter_list(in_stack, sym_global, function);
+            rule_parameter_list(stack, function);
 
             for (int i = 0; i < function->parameter_count; i++)
             {
-                DEBUG_PSEUDO("Parameter %d: %s %s", i, type_to_name(function->parameters[i].type), function->parameters[i].name);
+                parameter_t parameter = function->parameters[i];
+
+                DEBUG_PSEUDO("Parameter %d: %s %s", i, type_to_name(parameter.type), parameter.name);
 
                 // Insert as variables into function local symtable
-                variable_ptr parameter = variable_create(function->parameters[i].name, function->parameters[i].type, function->parameters[i].type_nullable);
-                sym_insert_var(function->symtable, parameter);
+                variable_ptr parameter_var = variable_create(parameter.name, parameter.type, parameter.type_nullable);
+                sym_insert_var(function->symtable, parameter_var);
             }
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_R_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_COLON);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_COLON);
 
             // Save return type to symtable
 
-            token_ptr return_type = assert_next_token_get(in_stack, TOKEN_TYPE);
+            token_ptr return_type = assert_next_token_get(stack, TOKEN_TYPE);
 
             function->return_type = return_type->value.type;
 
             DEBUG_PSEUDO("Returns %s", type_to_name(function->return_type));
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_LC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
+
+            // Generate function begin code
+
+            FUNCTION_BEGIN(function);
 
             // Function statement list
 
-            // Save function body code into a seperate buffer.
-            // Allows us to generate function code after the main body exit.
-            instr_buffer_ptr fn_instr_buffer = function->instr_buffer;
-
-            // Generate function header code
-            FUNCTION_HEADER(fn_instr_buffer, function->name);
-            if (function->return_type != TYPE_VOID)
-            {
-                FUNCTION_RETVAL(fn_instr_buffer);
-            }
-
-            // Define and pop function parameters
-            for (int i = 0; i < function->parameter_count; i++)
-            {
-                parameter_t param = function->parameters[i];
-
-                // DEFVAR and POPS
-                INSTRUCTION_OPS(fn_instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, param.name));
-                INSTRUCTION_OPS(fn_instr_buffer, INSTR_POPS, 1, instr_var(FRAME_LOCAL, param.name));
-            }
-
-            rule_statement_list(in_stack, sym_global, function, fn_instr_buffer);
-
-            // Function footer
-            if (function->return_type != TYPE_VOID)
-            {
-                INSTRUCTION_OPS(fn_instr_buffer, INSTR_POPS, 1, alloc_str("TF@_retval"));
-            }
-            FUNCTION_RETURN(fn_instr_buffer);
+            rule_statement_list(stack, function == NULL ? table : function->symtable, function, function == NULL ? instr : function->instr_buffer);
 
             if (function->return_type != TYPE_VOID && function->has_return == false)
             {
@@ -476,7 +454,9 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                 exit(FAIL_SEMANTIC_INVALID_RETURN_COUNT);
             }
 
-            ASSERT_NEXT_TOKEN(in_stack, TOKEN_RC_BRACKET);
+            FUNCTION_END(function);
+
+            ASSERT_NEXT_TOKEN(stack, TOKEN_RC_BRACKET);
 
             DEBUG_PSEUDO("end function %s", function_id->value.string);
 
@@ -490,18 +470,18 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
             if (function == NULL)
             {
                 // Can return a value or not.
-                token_ptr next = peek_top(in_stack);
+                token_ptr next = peek_top(stack);
 
                 type_t result_type = TYPE_VOID;
 
                 // not a semicolon, has to be an expression or constant
                 if (next->type != TOKEN_SEMICOLON)
                 {
-                    result_type = parse_expression(in_stack, sym_global, instr_buffer);
+                    result_type = parse_expression(stack, table, instr);
                 }
 
                 DEBUG_PSEUDO("global return %s;", type_to_name(result_type));
-                ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+                ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
             }
             else
             {
@@ -513,7 +493,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                 }
                 else
                 {
-                    type_t result_type = parse_expression(in_stack, sym_global, instr_buffer);
+                    type_t result_type = parse_expression(stack, table, instr);
 
                     if (function->return_type != result_type)
                     {
@@ -524,7 +504,7 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
                     DEBUG_PSEUDO("return %s;", type_to_name(result_type));
                 }
                 function->has_return = true;
-                ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+                ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
             }
             break;
         }
@@ -537,19 +517,19 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
     else
     {
         // just let it try to parse an expression here
-        parse_expression(in_stack, sym_global, instr_buffer);
+        parse_expression(stack, table, instr);
 
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_SEMICOLON);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
     }
 }
 
 // <statement-list> -> eps
 // <statement-list> -> <statement><statement-list>
-void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer)
+void rule_statement_list(stack_ptr stack, sym_table_ptr table, function_ptr function, instr_buffer_ptr instr)
 {
     DEBUG_RULE();
 
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
 
     // Nothing else to parse
     if (next == NULL)
@@ -558,7 +538,7 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
         return;
     }
 
-    if (is_one_of(next, TOKEN_KEYWORD,
+    if (is_one_of(next, 6, TOKEN_KEYWORD,
                   TOKEN_VAR_ID,
                   TOKEN_ID,
                   TOKEN_CONST_INT,
@@ -566,9 +546,9 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
                   TOKEN_STRING_LIT))
     {
         // <statement-list> -> <statement><statement-list>
-        rule_statement(in_stack, sym_global, function, instr_buffer);
+        rule_statement(stack, table, function, instr);
 
-        rule_statement_list(in_stack, sym_global, function, instr_buffer);
+        rule_statement_list(stack, table, function, instr);
     }
     else
     {
@@ -578,10 +558,10 @@ void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
 }
 
 // <par> -> type var_id
-void rule_parameter(stack_ptr in_stack, function_ptr function)
+void rule_parameter(stack_ptr stack, function_ptr function)
 {
-    token_ptr par_type = assert_next_token_get(in_stack, TOKEN_TYPE);
-    token_ptr par_id = assert_next_token_get(in_stack, TOKEN_VAR_ID);
+    token_ptr par_type = assert_next_token_get(stack, TOKEN_TYPE);
+    token_ptr par_id = assert_next_token_get(stack, TOKEN_VAR_ID);
 
     // cannot use void as parameter type
     if (par_type->value.type == TYPE_VOID)
@@ -600,17 +580,17 @@ void rule_parameter(stack_ptr in_stack, function_ptr function)
 
 // <par-list> -> eps
 // <par-list> -> <par> <par-next>
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
+void rule_parameter_list(stack_ptr stack, function_ptr function)
 {
     DEBUG_RULE();
 
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
 
     if (next->type == TOKEN_TYPE)
     {
         // <par-list> -> <par> <par-next>
-        rule_parameter(in_stack, function);
-        rule_parameter_next(in_stack, sym_global, function);
+        rule_parameter(stack, function);
+        rule_parameter_next(stack, function);
     }
     else
     {
@@ -621,18 +601,18 @@ void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_
 
 // <par-next> -> eps
 // <par-next> -> , <par> <par-next>
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function)
+void rule_parameter_next(stack_ptr stack, function_ptr function)
 {
     DEBUG_RULE();
 
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
 
     if (next->type == TOKEN_COMMA)
     {
         // <par-next> -> , <par> <par-next>
-        STACK_THROW(in_stack);
+        STACK_THROW(stack);
 
-        rule_parameter_list(in_stack, sym_global, function);
+        rule_parameter_list(stack, function);
     }
     else
     {
@@ -706,11 +686,11 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
 
 // <arg-list> -> eps
 // <arg-list> -> <arg> <arg-next>
-int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, bool variadic)
+int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr function, instr_buffer_ptr instr_buffer, bool variadic)
 {
     DEBUG_RULE();
 
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
 
     // Ignore argument count checks with variadic functions
 
@@ -733,9 +713,9 @@ int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_pt
     instr_buffer_ptr arg_buffer = instr_buffer_init();
 
     parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[0]);
-    rule_argument(in_stack, sym_global, expected_parameter, arg_buffer);
+    rule_argument(stack, table, expected_parameter, arg_buffer);
 
-    int current_parameter = rule_argument_next(in_stack, sym_global, function, instr_buffer, 0, variadic);
+    int current_parameter = rule_argument_next(stack, table, function, instr_buffer, 0, variadic);
 
     if (!variadic && current_parameter + 1 > function->parameter_count)
     {
@@ -761,11 +741,11 @@ int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_pt
 
 // <arg-next> -> eps
 // <arg-next> -> , <arg> <arg-next>
-int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic)
+int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic)
 {
     DEBUG_RULE();
 
-    token_ptr next = peek_top(in_stack);
+    token_ptr next = peek_top(stack);
 
     if (next->type != TOKEN_COMMA)
     {
@@ -773,11 +753,11 @@ int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_pt
         return current_parameter;
     }
 
-    STACK_THROW(in_stack);
+    STACK_THROW(stack);
 
     current_parameter += 1;
 
-    next = peek_top(in_stack);
+    next = peek_top(stack);
 
     if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
     {
@@ -798,9 +778,9 @@ int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_pt
     instr_buffer_ptr param_buffer = instr_buffer_init();
 
     parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[current_parameter]);
-    rule_argument(in_stack, sym_global, expected_parameter, param_buffer);
+    rule_argument(stack, table, expected_parameter, param_buffer);
 
-    current_parameter = rule_argument_next(in_stack, sym_global, function, instr_buffer, current_parameter, variadic);
+    current_parameter = rule_argument_next(stack, table, function, instr_buffer, current_parameter, variadic);
 
     // append argument instructions
     for (int i = 0; i < param_buffer->len; i++)
@@ -813,50 +793,52 @@ int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_pt
 }
 
 // <prog> -> <?php <statement-list> ?>
-void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr instr_buffer)
+void rule_prog(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr)
 {
     DEBUG_RULE();
 
-    // Main frame body
-    INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
-    INSTRUCTION(instr_buffer, INSTR_PUSH_FRAME);
-
     // Prolog
-    ASSERT_NEXT_TOKEN(in_stack, TOKEN_OPENING_TAG);
-    ASSERT_NEXT_TOKEN(in_stack, TOKEN_DECLARE);
+    ASSERT_NEXT_TOKEN(stack, TOKEN_OPENING_TAG);
+    ASSERT_NEXT_TOKEN(stack, TOKEN_DECLARE);
+
+    // Main frame body
+    INSTRUCTION(instr, INSTR_CREATE_FRAME);
+    INSTRUCTION(instr, INSTR_PUSH_FRAME);
 
     // Start parsing the main program body.
-    rule_statement_list(in_stack, sym_global, NULL, instr_buffer);
+    rule_statement_list(stack, table, NULL, instr);
 
     // Optional closing tag
-    token_ptr closing = peek_top(in_stack);
+    token_ptr closing = peek_top(stack);
 
     if (closing != NULL)
     {
-        ASSERT_NEXT_TOKEN(in_stack, TOKEN_CLOSING_TAG);
+        ASSERT_NEXT_TOKEN(stack, TOKEN_CLOSING_TAG);
     }
 }
 
 void parse(stack_ptr stack)
 {
-    sym_table_ptr sym_global = sym_init();
+    global_table = sym_init();
+
+    sym_table_ptr table = sym_init();
 
     // Add built in functions to symtable
 
     function_ptr fn_write = function_create("write", TYPE_VOID, false);
     fn_write->variadic = true;
-    sym_insert_fn(sym_global, fn_write);
+    sym_insert_fn(global_table, fn_write);
 
     BUILT_IN_WRITE(fn_write->instr_buffer);
 
     function_ptr fn_reads = function_create("reads", TYPE_STRING, true);
-    sym_insert_fn(sym_global, fn_reads);
+    sym_insert_fn(global_table, fn_reads);
 
     function_ptr fn_readi = function_create("readi", TYPE_INT, true);
-    sym_insert_fn(sym_global, fn_readi);
+    sym_insert_fn(global_table, fn_readi);
 
     function_ptr fn_readf = function_create("readf", TYPE_FLOAT, true);
-    sym_insert_fn(sym_global, fn_readf);
+    sym_insert_fn(global_table, fn_readf);
 
     // Initialize instruction buffer
 
@@ -864,7 +846,7 @@ void parse(stack_ptr stack)
 
     instr_buffer_append(instr_buffer, alloc_str(".ifjcode22"));
 
-    rule_prog(stack, sym_global, instr_buffer);
+    rule_prog(stack, table, instr_buffer);
 
     if (stack_size(stack) != 0)
     {
@@ -874,7 +856,8 @@ void parse(stack_ptr stack)
 
     if (LOG_ENABLED(SYMTABLE))
     {
-        sym_print(sym_global);
+        sym_print(table);
+        sym_print(global_table);
     }
 
     // Add exit instr
@@ -889,7 +872,7 @@ void parse(stack_ptr stack)
     // TODO: Add comments to generated code
 
     int count = 0;
-    function_ptr *functions = sym_get_functions(sym_global, &count);
+    function_ptr *functions = sym_get_functions(global_table, &count);
 
     for (int i = 0; i < count; i++)
     {
@@ -902,5 +885,6 @@ void parse(stack_ptr stack)
         instr_buffer_dispose(function->instr_buffer);
     }
 
-    sym_dispose(sym_global);
+    sym_dispose(table);
+    sym_dispose(global_table);
 }

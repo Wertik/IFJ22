@@ -56,6 +56,8 @@
         token_dispose(get_next_token(stack)); \
     } while (0);
 
+extern sym_table_ptr global_table;
+
 // -- utilities
 
 // Peek next nth token in the stack.
@@ -86,8 +88,8 @@ void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr f
 void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
 
 void rule_parameter(stack_ptr in_stack, function_ptr function);
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
+void rule_parameter_list(stack_ptr in_stack, function_ptr function);
+void rule_parameter_next(stack_ptr in_stack, function_ptr function);
 
 void rule_argument(stack_ptr in_stack, sym_table_ptr table, parameter_t *parameter, instr_buffer_ptr instr_buffer);
 int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, bool variadic);
