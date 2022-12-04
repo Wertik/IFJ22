@@ -129,6 +129,12 @@ void parse_function(item_ptr *item)
 
         DEBUG_PSEUDO("Parameter %d: %s %s", i, type_to_name(parameter.type), parameter.name);
 
+        if (sym_get_variable(function->symtable, parameter.name) != NULL)
+        {
+            fprintf(stderr, "Parameter with name %s already defined.\n", parameter.name);
+            exit(FAIL_SEMANTIC);
+        }
+
         // Insert as variables into function local symtable
         variable_ptr parameter_var = variable_create(parameter.name, parameter.type, parameter.type_nullable);
         sym_insert_var(function->symtable, parameter_var);

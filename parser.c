@@ -498,18 +498,6 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             // Throw away the parameter tokens
             rule_parameter_list(stack, function);
 
-            // Add variables and generate code
-            for (int i = 0; i < function->parameter_count; i++)
-            {
-                parameter_t parameter = function->parameters[i];
-
-                DEBUG_PSEUDO("Parameter %d: %s %s", i, type_to_name(parameter.type), parameter.name);
-
-                // Insert as variables into function local symtable
-                variable_ptr parameter_var = variable_create(parameter.name, parameter.type, parameter.type_nullable);
-                sym_insert_var(function->symtable, parameter_var);
-            }
-
             ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_COLON);
@@ -529,7 +517,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             if (function->return_type != TYPE_VOID && function->has_return == false)
             {
                 fprintf(stderr, "Missing return statement for non-void function %s.\n", function_id->value.string);
-                exit(FAIL_SEMANTIC_INVALID_RETURN_COUNT);
+                exit(FAIL_SEMANTIC_BAD_ARGS);
             }
 
             FUNCTION_END(function);
