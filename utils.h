@@ -1,5 +1,12 @@
-#ifndef UTILS_H
-#define UTILS_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xdobes22 Kristián Dobeš
+ */
+
+#ifndef _UTILS_H
+#define _UTILS_H
 
 #include <string.h>
 
@@ -8,7 +15,8 @@
 #define FAIL_SEMANTIC_FUNC_DEF 3
 #define FAIL_SEMANTIC_BAD_ARGS 4
 #define FAIL_SEMANTIC_VAR_UNDEFINED 5
-#define FAIL_SEMANTIC_BAD_RETURN 6
+#define FAIL_SEMANTIC_INVALID_RETURN_COUNT 6
+#define FAIL_SEMANTIC_INVALID_RETURN_TYPE 4
 #define FAIL_SEMANTIC_EXPRE 7
 #define FAIL_SEMANTIC 8
 #define FAIL_INTERNAL 99

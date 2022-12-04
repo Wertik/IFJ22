@@ -1,6 +1,12 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ */
+
 #include "utils.h"
 #include "token.h"
-#include "array.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdbool.h>
@@ -25,8 +31,7 @@ token_ptr token_create_empty(token_type_t type)
     return token_create(type, NONE, value);
 }
 
-// Create a token with str as string value. Copies str into a new string, can be freed.
-token_ptr token_create_string(token_type_t type, char *str)
+token_ptr token_create_string(token_type_t type, const char *str)
 {
     size_t len = strlen(str);
 
@@ -51,17 +56,6 @@ token_ptr token_create_type(type_t type)
 {
     token_value_t value = {.type = type};
     return token_create(TOKEN_TYPE, TYPE, value);
-}
-
-void token_dispose(token_ptr token)
-{
-    // free string values
-    if (token->value_type == STRING)
-    {
-        free(token->value.string);
-    }
-
-    free(token);
 }
 
 // Parse type name to string for pretty print
@@ -239,6 +233,14 @@ char *value_to_string(token_value_type_t type, token_value_t value)
 {
     switch (type)
     {
+    case NONE:
+    {
+        size_t len = snprintf(NULL, 0, "NONE");
+        char *s = malloc(sizeof(char) * (len + 1));
+        MALLOC_CHECK(s);
+        sprintf(s, "NONE");
+        return s;
+    }
     case STRING:
         return value.string;
     case INTEGER:
@@ -352,4 +354,15 @@ bool is_one_of(token_ptr token, int count, ...)
 
     va_end(va_list);
     return false;
+}
+
+void token_dispose(token_ptr token)
+{
+    // free string values
+    if (token->value_type == STRING)
+    {
+        free(token->value.string);
+    }
+
+    free(token);
 }

@@ -1,3 +1,9 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "scanner.h"
@@ -6,7 +12,7 @@
 #include "symtable.h"
 #include "utils.h"
 
-int main(int argc, char const *argv[])
+int main()
 {
     // Tokenize stdin
     stack_ptr stack = tokenize();

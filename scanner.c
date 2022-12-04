@@ -1,3 +1,12 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek02 Miroslav Bálek
+ * @author xdobes22 Kristán Dobeš
+ * @author xsynak03 Maroš Synák
+ */
+
 #include "scanner.h"
 #include "token.h"
 #include "utils.h"
@@ -175,7 +184,6 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_VAR_ID_START);
             buffer_append(buffer, c);
         }
-        // TODO: magic number
         else if (c == EOF || c == '\n' || c == ' ' || c == CR)
         {
             break;
@@ -388,6 +396,11 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
         {
             CHANGE_STATE(SCANNER_STRING);
             buffer->data[buffer->size - 1] = '\n';
+        }
+        else if (c == 'r')
+        {
+            CHANGE_STATE(SCANNER_STRING);
+            buffer->data[buffer->size - 1] = '\r';
         }
         else if (c == 't')
         {
@@ -677,7 +690,6 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
                 !attempt_keyword(stack, buffer, "else", KEYWORD_ELSE) &&
                 !attempt_keyword(stack, buffer, "while", KEYWORD_WHILE) &&
                 !attempt_keyword(stack, buffer, "return", KEYWORD_RETURN) &&
-                !attempt_keyword(stack, buffer, "write", KEYWORD_WRITE) &&
                 !attempt_type(stack, buffer, "int", TYPE_INT) &&
                 !attempt_type(stack, buffer, "string", TYPE_STRING) &&
                 !attempt_type(stack, buffer, "float", TYPE_FLOAT) &&

@@ -1,0 +1,7 @@
+<?php
+declare(strict_types=1);
+
+write("Hello world!\n", 2, 3);
+reads();
+readi();
+readf();

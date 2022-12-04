@@ -1,3 +1,12 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * Description:
+ * Usage demonstration for stack implementation.
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include "stack.h"

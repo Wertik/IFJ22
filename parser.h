@@ -1,20 +1,28 @@
-#ifndef PARSER_H
-#define PARSER_H
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xsynak03 Maroš Synák
+ * @author xdobes22 Kristián Dobeš
+ */
+
+#ifndef _PARSER_H
+#define _PARSER_H
 
 #include "symtable.h"
 #include "stack.h"
 #include "utils.h"
 #include "instruction.h"
 
-#define ASSERT_TOKEN_TYPE(token, token_type)                                                                                                  \
-    do                                                                                                                                        \
-    {                                                                                                                                         \
-        DEBUG_ASSERT(token_type, token);                                                                                                      \
-        if (token == NULL || token->type != token_type)                                                                                       \
-        {                                                                                                                                     \
+#define ASSERT_TOKEN_TYPE(token, token_type)                                                                                                     \
+    do                                                                                                                                           \
+    {                                                                                                                                            \
+        DEBUG_ASSERT(token_type, token);                                                                                                         \
+        if (token == NULL || token->type != token_type)                                                                                          \
+        {                                                                                                                                        \
             fprintf(stderr, "%s expected, got %s.\n", token_type_to_name(token_type), token == NULL ? "NULL" : token_type_to_name(token->type)); \
-            exit(FAIL_SYNTAX);                                                                                                                \
-        }                                                                                                                                     \
+            exit(FAIL_SYNTAX);                                                                                                                   \
+        }                                                                                                                                        \
     } while (0);
 
 #define ASSERT_NEXT_TOKEN(stack, token_type)     \
@@ -50,6 +58,14 @@
         token_dispose(token);                                     \
     } while (0);
 
+#define STACK_THROW(stack)                    \
+    do                                        \
+    {                                         \
+        token_dispose(get_next_token(stack)); \
+    } while (0);
+
+extern sym_table_ptr global_table;
+
 // -- utilities
 
 // Peek next nth token in the stack.
@@ -76,17 +92,20 @@ void assert_n_tokens(stack_ptr stack, int count, ...);
 // -- rule functions
 
 void rule_prog(stack_ptr in_stack, sym_table_ptr sym_global, instr_buffer_ptr instr_buffer);
+
 void rule_statement(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
 void rule_statement_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer);
 
-void rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
-void rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function);
+void rule_parameter(stack_ptr in_stack, function_ptr function);
+void rule_parameter_list(stack_ptr in_stack, function_ptr function);
+void rule_parameter_next(stack_ptr in_stack, function_ptr function);
 
-void rule_parameter_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter);
-void rule_parameter_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, int current_parameter);
+void rule_argument(stack_ptr in_stack, sym_table_ptr table, parameter_t *parameter, instr_buffer_ptr instr_buffer);
+int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, bool variadic);
+int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic);
 
-type_t parse_expression(stack_ptr in_stack, sym_table_ptr tree);
-void rule_expression_next(stack_ptr in_stack, sym_table_ptr tree);
+type_t parse_expression(stack_ptr in_stack, sym_table_ptr tree, instr_buffer_ptr instr_buffer);
+void rule_expression_next(stack_ptr in_stack, sym_table_ptr tree, instr_buffer_ptr instr_buffer);
 
 void parse(stack_ptr tokens);
 #endif

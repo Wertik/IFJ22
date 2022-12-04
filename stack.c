@@ -1,3 +1,10 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -31,7 +38,7 @@ void stack_add(stack_ptr stack, symbol_ptr symbol)
 
     item->symbol = symbol;
     item->next = NULL;
-    
+
     if (stack->top == NULL)
     {
         stack->top = item;
@@ -101,7 +108,8 @@ void stack_print(stack_ptr stack)
     printf("]\n");
 }
 
-bool stack_empty(stack_ptr stack) {
+bool stack_empty(stack_ptr stack)
+{
     return stack->top == NULL;
 }
 
@@ -109,7 +117,8 @@ item_ptr stack_pop(stack_ptr stack)
 {
     item_ptr item = stack->top;
 
-    if (item == NULL) {
+    if (item == NULL)
+    {
         return NULL;
     }
 

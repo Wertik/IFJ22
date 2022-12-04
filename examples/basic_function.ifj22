@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-function hello(int $x, string $a): void {
-    return;
+function hello(int $x, int $y): int {
+    return 30;
 }
 
-hello();
-
+$x = hello(10, 20);
+write($x, "\n");
 ?>

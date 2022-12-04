@@ -1,16 +1,21 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ * @author xbalek01 Miroslav Bálek
+ */
+
 #include "symtable.h"
 #include "utils.h"
 #include "token.h"
+#include "instruction.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#define MIN(a, b) (a > b ? b : a)
-
 int compare_keys(char *key1, char *key2)
 {
-    // compare keys by alphabet order? ascii value
-    int len = MIN(strlen(key1), strlen(key2));
+    int len = SYMTABLE_MIN(strlen(key1), strlen(key2));
 
     for (int i = 0; i < len; i++)
     {
@@ -28,15 +33,17 @@ int compare_keys(char *key1, char *key2)
     return 0;
 }
 
-variable_ptr variable_create(type_t type, bool type_nullable)
+variable_ptr variable_create(char *name, type_t type, bool type_nullable)
 {
     variable_ptr variable = malloc(sizeof(struct variable_t));
 
-    if (variable == NULL)
-    {
-        fprintf(stderr, "variable_create: malloc fail\n");
-        exit(FAIL_INTERNAL);
-    }
+    MALLOC_CHECK(variable);
+
+    variable->name = malloc(sizeof(char) * (strlen(name) + 1));
+
+    MALLOC_CHECK(variable->name);
+
+    strcpy(variable->name, name);
 
     variable->type = TYPE_INT;
     variable->type_nullable = false;
@@ -55,7 +62,7 @@ char *parameter_to_string(parameter_t parameter)
     return s;
 }
 
-char *function_to_string(char *id, function_ptr function)
+char *function_to_string(function_ptr function)
 {
     // parameters to string
     char *str = malloc(1);
@@ -80,7 +87,7 @@ char *function_to_string(char *id, function_ptr function)
     }
 
     size_t len = snprintf(NULL, 0, "%s (%s%s, [%s])",
-                          id,
+                          function->name,
                           function->return_type_nullable ? "?" : "",
                           type_to_name(function->return_type),
                           str);
@@ -90,7 +97,7 @@ char *function_to_string(char *id, function_ptr function)
     MALLOC_CHECK(s);
 
     sprintf(s, "%s (%s%s, [%s])",
-            id,
+            function->name,
             function->return_type_nullable ? "?" : "",
             type_to_name(function->return_type),
             str);
@@ -100,42 +107,112 @@ char *function_to_string(char *id, function_ptr function)
     return s;
 }
 
-char *variable_to_string(char *id, variable_ptr variable)
+char *variable_to_string(variable_ptr variable)
 {
-    size_t len = snprintf(NULL, 0, "%s%s %s", variable->type_nullable == true ? "?" : "", type_to_name(variable->type), id);
-    char *s = malloc(sizeof(char) * len + 1);
+    size_t len = snprintf(NULL, 0, "%s%s %s", variable->type_nullable == true ? "?" : "", type_to_name(variable->type), variable->name);
+    char *s = malloc(sizeof(char) * (len + 1));
 
     MALLOC_CHECK(s);
 
-    sprintf(s, "%s%s %s", variable->type_nullable == true ? "?" : "", type_to_name(variable->type), id);
+    sprintf(s, "%s%s %s", variable->type_nullable == true ? "?" : "", type_to_name(variable->type), variable->name);
     return s;
 }
 
-function_ptr function_create()
+function_ptr function_create(char *name, type_t return_type, bool return_type_nullable)
 {
     function_ptr function = malloc(sizeof(struct function_t));
 
-    if (function == NULL)
-    {
-        fprintf(stderr, "function_create: malloc fail\n");
-        exit(FAIL_INTERNAL);
-    }
+    MALLOC_CHECK(function);
 
-    function->return_type = TYPE_VOID;
-    function->return_type_nullable = false;
+    function->name = malloc(sizeof(char) * (strlen(name) + 1));
+
+    MALLOC_CHECK(function->name);
+
+    strcpy(function->name, name);
+
+    function->return_type = return_type;
+    function->return_type_nullable = return_type_nullable;
+    function->variadic = false;
+    function->has_return = false;
+    function->called = false;
+    function->defined = false;
 
     function->parameter_count = 0;
     function->parameters = malloc(0);
 
-    if (function->parameters == NULL)
-    {
-        fprintf(stderr, "function_create(parameters): malloc fail\n");
-        exit(FAIL_INTERNAL);
-    }
+    MALLOC_CHECK(function->parameters);
 
     function->symtable = sym_init();
+    function->instr_buffer = instr_buffer_init();
 
     return function;
+}
+
+void sym_get_variables_rec(sym_node_ptr root, variable_ptr **vars, int *count)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+
+    sym_get_variables_rec(root->left, vars, count);
+    sym_get_variables_rec(root->right, vars, count);
+
+    if (root->variable != NULL)
+    {
+        *count += 1;
+        *vars = realloc(*vars, sizeof(variable_ptr) * *count);
+
+        MALLOC_CHECK(*vars);
+    }
+}
+
+// Get all the variables
+variable_ptr *sym_get_variables(sym_table_ptr table, int *count)
+{
+    variable_ptr *vars = malloc(sizeof(variable_ptr) * 0);
+    *count = 0;
+
+    MALLOC_CHECK(vars);
+
+    sym_get_variables_rec(table->root, &vars, count);
+
+    return vars;
+}
+
+void sym_get_functions_rec(sym_node_ptr root, function_ptr **fns, int *count)
+{
+    if (root == NULL)
+    {
+        return;
+    }
+
+    sym_get_functions_rec(root->left, fns, count);
+    sym_get_functions_rec(root->right, fns, count);
+
+    if (root->function != NULL)
+    {
+        *count += 1;
+        *fns = realloc(*fns, sizeof(function_ptr) * (*count));
+
+        MALLOC_CHECK(*fns);
+
+        (*fns)[*count - 1] = root->function;
+    }
+}
+
+// Get all the functions
+function_ptr *sym_get_functions(sym_table_ptr table, int *count)
+{
+    function_ptr *fns = malloc(sizeof(function_ptr) * 0);
+
+    MALLOC_CHECK(fns);
+
+    *count = 0;
+
+    sym_get_functions_rec(table->root, &fns, count);
+
+    return fns;
 }
 
 void append_parameter(function_ptr function, char *name, type_t type, bool type_nullable)
@@ -167,6 +244,7 @@ void function_dispose(function_ptr function)
         free(function->parameters[i].name);
     }
 
+    free(function->name);
     free(function->parameters);
     free(function);
 }
@@ -222,37 +300,50 @@ sym_table_ptr sym_init()
     return table;
 }
 
-sym_node_ptr sym_insert_rec(sym_node_ptr root, char *id, function_ptr function, variable_ptr variable)
+sym_node_ptr sym_insert_rec(sym_node_ptr root, sym_node_ptr node)
 {
     if (root == NULL)
     {
-        return create_node(id, function, variable);
+        return node;
     }
     else
     {
-        if (compare_keys(id, root->id) == 1)
+        if (compare_keys(node->id, root->id) == 1)
         {
-            root->left = sym_insert_rec(root->left, id, function, variable);
+            root->left = sym_insert_rec(root->left, node);
         }
-        else if (compare_keys(id, root->id) == -1)
+        else if (compare_keys(node->id, root->id) == -1)
         {
-            root->right = sym_insert_rec(root->right, id, function, variable);
+            root->right = sym_insert_rec(root->right, node);
         }
         else
         {
             // only overwrite what's not null
-            if (function != NULL)
-                root->function = function;
-            if (variable != NULL)
-                root->variable = variable;
+            if (node->function != NULL)
+                root->function = node->function;
+            if (node->variable != NULL)
+                root->variable = node->variable;
+            free(node);
         }
     }
     return root;
 }
 
-void sym_insert(sym_table_ptr table, char *id, function_ptr function, variable_ptr variable)
+void sym_insert(sym_table_ptr table, sym_node_ptr node)
 {
-    table->root = sym_insert_rec(table->root, id, function, variable);
+    table->root = sym_insert_rec(table->root, node);
+}
+
+void sym_insert_fn(sym_table_ptr table, function_ptr function)
+{
+    sym_node_ptr node = create_node(function->name, function, NULL);
+    sym_insert(table, node);
+}
+
+void sym_insert_var(sym_table_ptr table, variable_ptr variable)
+{
+    sym_node_ptr node = create_node(variable->name, NULL, variable);
+    sym_insert(table, node);
 }
 
 sym_node_ptr sym_min(sym_node_ptr root)

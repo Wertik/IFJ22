@@ -1,8 +1,48 @@
+/*
+ * Project: IFJ22 language compiler
+ *
+ * @author xotrad00 Martin Otradovec
+ */
+
 #include "buffer.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+char *alloc_str(const char *str) {
+    char *s = malloc(sizeof(char) * (strlen(str) + 1));
+
+    MALLOC_CHECK(s);
+
+    strcpy(s, str);
+
+    return s;
+}
+
+char *int_to_str(int i) {
+    size_t len = snprintf(NULL, 0, "%d", i);
+
+    char *s = malloc(sizeof(char) * len);
+
+    MALLOC_CHECK(s);
+
+    sprintf(s, "%d", i);
+
+    return s;
+}
+
+char *float_to_str(double d) {
+    size_t len = snprintf(NULL, 0, "%f", d);
+
+    char *s = malloc(sizeof(char) * len);
+
+    MALLOC_CHECK(s);
+
+    sprintf(s, "%f", d);
+
+    return s;
+}
 
 buffer_ptr buffer_init()
 {
