@@ -103,24 +103,26 @@
     } while (0);
 
 // Generate the built-in write function
-#define BUILT_IN_WRITE(buffer)                                                 \
-    do                                                                         \
-    {                                                                          \
-        FUNCTION_HEADER(buffer, alloc_str("write"))                            \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));        \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));     \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));      \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));          \
-        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));         \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));           \
-        INSTRUCTION(buffer, INSTR_SUBS);                                       \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));           \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQS, 1, alloc_str("_writeloop")); \
-        FUNCTION_RETURN(buffer);                                               \
+#define BUILT_IN_WRITE(buffer)                                                    \
+    do                                                                            \
+    {                                                                             \
+        FUNCTION_HEADER(buffer, alloc_str("write"))                               \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));           \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));        \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));          \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));              \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, alloc_str("_writeloop_end")); \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));             \
+        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));            \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));              \
+        INSTRUCTION(buffer, INSTR_SUBS);                                          \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));          \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_writeloop"));          \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_end"));     \
+        FUNCTION_RETURN(buffer);                                                  \
     } while (0);
 
 // TODO: Other built-in functions

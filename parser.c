@@ -314,12 +314,12 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             called_function->called = true;
 
-            int parameter_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
+            int argument_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
 
             // Push count of arguments for variadic functions
             if (called_function->variadic)
             {
-                INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
+                INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(argument_count));
             }
 
             INSTRUCTION_CMT(instr, "Function call with assignment");
@@ -383,12 +383,12 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         INSTRUCTION_CMT(instr, "Function call");
 
-        int parameter_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
+        int argument_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
 
         // Push count of arguments for variadic functions
         if (called_function->variadic)
         {
-            INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
+            INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(argument_count));
         }
 
         // Function call code
@@ -763,17 +763,17 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[0]);
     rule_argument(stack, table, expected_parameter, arg_buffer);
 
-    int current_parameter = rule_argument_next(stack, table, function, instr_buffer, 0, variadic);
+    int argument_count = rule_argument_next(stack, table, function, instr_buffer, 1, variadic);
 
-    if (!variadic && current_parameter + 1 > function->parameter_count)
+    if (!variadic && argument_count > function->parameter_count)
     {
-        fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        fprintf(stderr, "Too many parameters for function. Expected %d but got %d.\n", function->parameter_count, argument_count);
         exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
-    if (!variadic && function->parameter_count > current_parameter + 1)
+    if (!variadic && function->parameter_count > argument_count)
     {
-        fprintf(stderr, "Not enough arguments for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        fprintf(stderr, "Not enough arguments for function. Expected %d but got %d.\n", function->parameter_count, argument_count);
         exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
@@ -784,12 +784,12 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     }
     free(arg_buffer);
 
-    return current_parameter;
+    return argument_count;
 }
 
 // <arg-next> -> eps
 // <arg-next> -> , <arg> <arg-next>
-int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic)
+int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr function, instr_buffer_ptr instr_buffer, int argument_count, bool variadic)
 {
     DEBUG_RULE();
 
@@ -798,12 +798,12 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     if (next->type != TOKEN_COMMA)
     {
         // <arg-next> -> eps
-        return current_parameter;
+        return argument_count;
     }
 
     STACK_THROW(stack);
 
-    current_parameter += 1;
+    argument_count += 1;
 
     next = peek_top(stack);
 
@@ -813,9 +813,9 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
         exit(FAIL_SYNTAX);
     }
 
-    if (!variadic && current_parameter + 1 > function->parameter_count)
+    if (!variadic && argument_count > function->parameter_count)
     {
-        fprintf(stderr, "Too many arguments for function. Expected %d but got %d.\n", function->parameter_count, current_parameter + 1);
+        fprintf(stderr, "Too many arguments for function. Expected %d but got %d.\n", function->parameter_count, argument_count);
         exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
@@ -825,10 +825,10 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
 
     instr_buffer_ptr param_buffer = instr_buffer_init();
 
-    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[current_parameter]);
+    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[argument_count - 1]);
     rule_argument(stack, table, expected_parameter, param_buffer);
 
-    current_parameter = rule_argument_next(stack, table, function, instr_buffer, current_parameter, variadic);
+    argument_count = rule_argument_next(stack, table, function, instr_buffer, argument_count, variadic);
 
     // append argument instructions
     for (int i = 0; i < param_buffer->len; i++)
@@ -837,7 +837,7 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     }
     free(param_buffer);
 
-    return current_parameter;
+    return argument_count;
 }
 
 // <prog> -> <?php <statement-list> ?>
