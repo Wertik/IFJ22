@@ -175,8 +175,10 @@ char *instr_const_int(int val)
 // Replace a character by a series of characters
 char *str_rep(char *str, char target, char *replacement)
 {
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == target) {
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        if (str[i] == target)
+        {
             // realloc with new size
             int size = strlen(str) + strlen(replacement);
             char *s = malloc(sizeof(char) * (size + 1));
@@ -189,7 +191,7 @@ char *str_rep(char *str, char target, char *replacement)
             s[size] = '\0';
 
             return str_rep(s, target, replacement);
-       }
+        }
     }
     return str;
 }
@@ -204,7 +206,36 @@ char *instr_const_str(char *str)
     s = str_rep(s, ' ', "\\032");
     s = str_rep(s, '\r', "\\013");
     s = str_rep(s, '\n', "\\010");
-    
+
+    return s;
+}
+
+char *instr_type_str(type_t type)
+{
+    const char *type_str = type_to_formal(type);
+
+    size_t len = snprintf(NULL, 0, "string@%s", type_str);
+    char *s = malloc(sizeof(char) * (len + 1));
+
+    MALLOC_CHECK(s);
+
+    sprintf(s, "string@%s", type_str);
+    return s;
+}
+
+char *dyn_str(const char *fmt, ...)
+{
+    va_list valist;
+    va_start(valist, fmt);
+    size_t len = vsnprintf(NULL, 0, fmt, valist);
+    char *s = malloc(sizeof(char) * (len + 1));
+
+    MALLOC_CHECK(s);
+
+    va_start(valist, fmt);
+    vsprintf(s, fmt, valist);
+
+    va_end(valist);
     return s;
 }
 

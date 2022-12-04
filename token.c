@@ -160,7 +160,7 @@ const char *type_to_formal(type_t type)
     case TYPE_FLOAT:
         return "float";
     case TYPE_VOID:
-        return "void";
+        return "nil";
     default:
         return "#unknown-type";
     }

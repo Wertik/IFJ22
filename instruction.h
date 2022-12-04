@@ -7,6 +7,7 @@
 #ifndef _INSTRUCTION_H
 #define _INSTRUCTION_H
 
+#include "token.h"
 #include <string.h>
 
 // Generate an instruction with no operands
@@ -22,6 +23,34 @@
     {                                                                     \
         char *call = generate_instruction_ops(instr, count, __VA_ARGS__); \
         instr_buffer_append(buffer, call);                                \
+    } while (0);
+
+#define INSTRUCTION_CMT(buffer, comment)                      \
+    do                                                        \
+    {                                                         \
+        instr_buffer_append(buffer, alloc_str("# " comment)); \
+    } while (0);
+
+#define FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt) \
+    (dyn_str("%s%s_call_%s_%d_cont_typecheck", function_scope ? "_" : "", function_scope ? function_scope->name : "", called_function->name, label_cnt))
+
+#define FUNCTION_RETURN_TYPE_CHECK(buffer, function_scope, called_function)                                                                \
+    do                                                                                                                                     \
+    {                                                                                                                                      \
+        int label_cnt = buffer->len;                                                                                                       \
+        INSTRUCTION_CMT(buffer, "Function return type check");                                                                             \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                                           \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval"));                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                   \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_retval"));                                                          \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_retval_type"), instr_var(FRAME_TEMP, "_retval"));                   \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_type_str(called_function->return_type));                                             \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt)); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_INVALID_RETURN_TYPE));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt));     \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval"));                                                         \
+        INSTRUCTION_CMT(buffer, "End function return type check");                                                                         \
     } while (0);
 
 // Generate a function header
@@ -66,10 +95,11 @@
 // Generate a full function end.
 // POPS TF@_retval (for non-void)
 // RETURN
-#define FUNCTION_END(function)                   \
-    do                                           \
-    {                                            \
-        FUNCTION_RETURN(function->instr_buffer); \
+#define FUNCTION_END(function)                                \
+    do                                                        \
+    {                                                         \
+        INSTRUCTION(function->instr_buffer, INSTR_POP_FRAME); \
+        FUNCTION_RETURN(function->instr_buffer);              \
     } while (0);
 
 // Generate the built-in write function
@@ -263,6 +293,10 @@ char *str_rep(char *str, char target, char *replacement);
 // Replaces control characters with correct escape senquences.
 // ex.: "Hello world!\n" -> "string@Hello\032world!\010"
 char *instr_const_str(char *str);
+
+char *instr_type_str(type_t type);
+
+char *dyn_str(const char *fmt, ...);
 
 // Generate an instruction with no operands.
 char *generate_instruction(instruction_t instr);

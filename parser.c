@@ -322,12 +322,18 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_int(parameter_count + 1));
             }
 
+            INSTRUCTION_CMT(instr, "Function call with assignment");
+
             // Call the function
             INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
 
+            // TODO: Nullable
+            FUNCTION_RETURN_TYPE_CHECK(instr, function, called_function);
+
             // Pop the return value from the stack into the variable
-            // TODO: Runtime check of the result type
             INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var_id->value.string));
+
+            INSTRUCTION_CMT(instr, "End function call with assignment");
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
         }
@@ -375,6 +381,8 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         called_function->called = true;
 
+        INSTRUCTION_CMT(instr, "Function call");
+
         int parameter_count = rule_argument_list(stack, table, called_function, instr, called_function->variadic);
 
         // Push count of arguments for variadic functions
@@ -385,8 +393,17 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         // Function call code
         INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
-        // No need to return the value here
-        INSTRUCTION(instr, INSTR_POP_FRAME);
+
+        if (called_function->return_type != TYPE_VOID)
+        {
+            // TODO: Nullable
+            FUNCTION_RETURN_TYPE_CHECK(instr, function, called_function);
+        }
+
+        // Clear the stack after a function call in case the function returned a value to the stack.
+        INSTRUCTION(instr, INSTR_CLEARS);
+
+        INSTRUCTION_CMT(instr, "End function call");
 
         ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
         ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
@@ -557,12 +574,6 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 {
                     // The return value should be pushed onto the stack in expression
                     type_t result_type = parse_expression(stack, table, instr);
-
-                    if (function->return_type != result_type)
-                    {
-                        fprintf(stderr, "Invalid function return type. Expected %s, got %s.\n", type_to_name(function->return_type), type_to_name(result_type));
-                        exit(FAIL_SEMANTIC_INVALID_RETURN_TYPE);
-                    }
 
                     DEBUG_PSEUDO("return %s;", type_to_name(result_type));
                 }
