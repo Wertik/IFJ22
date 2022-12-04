@@ -18,6 +18,7 @@
 #include "utils.h"
 #include "instruction.h"
 #include "preparser.h"
+#include "precedence_expression.h"
 
 sym_table_ptr global_table = NULL;
 
@@ -106,6 +107,17 @@ void assert_n_tokens(stack_ptr stack, int n, ...)
 // treba asi zmenit
 type_t parse_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
 {
+
+    stack_ptr push_down_stack = stack_init();
+
+    // represents dollar
+    token_value_t value;
+    token_ptr dollar = token_create(TOKEN_SEMICOLON, NONE, value);
+    symbol_ptr symbol = create_terminal(dollar);
+    stack_push(push_down_stack, symbol);
+
+    expression_prec(stack, table, push_down_stack);
+    /*
     DEBUG_RULE();
 
     type_t result_type;
@@ -160,23 +172,28 @@ type_t parse_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr i
         rule_expression_next(stack, table, instr_buffer);
         break;
     // Part of FUNEXP
-    /* case TOKEN_ID:
-        ASSERT_NEXT_TOKEN(stack, TOKEN_ID);
-
-        // TODO: Check if function exists and get the return type from symtable.
-
-        // value = parse_expression(stack);
-        // value = next->value.string;
-        ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
-        rule_argument_list(stack, table);
-        ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
-        break; */
+    // case TOKEN_ID:
+    //    ASSERT_NEXT_TOKEN(stack, TOKEN_ID);
+//
+    //    // TODO: Check if function exists and get the return type from symtable.
+//
+    //    // value = parse_expression(stack);
+    //    // value = next->value.string;
+   //     ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
+   //     rule_argument_list(stack, table);
+   //     ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
+  //      break; 
     default:
         fprintf(stderr, "Not an expression.\n");
         exit(FAIL_SYNTAX);
     }
 
     return result_type;
+    */
+
+
+   // for now
+   return TYPE_STRING ;
 }
 
 void rule_expression_next(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
