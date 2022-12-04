@@ -12,29 +12,31 @@
 #include "parser.h"
 #include "utils.h"
 
-char precedence_table[8][8] = {
-    //   +-. ;   */ ;     (  ;     ) ;    i ;     <? ; === !== ; ><<=>=
-    {'>', '<', '<', '>', '<', '>', '>', '>'},   //+-.
-    {'>', '>', '<', '>', '<', '>', '>', '>'},   //*/
-    {'<', '<', 'n', '=', '<', 'nev', '>', '<'}, // (
-    {'>', '>', 'n', 'n', 'n', 'nev', '>', '>'}, // )
-    {'>', '>', 'n', '>', '<', '>', '>', '>'},   // i
-    {'<', '<', '<', 'n', '<', 'n', '<', '<'},   // <?
-    {'<', '<', '<', '>', '<', '>', '>', '<'},   //===,!===
-    {'<', '<', '<', '>', '<', '>', '>', '>'},   // <><=>=
+char precedence_table[8][8] ={
+//   +-. ;   */ ;     (  ;     ) ;    i ;     <?(;) ; === !== ; ><<=>= 
+    {'>',    '<',     '<',     '>',     '<',     '>',     '>',     '>'}, //+-.
+    {'>',    '>',     '<',     '>',     '<',     '>',     '>',     '>'}, //*/
+    {'<',    '<',     'n',     '=',     '<',     'x',     '>',     '<'}, // (
+    {'>',    '>',     'n',     'n',     'n',     'x',     '>',     '>'}, // ) 
+    {'>',    '>',     'n',     '>',     '<',     '>',     '>',     '>'}, // i 
+    {'<',    '<',     '<',     'n',     '<',     'n',     '<',     '<'}, // <? (;)
+    {'<',    '<',     '<',     '>',     '<',     '>',     '>',     '<'}, //===,!===
+    {'<',    '<',     '<',     '>',     '<',     '>',     '>',     '>'}, // <><=>=
 };
 
-token_ptr get_first_non_E(item_ptr *stack)
-{
+token_ptr get_first_non_E(stack_ptr stack){
     token_ptr next = peek_top(stack);
-    token_value_t value;
-    if (next->type == TOKEN_CONST_EXP)
-    {
-        token_ptr skiped = get_next_token(stack);
+    //token_value_t value;
+    if (next->type == TOKEN_CONST_EXP){
+        token_ptr skipped = get_next_token(stack);
         next = peek_top(stack);
 
-        symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-        stack_push(stack, E);
+       // token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+      // symbol_ptr symbol = create_terminal(E);
+
+        symbol_ptr symbol = create_terminal(skipped);
+        stack_push(stack, symbol);
+      //  stack_push(stack, symbol);
     }
     return next;
 }
@@ -85,15 +87,13 @@ int get_pos_in_t(token_ptr TOKEN)
     fprintf(stderr, "NON VALID TOKEN");
     exit(FAIL_LEXICAL);
 }
-void perform_reduction(item_ptr *push_down_stack, sym_table_ptr table)
-{
+void perform_reduction(stack_ptr push_down_stack, sym_table_ptr tree){
     token_ptr next = get_next_token(push_down_stack);
     token_value_t value;
-    if (next->type == TOKEN_VAR_ID)
-    {
-        // stack_pop(push_down_stack);
-        //  am not sure about different types int string float
-        symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+    if (next->type == TOKEN_VAR_ID){
+        //stack_pop(push_down_stack);
+        // am not sure about different types int string float
+        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
         DEBUG_PSEUDO("$");
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
@@ -103,7 +103,7 @@ void perform_reduction(item_ptr *push_down_stack, sym_table_ptr table)
         token_ptr second_next = get_next_token(push_down_stack);
         if (second_next->type != TOKEN_SEMICOLON){
             stack_pop(push_down_stack);
-            symbol_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+            token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
             DEBUG_PSEUDO("$");
             symbol_ptr symbol = create_terminal(E);
             stack_push(push_down_stack, symbol);
@@ -113,15 +113,15 @@ void perform_reduction(item_ptr *push_down_stack, sym_table_ptr table)
     fprintf(stderr, "NOT POSSIBLE TO REDUCE");
 }
 
-void perform_addition(item_ptr *push_down_stack, sym_table_ptr *tree , item_ptr *in_stack){
+void perform_addition(stack_ptr push_down_stack, sym_table_ptr tree , stack_ptr in_stack){
     token_ptr next = get_next_token(in_stack);
     symbol_ptr symbol = create_terminal(next);
     stack_push(push_down_stack, symbol);
 }
 
-int expression(item_ptr *in_stack, sym_table_ptr *tree){
+int expression(stack_ptr in_stack, sym_table_ptr tree){
     
-    item_ptr push_down_stack = stack_init();
+    stack_ptr push_down_stack = stack_init();
 
     // represents dollar
     token_value_t value;
@@ -153,4 +153,6 @@ int expression(item_ptr *in_stack, sym_table_ptr *tree){
         exit(FAIL_LEXICAL);
         fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
     }
+    //not finnished
+    return 0;
 }
