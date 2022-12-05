@@ -107,40 +107,69 @@ int get_pos_in_t(token_ptr TOKEN)
 void perform_reduction(stack_ptr push_down_stack, sym_table_ptr tree){
     DEBUG("PERFORMING REDUCTION\n");
     token_ptr next = get_next_token(push_down_stack);
-    DEBUG("hhh\n");
+    //DEBUG("hhh\n");
     token_value_t value;
     if (next->type == TOKEN_CONST_INT){
-        DEBUG("HERE1\n");
+        
+        //DEBUG("INT\n");
         //stack_pop(push_down_stack);
         // am not sure about different types int string float
         token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-        DEBUG("gN\n");
-        DEBUG_PSEUDO("$");
-        DEBUG("g\n");
+        //DEBUG("gN\n");
+        //DEBUG_PSEUDO("$");
+        //DEBUG("g\n");
         symbol_ptr symbol = create_terminal(E);
-        DEBUG("1\n");
+        //DEBUG("1\n");
         stack_push(push_down_stack, symbol);
-        DEBUG("2\n");
+        //DEBUG("2\n");
+        return;
+    }
+    if (next->type == TOKEN_CONST_DOUBLE){
+        //DEBUG("DOUBLE\n");
+        //stack_pop(push_down_stack);
+        // am not sure about different types int string float
+        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+        //DEBUG("gN\n");
+        //DEBUG_PSEUDO("$");
+        //DEBUG("g\n");
+        symbol_ptr symbol = create_terminal(E);
+        //DEBUG("1\n");
+        stack_push(push_down_stack, symbol);
+        //DEBUG("2\n");
+        return;
+    }
+    if (next->type == TOKEN_STRING_LIT){
+        //DEBUG("STRING\n");
+        //stack_pop(push_down_stack);
+        // am not sure about different types int string float
+        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+        //DEBUG("gN\n");
+        //DEBUG_PSEUDO("$");
+        //DEBUG("g\n");
+        symbol_ptr symbol = create_terminal(E);
+        //DEBUG("1\n");
+        stack_push(push_down_stack, symbol);
+        //DEBUG("2\n");
         return;
     }
     if (next->type == TOKEN_VAR_ID){
-        DEBUG("HERE2\n");
+        //DEBUG("HERE2\n");
         //stack_pop(push_down_stack);
         // am not sure about different types int string float
         token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-        DEBUG_PSEUDO("$");
+        //DEBUG_PSEUDO("$");
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
         return;
     }
     if (next->type == TOKEN_CONST_EXP)
     {
-        DEBUG("HERE3\n");
+        //DEBUG("HERE3\n");
         token_ptr second_next = get_next_token(push_down_stack);
         if (second_next->type != TOKEN_SEMICOLON){
             stack_pop(push_down_stack);
             token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-            DEBUG_PSEUDO("$");
+            //DEBUG_PSEUDO("$");
             symbol_ptr symbol = create_terminal(E);
             stack_push(push_down_stack, symbol);
             return;
@@ -153,14 +182,25 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr tree){
 void perform_addition(stack_ptr push_down_stack, sym_table_ptr tree , stack_ptr in_stack){
     DEBUG("PERFORMING ADITION\n");
     token_ptr next = get_next_token(in_stack);
-    symbol_ptr symbol = create_terminal(next);
-    DEBUG("Pj\n");
-    stack_push(push_down_stack, symbol);
-    DEBUG("jN\n");
-    token_ptr bruh = peek_top(push_down_stack);
-    if (bruh->type == TOKEN_CONST_INT){
-        DEBUG("IT WORKED \n");
+    if (next->type == TOKEN_SEMICOLON){
+        symbol_ptr symbol = create_terminal(next);
+        DEBUG("SEMICOLON FOR FUCK SAKE WORK MAN\n");
+        stack_push(in_stack, symbol);
     }
+    else{
+        symbol_ptr symbol = create_terminal(next);
+    //DEBUG("Pj\n");
+        stack_push(push_down_stack, symbol);
+    }
+//    symbol_ptr symbol = create_terminal(next);
+    //DEBUG("Pj\n");
+//    stack_push(push_down_stack, symbol);
+    //DEBUG("jN\n");
+    //token_ptr bruh = peek_top(push_down_stack);
+    //if (bruh->type == TOKEN_CONST_INT){
+    //    DEBUG("IT WORKED \n");
+    //}
+    //return next->type;
     //assert_next_token(push_down_stack,TOKEN_CONST_INT);
 }
 
@@ -168,18 +208,48 @@ int expression_prec(stack_ptr in_stack, sym_table_ptr tree, stack_ptr push_down_
     DEBUG_RULE();
     DEBUG("ENTERING EXPRESSION PARSER BOTTOM UP \n");
 
+    static int illegal_type = -1;
     // dollar = create_terminal(dollar);
     DEBUG_PSEUDO("$"); // not sure what this is for
     // changed stuff here
     token_ptr next_sym_stack = peek_top(in_stack);
     token_ptr next_sym_push = get_first_non_E(push_down_stack);
     int next_in_push = get_pos_in_t(next_sym_push);
-    DEBUG("EHY\n");
+    //DEBUG("EHY\n");
     int next_in_stack = get_pos_in_t(next_sym_stack);
-    DEBUG("WHY\n");
+    if (illegal_type == -1 && (next_sym_stack->type == TOKEN_CONST_INT || next_sym_stack->type == TOKEN_CONST_DOUBLE)){ // if number 
+        DEBUG("illegal type = 0\n");
+        illegal_type = 0;// concatenate not allowed
+    }
+    if (illegal_type == -1 && next_sym_stack->type == TOKEN_STRING_LIT){ // if number
+        DEBUG("illegal type = 1\n"); 
+        illegal_type = 1;// num operators not allowed not allowed
+    }
+
+    if ((next_sym_stack->type == TOKEN_PLUS || next_sym_stack->type == TOKEN_MINUS || next_sym_stack->type == TOKEN_MULTIPLE || next_sym_stack->type == TOKEN_DIVIDE) && illegal_type == 1){
+        fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
+
+        // finnish exit number
+        exit(100);
+    }
+    if ((next_sym_stack->type == TOKEN_CONST_DOUBLE || next_sym_stack->type == TOKEN_CONST_INT) && illegal_type == 1){
+        fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
+
+        // finnish exit number
+        exit(100);
+    }
+
+    if ((next_sym_stack->type == TOKEN_STRING_LIT) && illegal_type == 0){
+        fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
+
+        // finnish exit number
+        exit(100);
+    }
+
+    //DEBUG("WHY\n");
     if (precedence_table[next_in_push][next_in_stack] == '>')
     {
-        DEBUG("WHY AM I NOT HERE \n");
+        //DEBUG("WHY AM I NOT HERE \n");
         perform_reduction(push_down_stack, tree);
     }
     else if (precedence_table[next_in_push][next_in_stack] == '<')
@@ -187,19 +257,20 @@ int expression_prec(stack_ptr in_stack, sym_table_ptr tree, stack_ptr push_down_
         perform_addition(push_down_stack, tree, in_stack);
         
         
-        token_ptr bruh = peek_top(push_down_stack);
-        if (bruh->type == TOKEN_CONST_INT){
-            DEBUG("IT WORKED \n");
-        }
+        //token_ptr bruh = peek_top(push_down_stack);
+        //if (bruh->type == TOKEN_CONST_INT){
+        //    DEBUG("IT WORKED \n");
+        //}
     }
     else if (precedence_table[next_in_push][next_in_stack] == '=')
     {
         // not finnished
+        // should prob just pop the brackets
     }
     else if (precedence_table[next_in_push][next_in_stack] == 'n')
     {
-        exit(FAIL_LEXICAL);
         fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
+        exit(FAIL_LEXICAL);
     }
     //not finnished
     bool finnish = ((get_first_non_E(push_down_stack)->type == TOKEN_SEMICOLON) && (peek_top(in_stack)->type == TOKEN_SEMICOLON));  
