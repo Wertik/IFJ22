@@ -338,7 +338,7 @@
         FUNCTION_RETURN(buffer);                                                                   \
     } while (0);
 
-#define BUILT_IN_STRval(buffer)                                                                    \
+#define BUILT_IN_STRVAL(buffer)                                                                    \
     do                                                                                             \
     {                                                                                              \
         FUNCTION_HEADER(buffer, alloc_str("strval"))                                               \
@@ -363,9 +363,7 @@
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                          \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                      \
         FUNCTION_RETURN(buffer);                                                                   \
-    }
-while (0)
-    ;
+    } while (0);
 
 typedef enum
 {
