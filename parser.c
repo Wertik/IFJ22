@@ -769,12 +769,32 @@ void parse(stack_ptr stack)
     append_parameter(fn_strlen, "$s", TYPE_STRING, false);
     BUILT_IN_STRLEN(fn_strlen->instr_buffer);
 
-    function_ptr fn_substring = function_create("substring", TYPE_STRING, false);
+    function_ptr fn_substring = function_create("substring", TYPE_STRING, true);
     sym_insert_fn(global_table, fn_substring);
     append_parameter(fn_substring, "$s", TYPE_STRING, false);
     append_parameter(fn_substring, "$i", TYPE_INT, false);
     append_parameter(fn_substring, "$j", TYPE_INT, false);
     BUILT_IN_SUBSTRING(fn_substring->instr_buffer);
+
+ 
+    function_ptr fn_floatval = function_create("floatval", TYPE_FLOAT, false);
+    sym_insert_fn(global_table, fn_floatval);
+    //TODO: How to append any type of parameter?
+    append_parameter(fn_floatval, "$s", TYPE_STRING, false);
+    BUILT_IN_STRLEN(fn_floatval->instr_buffer);
+
+     
+    function_ptr fn_intval = function_create("intval", TYPE_INT, false);
+    sym_insert_fn(global_table, fn_intval);
+    //TODO: How to append any type of parameter?
+    append_parameter(fn_intval, "$s", TYPE_STRING, false);
+    BUILT_IN_STRLEN(fn_intval->instr_buffer);
+
+    function_ptr fn_strval = function_create("strval", TYPE_STRING, false);
+    sym_insert_fn(global_table, fn_strval);
+    //TODO: How to append any type of parameter?
+    append_parameter(fn_strval, "$s", TYPE_STRING, false);
+    BUILT_IN_STRLEN(fn_strval->instr_buffer);
 
     DEBUG("Running preparser # parse_function_definitions");
 

@@ -1,0 +1,64 @@
+.ifjcode22
+
+createframe
+pushframe
+PUSHS nil@nil
+
+call intval
+popframe
+
+exit int@0
+
+
+label intval
+
+createframe
+pushframe
+ 
+
+defvar LF@$buffer
+defvar LF@$type
+DEFVAR LF@$actual
+DEFVAR LF@$return
+
+POPS LF@$buffer
+
+TYPE LF@$type LF@$buffer
+getchar LF@$actual LF@$type int@0
+
+jumpifeq _intint LF@$actual string@i
+jumpifeq _floatint LF@$actual string@f
+jumpifeq _boolint LF@$actual string@b
+jumpifeq _boolfalse LF@$actual string@n #returns 0
+
+LABEL _intint 
+MOVE LF@$return LF@$buffer
+JUMP _end
+
+#------_intint-----
+
+LABEL _floatint 
+FLOAT2INT LF@$return LF@$buffer
+JUMP _end
+#------_floatfloat-----
+
+LABEL _boolint 
+
+JUMPIFEQ _boolfalse LF@$buffer bool@false
+
+MOVE LF@$return int@1
+JUMP _end
+
+LABEL _boolfalse
+MOVE LF@$return int@0
+
+JUMP _end
+#------_boolint-----
+
+
+
+LABEL _end
+pushs LF@$return
+
+
+return
