@@ -8,6 +8,7 @@
 #define _INSTRUCTION_H
 
 #include "token.h"
+#include "buffer.h"
 #include <string.h>
 
 // Generate an instruction with no operands
@@ -287,6 +288,8 @@ char *instr_var(frame_t frame, char *name);
 // Create a valid int constant string for ifjcode22
 char *instr_const_int(int val);
 
+char *instr_const_float(double val);
+
 // Replace a target character in str with given replacement.
 // Used to replace control characters inside strings with ifjcode22 escape sequences.
 char *str_rep(char *str, char target, char *replacement);
@@ -298,6 +301,7 @@ char *instr_const_str(char *str);
 
 char *instr_type_str(type_t type);
 
+// Create an alloc'd string using printf.
 char *dyn_str(const char *fmt, ...);
 
 // Generate an instruction with no operands.

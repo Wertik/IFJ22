@@ -140,6 +140,10 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
+
+        // Push the value onto the stack
+        instr_buffer_append(instr_buffer, dyn_str("# Float value: %lf", next->value.float_value));
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_float(next->value.float_value));
         return;
     }
     if (next->type == TOKEN_STRING_LIT)
@@ -180,6 +184,60 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
 
             DEBUG("Operator reduction: %s", token_type_to_name(second_next->type));
 
+            // implicit conversions int -> float
+            if (next->value_type == INTEGER && second_arg->value_type == FLOAT)
+            {
+                // convert second arg to float
+                // can do this straight away, the second argument is on top of the stack
+                // arg2
+                // arg1
+
+                INSTRUCTION_CMT(instr_buffer, "Second argument conversion");
+                INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
+                INSTRUCTION_CMT(instr_buffer, "End second argument conversion");
+            }
+            else if (next->value_type == FLOAT && second_arg->value_type == INTEGER)
+            {
+                // convert first arg to float
+                // cannot do this straight away -> pop second arg into temp var, convert, push arg2 back
+                // arg2
+                // arg1
+
+                // Create a new temporary frame
+                INSTRUCTION_CMT(instr_buffer, "First argument conversion");
+                INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
+                INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));
+                INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
+                INSTRUCTION_CMT(instr_buffer, "End first argument conversion");
+            }
+            else if (next->value_type == INTEGER && second_arg->value_type == INTEGER)
+            {
+                // both integers
+                if (second_next->type == TOKEN_DIVIDE)
+                {
+                    // we're doing division, convert both
+
+                    // arg2
+                    // arg1
+
+                    INSTRUCTION_CMT(instr_buffer, "Both argument conversion");
+
+                    // convert arg2 on top
+                    INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
+
+                    // pop, convert arg1 under, push arg2 back
+                    INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
+                    INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));
+                    INSTRUCTION_OPS(instr_buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));
+                    INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
+                    INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
+
+                    INSTRUCTION_CMT(instr_buffer, "End both argument conversion");
+                }
+            }
+
             // Generate instructions for operator
             switch (second_next->type)
             {
@@ -194,20 +252,12 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
                 break;
             case TOKEN_DIVIDE:
             {
-                // TODO: Type conversions
-                if (next->value_type == INTEGER && second_arg->value_type == INTEGER)
-                {
-                    INSTRUCTION(instr_buffer, INSTR_IDIVS);
-                }
-                else if (next->value_type == FLOAT && second_arg->value_type == FLOAT)
-                {
-                    INSTRUCTION(instr_buffer, INSTR_DIVS);
-                }
+                INSTRUCTION(instr_buffer, INSTR_DIVS);
                 break;
             }
             default:
                 fprintf(stderr, "Operator %s not supported in expresions.\n", token_type_to_name(second_next->type));
-                exit(100);
+                exit(FAIL_INTERNAL);
             }
 
             // E <+ / - / * / /> E -> E

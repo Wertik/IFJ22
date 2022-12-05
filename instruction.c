@@ -151,25 +151,17 @@ const char *frame_to_formal(frame_t frame)
 char *instr_var(frame_t frame, char *var)
 {
     const char *frame_formal = frame_to_formal(frame);
-
-    size_t len = snprintf(NULL, 0, "%s@%s", frame_formal, var);
-
-    char *s = malloc(sizeof(char) * (len + 1));
-
-    MALLOC_CHECK(s);
-
-    sprintf(s, "%s@%s", frame_formal, var);
-
-    return s;
+    return dyn_str("%s@%s", frame_formal, var);
 }
 
 char *instr_const_int(int val)
 {
-    size_t len = snprintf(NULL, 0, "int@%d", val);
-    char *s = malloc(sizeof(char) * (len + 1));
-    MALLOC_CHECK(s);
-    sprintf(s, "int@%d", val);
-    return s;
+    return dyn_str("int@%d", val);
+}
+
+char *instr_const_float(double val)
+{
+    return dyn_str("float@%a", val);
 }
 
 // Replace a character by a series of characters
@@ -198,10 +190,7 @@ char *str_rep(char *str, char target, char *replacement)
 
 char *instr_const_str(char *str)
 {
-    size_t len = snprintf(NULL, 0, "string@%s", str);
-    char *s = malloc(sizeof(char) * (len + 1));
-    MALLOC_CHECK(s);
-    sprintf(s, "string@%s", str);
+    char *s = dyn_str("string@%s", str);
 
     s = str_rep(s, ' ', "\\032");
     s = str_rep(s, '\r', "\\013");
