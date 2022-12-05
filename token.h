@@ -57,6 +57,7 @@ typedef enum
     TOKEN_CONST_INT,    // Integer constant
     TOKEN_CONST_DOUBLE, // Float constant
     TOKEN_STRING_LIT,   // String literal
+    TOKEN_CONST_NULL,   // null
     TOKEN_RC_BRACKET,   // }
     TOKEN_LC_BRACKET,   // {
     TOKEN_NULLABLE,     // ?

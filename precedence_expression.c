@@ -217,6 +217,17 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
         return;
     }
+    if (next->type == TOKEN_CONST_NULL)
+    {
+        // null -> E
+
+        token_ptr E = token_create(TOKEN_CONST_EXP, INTEGER, value);
+        symbol_ptr symbol = create_terminal(E);
+        stack_push(push_down_stack, symbol);
+
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, alloc_str("nil@nil"));
+        return;
+    }
     if (next->type == TOKEN_VAR_ID)
     {
         // var_id -> E
@@ -331,7 +342,8 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     token_ptr next_push = get_first_non_E(push_down_stack);
 
     // Don't allow string concat with numbers
-    if (next_in->type == TOKEN_EQUAL || next_in->type == TOKEN_NOT_EQUAL){
+    if (next_in->type == TOKEN_EQUAL || next_in->type == TOKEN_NOT_EQUAL)
+    {
         illegal_type = -1;
     }
     if (illegal_type == -1 && (next_in->type == TOKEN_CONST_INT || next_in->type == TOKEN_CONST_DOUBLE))
@@ -348,13 +360,13 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     }
 
     // Don't allow arithmetic operators with strings
-   // if ((next_in->type == TOKEN_PLUS || next_in->type == TOKEN_MINUS || next_in->type == TOKEN_MULTIPLE || next_in->type == TOKEN_DIVIDE) && illegal_type == 1)
-   //{
-   //     fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
-//
-  //      // finnish exit number
-   //     exit(100);
-  //  }
+    // if ((next_in->type == TOKEN_PLUS || next_in->type == TOKEN_MINUS || next_in->type == TOKEN_MULTIPLE || next_in->type == TOKEN_DIVIDE) && illegal_type == 1)
+    //{
+    //     fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
+    //
+    //      // finnish exit number
+    //     exit(100);
+    //  }
 
     // Don't allow arithmetic operators with strings?
     if ((next_in->type == TOKEN_CONST_DOUBLE || next_in->type == TOKEN_CONST_INT) && illegal_type == 1)
@@ -389,7 +401,8 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     else if (precedence_table[next_push_idx][next_in_idx] == '=')
     {
         token_ptr top = get_next_token(push_down_stack);
-        if (top->type == TOKEN_L_PAREN){
+        if (top->type == TOKEN_L_PAREN)
+        {
             stack_pop(push_down_stack);
         }
         else if (peek_top(push_down_stack)->type == TOKEN_L_PAREN)
@@ -398,11 +411,12 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
             symbol_ptr symbol = create_terminal(top);
             stack_push(push_down_stack, symbol);
         }
-        else{
+        else
+        {
             fprintf(stderr, "ERROR IN PAREN PARSING");
             exit(1226);
         }
-        
+
         stack_pop(in_stack);
         // not finnished
         // should prob just pop the brackets

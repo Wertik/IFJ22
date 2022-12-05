@@ -29,6 +29,17 @@ bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyw
     return false;
 }
 
+bool attempt_null(stack_ptr stack, buffer_ptr buffer)
+{
+    if (strcmp(buffer->data, "null") == 0)
+    {
+        APPEND_EMPTY(stack, TOKEN_CONST_NULL);
+        buffer_reset(buffer);
+        return true;
+    }
+    return false;
+}
+
 bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type)
 {
     if (strcmp(buffer->data, type_str) == 0)
@@ -693,7 +704,8 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
                 !attempt_type(stack, buffer, "int", TYPE_INT) &&
                 !attempt_type(stack, buffer, "string", TYPE_STRING) &&
                 !attempt_type(stack, buffer, "float", TYPE_FLOAT) &&
-                !attempt_type(stack, buffer, "void", TYPE_VOID))
+                !attempt_type(stack, buffer, "void", TYPE_VOID) &&
+                !attempt_null(stack, buffer))
             {
                 // none of the keywords matched, create a token id from this
                 APPEND_STRING(stack, TOKEN_ID, buffer);

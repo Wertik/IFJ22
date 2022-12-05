@@ -369,6 +369,14 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_COLON);
 
+            token_ptr potentional_nullable = peek_top(stack);
+
+            if (potentional_nullable->type == TOKEN_NULLABLE)
+            {
+                STACK_THROW(stack);
+                function->return_type_nullable = true;
+            }
+            
             ASSERT_NEXT_TOKEN(stack, TOKEN_TYPE);
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);

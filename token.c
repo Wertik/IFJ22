@@ -125,6 +125,8 @@ const char *token_type_to_name(token_type_t type)
         return "TOKEN_CLOSING_TAG";
     case TOKEN_DECLARE:
         return "TOKEN_DECLARE";
+    case TOKEN_CONST_NULL:
+        return "TOKEN_CONST_NULL";
     default:
     {
         return "#invalid-token-type";

@@ -123,6 +123,10 @@ bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyw
 // Reset the buffer and return true if successful.
 bool attempt_type(stack_ptr stack, buffer_ptr buffer, char *type_str, type_t type);
 
+// Attempt to parse "null" from buffer
+// Reset the buffer and return true if successful.
+bool attempt_null(stack_ptr stack, buffer_ptr buffer);
+
 // Attempt to "greedily" (reads extra characters and rolls back if unsuccessful) parse a string from stdin.
 // Returns true if successful.
 bool attempt_greedy(char *rest, bool ignore_whitespace);

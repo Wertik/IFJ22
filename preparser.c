@@ -146,6 +146,14 @@ void parse_function(item_ptr *item)
 
     // Save return type to symtable
 
+    token_ptr next = (*item)->next->symbol->token;
+
+    if (next->type == TOKEN_NULLABLE)
+    {
+        move(item);
+        function->return_type_nullable = true;
+    }
+
     token_ptr return_type = passert_next_token_get(item, TOKEN_TYPE);
 
     function->return_type = return_type->value.type;
