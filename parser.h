@@ -104,8 +104,7 @@ void rule_argument(stack_ptr in_stack, sym_table_ptr table, parameter_t *paramet
 int rule_argument_list(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, bool variadic);
 int rule_argument_next(stack_ptr in_stack, sym_table_ptr sym_global, function_ptr function, instr_buffer_ptr instr_buffer, int current_parameter, bool variadic);
 
-type_t parse_expression(stack_ptr in_stack, sym_table_ptr tree, instr_buffer_ptr instr_buffer);
-void rule_expression_next(stack_ptr in_stack, sym_table_ptr tree, instr_buffer_ptr instr_buffer);
+void rule_expression(stack_ptr in_stack, sym_table_ptr table, instr_buffer_ptr instr_buffer);
 
 void parse(stack_ptr tokens);
 #endif

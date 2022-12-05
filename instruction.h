@@ -7,6 +7,8 @@
 #ifndef _INSTRUCTION_H
 #define _INSTRUCTION_H
 
+#include "token.h"
+#include "buffer.h"
 #include <string.h>
 
 // Generate an instruction with no operands
@@ -22,6 +24,54 @@
     {                                                                     \
         char *call = generate_instruction_ops(instr, count, __VA_ARGS__); \
         instr_buffer_append(buffer, call);                                \
+    } while (0);
+
+#define INSTRUCTION_CMT(buffer, comment)                      \
+    do                                                        \
+    {                                                         \
+        instr_buffer_append(buffer, alloc_str("# " comment)); \
+    } while (0);
+
+#define INSTRUCTION_CONV_ARG2_I2F(buffer)            \
+    do                                               \
+    {                                                \
+        INSTRUCTION(instr_buffer, INSTR_INT2FLOATS); \
+    } while (0);
+
+#define INSTRUCTION_CONV_ARG1_I2F(buffer)                                         \
+    do                                                                            \
+    {                                                                             \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2")); \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));   \
+        INSTRUCTION(buffer, INSTR_INT2FLOATS);                                    \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));  \
+    } while (0);
+
+#define FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt) \
+    (dyn_str("%s%s_call_%s_%d_cont_typecheck", function_scope ? "_" : "", function_scope ? function_scope->name : "", called_function->name, label_cnt))
+
+// Generate a unique label with the current buffer prefix and buffer cnt
+#define INSTRUCTION_GEN_CTX_LABEL(buffer, buffer_cnt, label) \
+    (dyn_str("%s%s_%d_%s", buffer->prefix == NULL ? "" : "_", buffer->prefix == NULL ? "" : buffer->prefix, buffer_cnt, label))
+
+#define FUNCTION_RETURN_TYPE_CHECK(buffer, function_scope, called_function)                                                                \
+    do                                                                                                                                     \
+    {                                                                                                                                      \
+        int label_cnt = buffer->len;                                                                                                       \
+        INSTRUCTION_CMT(buffer, "Function return type check");                                                                             \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                                           \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval"));                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                   \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_retval"));                                                          \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_retval_type"), instr_var(FRAME_TEMP, "_retval"));                   \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_type_str(called_function->return_type));                                             \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt)); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_INVALID_RETURN_TYPE));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt));     \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval"));                                                         \
+        INSTRUCTION_CMT(buffer, "End function return type check");                                                                         \
     } while (0);
 
 // Generate a function header
@@ -66,31 +116,34 @@
 // Generate a full function end.
 // POPS TF@_retval (for non-void)
 // RETURN
-#define FUNCTION_END(function)                   \
-    do                                           \
-    {                                            \
-        FUNCTION_RETURN(function->instr_buffer); \
+#define FUNCTION_END(function)                                \
+    do                                                        \
+    {                                                         \
+        INSTRUCTION(function->instr_buffer, INSTR_POP_FRAME); \
+        FUNCTION_RETURN(function->instr_buffer);              \
     } while (0);
 
 // Generate the built-in write function
-#define BUILT_IN_WRITE(buffer)                                                 \
-    do                                                                         \
-    {                                                                          \
-        FUNCTION_HEADER(buffer, alloc_str("write"))                            \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));        \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));     \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));      \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));          \
-        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));         \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));           \
-        INSTRUCTION(buffer, INSTR_SUBS);                                       \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));       \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));      \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));           \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQS, 1, alloc_str("_writeloop")); \
-        FUNCTION_RETURN(buffer);                                               \
+#define BUILT_IN_WRITE(buffer)                                                    \
+    do                                                                            \
+    {                                                                             \
+        FUNCTION_HEADER(buffer, alloc_str("write"))                               \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));           \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));        \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));          \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));              \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, alloc_str("_writeloop_end")); \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));             \
+        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));            \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));              \
+        INSTRUCTION(buffer, INSTR_SUBS);                                          \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));          \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_writeloop"));          \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_end"));     \
+        FUNCTION_RETURN(buffer);                                                  \
     } while (0);
 
 #define BUILT_IN_READF(buffer)                                                 \
@@ -338,6 +391,7 @@ typedef struct instr_buffer_t
 {
     char **instructions;
     size_t len;
+    char *prefix;
 } * instr_buffer_ptr;
 
 // Helper functions
@@ -354,6 +408,8 @@ char *instr_var(frame_t frame, char *name);
 // Create a valid int constant string for ifjcode22
 char *instr_const_int(int val);
 
+char *instr_const_float(double val);
+
 // Replace a target character in str with given replacement.
 // Used to replace control characters inside strings with ifjcode22 escape sequences.
 char *str_rep(char *str, char target, char *replacement);
@@ -362,6 +418,13 @@ char *str_rep(char *str, char target, char *replacement);
 // Replaces control characters with correct escape senquences.
 // ex.: "Hello world!\n" -> "string@Hello\032world!\010"
 char *instr_const_str(char *str);
+
+char *instr_type_str(type_t type);
+
+char *instr_const_bool(bool val);
+
+// Create an alloc'd string using printf.
+char *dyn_str(const char *fmt, ...);
 
 // Generate an instruction with no operands.
 char *generate_instruction(instruction_t instr);
@@ -374,7 +437,7 @@ char *generate_instruction_ops(instruction_t instr, int n, ...);
 // Instruction buffer
 
 // Initialize an empty buffer
-instr_buffer_ptr instr_buffer_init();
+instr_buffer_ptr instr_buffer_init(char *prefix);
 
 // Append an instruction to the buffer
 // instr has to be an alloc'd string, it's free'd when isntruction buffer gets disposed

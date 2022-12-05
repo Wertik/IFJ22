@@ -160,10 +160,26 @@ const char *type_to_formal(type_t type)
     case TYPE_FLOAT:
         return "float";
     case TYPE_VOID:
-        return "void";
+        return "nil";
     default:
         return "#unknown-type";
     }
+}
+
+bool is_arithmetic(token_type_t type)
+{
+    return type == TOKEN_PLUS ||
+           type == TOKEN_MINUS ||
+           type == TOKEN_DIVIDE ||
+           type == TOKEN_MULTIPLE;
+}
+
+bool is_relational(token_type_t type)
+{
+    return type == TOKEN_MORE ||
+           type == TOKEN_MORE_EQUAL ||
+           type == TOKEN_LESS ||
+           type == TOKEN_LESS_EQUAL;
 }
 
 const char *keyword_to_name(keyword_t keyword)

@@ -151,32 +151,26 @@ const char *frame_to_formal(frame_t frame)
 char *instr_var(frame_t frame, char *var)
 {
     const char *frame_formal = frame_to_formal(frame);
-
-    size_t len = snprintf(NULL, 0, "%s@%s", frame_formal, var);
-
-    char *s = malloc(sizeof(char) * (len + 1));
-
-    MALLOC_CHECK(s);
-
-    sprintf(s, "%s@%s", frame_formal, var);
-
-    return s;
+    return dyn_str("%s@%s", frame_formal, var);
 }
 
 char *instr_const_int(int val)
 {
-    size_t len = snprintf(NULL, 0, "int@%d", val);
-    char *s = malloc(sizeof(char) * (len + 1));
-    MALLOC_CHECK(s);
-    sprintf(s, "int@%d", val);
-    return s;
+    return dyn_str("int@%d", val);
+}
+
+char *instr_const_float(double val)
+{
+    return dyn_str("float@%a", val);
 }
 
 // Replace a character by a series of characters
 char *str_rep(char *str, char target, char *replacement)
 {
-    for (int i = 0; str[i] != '\0'; i++) {
-        if (str[i] == target) {
+    for (int i = 0; str[i] != '\0'; i++)
+    {
+        if (str[i] == target)
+        {
             // realloc with new size
             int size = strlen(str) + strlen(replacement);
             char *s = malloc(sizeof(char) * (size + 1));
@@ -189,22 +183,53 @@ char *str_rep(char *str, char target, char *replacement)
             s[size] = '\0';
 
             return str_rep(s, target, replacement);
-       }
+        }
     }
     return str;
 }
 
 char *instr_const_str(char *str)
 {
-    size_t len = snprintf(NULL, 0, "string@%s", str);
-    char *s = malloc(sizeof(char) * (len + 1));
-    MALLOC_CHECK(s);
-    sprintf(s, "string@%s", str);
+    char *s = dyn_str("string@%s", str);
 
     s = str_rep(s, ' ', "\\032");
     s = str_rep(s, '\r', "\\013");
     s = str_rep(s, '\n', "\\010");
-    
+
+    return s;
+}
+
+char *instr_const_bool(bool val)
+{
+    return dyn_str("bool@%s", val == true ? "true" : "false");
+}
+
+char *instr_type_str(type_t type)
+{
+    const char *type_str = type_to_formal(type);
+
+    size_t len = snprintf(NULL, 0, "string@%s", type_str);
+    char *s = malloc(sizeof(char) * (len + 1));
+
+    MALLOC_CHECK(s);
+
+    sprintf(s, "string@%s", type_str);
+    return s;
+}
+
+char *dyn_str(const char *fmt, ...)
+{
+    va_list valist;
+    va_start(valist, fmt);
+    size_t len = vsnprintf(NULL, 0, fmt, valist);
+    char *s = malloc(sizeof(char) * (len + 1));
+
+    MALLOC_CHECK(s);
+
+    va_start(valist, fmt);
+    vsprintf(s, fmt, valist);
+
+    va_end(valist);
     return s;
 }
 
@@ -261,16 +286,26 @@ char *generate_instruction_ops(instruction_t instruction, int n, ...)
     return call_str;
 }
 
-instr_buffer_ptr instr_buffer_init()
+instr_buffer_ptr instr_buffer_init(char *prefix)
 {
     instr_buffer_ptr instr_buffer = malloc(sizeof(struct instr_buffer_t));
 
     MALLOC_CHECK(instr_buffer);
 
     instr_buffer->len = 0;
-    instr_buffer->instructions = malloc(0);
 
+    instr_buffer->instructions = malloc(0);
     MALLOC_CHECK(instr_buffer->instructions);
+
+    if (prefix != NULL)
+    {
+        instr_buffer->prefix = malloc(sizeof(char) * (strlen(prefix) + 1));
+        MALLOC_CHECK(instr_buffer->prefix);
+
+        strcpy(instr_buffer->prefix, prefix);
+    } else {
+        instr_buffer->prefix = NULL;
+    }
 
     return instr_buffer;
 }
@@ -280,7 +315,6 @@ void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr)
     instr_buffer->len += 1;
 
     instr_buffer->instructions = realloc(instr_buffer->instructions, sizeof(char *) * instr_buffer->len);
-
     MALLOC_CHECK(instr_buffer->instructions);
 
     instr_buffer->instructions[instr_buffer->len - 1] = instr;
@@ -288,7 +322,7 @@ void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr)
 
 void instr_buffer_print(instr_buffer_ptr instr_buffer)
 {
-    printf("instr_buffer(%ld)[", instr_buffer->len);
+    printf("instr_buffer(%s)(%ld)[", instr_buffer->prefix == NULL ? "no prefix" : instr_buffer->prefix, instr_buffer->len);
     for (int i = 0; i < instr_buffer->len; i++)
     {
         printf("%s", instr_buffer->instructions[i]);
@@ -314,6 +348,10 @@ void instr_buffer_dispose(instr_buffer_ptr instr_buffer)
     for (int i = 0; i < instr_buffer->len; i++)
     {
         free(instr_buffer->instructions[i]);
+    }
+    if (instr_buffer->prefix != NULL)
+    {
+        free(instr_buffer->prefix);
     }
     free(instr_buffer->instructions);
     free(instr_buffer);
