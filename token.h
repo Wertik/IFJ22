@@ -136,6 +136,9 @@ const char *type_to_name(type_t type);
 // Convert type enum to a formal valid ifjcode22 type name.
 const char *type_to_formal(type_t type);
 
+bool is_arithmetic(token_type_t type);
+bool is_relational(token_type_t type);
+
 // Convert a token value to string. Helper for token_to_string
 char *value_to_string(token_value_type_t type, token_value_t value);
 

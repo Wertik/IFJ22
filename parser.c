@@ -621,7 +621,7 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
 
-    instr_buffer_ptr arg_buffer = instr_buffer_init();
+    instr_buffer_ptr arg_buffer = instr_buffer_init(NULL);
 
     parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[0]);
     rule_argument(stack, table, expected_parameter, arg_buffer);
@@ -686,7 +686,7 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
 
-    instr_buffer_ptr param_buffer = instr_buffer_init();
+    instr_buffer_ptr param_buffer = instr_buffer_init(NULL);
 
     parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[argument_count - 1]);
     rule_argument(stack, table, expected_parameter, param_buffer);
@@ -777,7 +777,7 @@ void parse(stack_ptr stack)
 
     // Initialize instruction buffer
 
-    instr_buffer_ptr instr_buffer = instr_buffer_init();
+    instr_buffer_ptr instr_buffer = instr_buffer_init(NULL);
 
     instr_buffer_append(instr_buffer, alloc_str(".ifjcode22"));
 

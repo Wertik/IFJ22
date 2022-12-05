@@ -143,7 +143,7 @@ function_ptr function_create(char *name, type_t return_type, bool return_type_nu
     MALLOC_CHECK(function->parameters);
 
     function->symtable = sym_init();
-    function->instr_buffer = instr_buffer_init();
+    function->instr_buffer = instr_buffer_init(function->name);
 
     return function;
 }

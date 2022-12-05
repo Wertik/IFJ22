@@ -199,6 +199,11 @@ char *instr_const_str(char *str)
     return s;
 }
 
+char *instr_const_bool(bool val)
+{
+    return dyn_str("bool@%s", val == true ? "true" : "false");
+}
+
 char *instr_type_str(type_t type)
 {
     const char *type_str = type_to_formal(type);
@@ -281,16 +286,26 @@ char *generate_instruction_ops(instruction_t instruction, int n, ...)
     return call_str;
 }
 
-instr_buffer_ptr instr_buffer_init()
+instr_buffer_ptr instr_buffer_init(char *prefix)
 {
     instr_buffer_ptr instr_buffer = malloc(sizeof(struct instr_buffer_t));
 
     MALLOC_CHECK(instr_buffer);
 
     instr_buffer->len = 0;
-    instr_buffer->instructions = malloc(0);
 
+    instr_buffer->instructions = malloc(0);
     MALLOC_CHECK(instr_buffer->instructions);
+
+    if (prefix != NULL)
+    {
+        instr_buffer->prefix = malloc(sizeof(char) * (strlen(prefix) + 1));
+        MALLOC_CHECK(instr_buffer->prefix);
+
+        strcpy(instr_buffer->prefix, prefix);
+    } else {
+        instr_buffer->prefix = NULL;
+    }
 
     return instr_buffer;
 }
@@ -300,7 +315,6 @@ void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr)
     instr_buffer->len += 1;
 
     instr_buffer->instructions = realloc(instr_buffer->instructions, sizeof(char *) * instr_buffer->len);
-
     MALLOC_CHECK(instr_buffer->instructions);
 
     instr_buffer->instructions[instr_buffer->len - 1] = instr;
@@ -308,7 +322,7 @@ void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr)
 
 void instr_buffer_print(instr_buffer_ptr instr_buffer)
 {
-    printf("instr_buffer(%ld)[", instr_buffer->len);
+    printf("instr_buffer(%s)(%ld)[", instr_buffer->prefix == NULL ? "no prefix" : instr_buffer->prefix, instr_buffer->len);
     for (int i = 0; i < instr_buffer->len; i++)
     {
         printf("%s", instr_buffer->instructions[i]);
@@ -334,6 +348,10 @@ void instr_buffer_dispose(instr_buffer_ptr instr_buffer)
     for (int i = 0; i < instr_buffer->len; i++)
     {
         free(instr_buffer->instructions[i]);
+    }
+    if (instr_buffer->prefix != NULL)
+    {
+        free(instr_buffer->prefix);
     }
     free(instr_buffer->instructions);
     free(instr_buffer);

@@ -32,8 +32,28 @@
         instr_buffer_append(buffer, alloc_str("# " comment)); \
     } while (0);
 
+#define INSTRUCTION_CONV_ARG2_I2F(buffer)            \
+    do                                               \
+    {                                                \
+        INSTRUCTION(instr_buffer, INSTR_INT2FLOATS); \
+    } while (0);
+
+#define INSTRUCTION_CONV_ARG1_I2F(buffer)                                         \
+    do                                                                            \
+    {                                                                             \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2")); \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));   \
+        INSTRUCTION(buffer, INSTR_INT2FLOATS);                                    \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));  \
+    } while (0);
+
 #define FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt) \
     (dyn_str("%s%s_call_%s_%d_cont_typecheck", function_scope ? "_" : "", function_scope ? function_scope->name : "", called_function->name, label_cnt))
+
+// Generate a unique label with the current buffer prefix and buffer cnt
+#define INSTRUCTION_GEN_CTX_LABEL(buffer, buffer_cnt, label) \
+    (dyn_str("%s%s_%d_%s", buffer->prefix == NULL ? "" : "_", buffer->prefix == NULL ? "" : buffer->prefix, buffer_cnt, label))
 
 #define FUNCTION_RETURN_TYPE_CHECK(buffer, function_scope, called_function)                                                                \
     do                                                                                                                                     \
@@ -272,6 +292,7 @@ typedef struct instr_buffer_t
 {
     char **instructions;
     size_t len;
+    char *prefix;
 } * instr_buffer_ptr;
 
 // Helper functions
@@ -301,6 +322,8 @@ char *instr_const_str(char *str);
 
 char *instr_type_str(type_t type);
 
+char *instr_const_bool(bool val);
+
 // Create an alloc'd string using printf.
 char *dyn_str(const char *fmt, ...);
 
@@ -315,7 +338,7 @@ char *generate_instruction_ops(instruction_t instr, int n, ...);
 // Instruction buffer
 
 // Initialize an empty buffer
-instr_buffer_ptr instr_buffer_init();
+instr_buffer_ptr instr_buffer_init(char *prefix);
 
 // Append an instruction to the buffer
 // instr has to be an alloc'd string, it's free'd when isntruction buffer gets disposed

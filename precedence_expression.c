@@ -9,6 +9,7 @@
 #include "parser.h"
 #include "utils.h"
 #include "instruction.h"
+#include "precedence_expression.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -111,6 +112,63 @@ int get_pos_in_t(token_ptr token)
     exit(FAIL_LEXICAL);
 }
 
+void conversion(instr_buffer_ptr instr_buffer, token_ptr arg1, token_type_t operator, token_ptr arg2)
+{
+    // Arithmetic conversions
+    // int + int -> nothing
+    // float + int -> float + float
+    // int + float -> float + float
+    // float + float -> nothing
+    if (is_arithmetic(operator))
+    {
+        // implicit conversions int -> float
+        if (arg1->value_type == INTEGER && arg2->value_type == FLOAT)
+        {
+            // convert second arg to float
+            // can do this straight away, the second argument is on top of the stack
+            // arg2
+            // arg1
+
+            INSTRUCTION_CMT(instr_buffer, "Second argument conversion");
+            INSTRUCTION_CONV_ARG2_I2F(instr_buffer);
+            INSTRUCTION_CMT(instr_buffer, "End second argument conversion");
+        }
+        else if (arg1->value_type == FLOAT && arg2->value_type == INTEGER)
+        {
+            // convert first arg to float
+            // cannot do this straight away -> pop second arg into temp var, convert, push arg2 back
+            // arg2
+            // arg1
+
+            INSTRUCTION_CMT(instr_buffer, "First argument conversion");
+            INSTRUCTION_CONV_ARG1_I2F(instr_buffer);
+            INSTRUCTION_CMT(instr_buffer, "End first argument conversion");
+        }
+        else if (arg1->value_type == INTEGER && arg2->value_type == INTEGER)
+        {
+            // both integers
+            // int / int -> float / float
+            if (arg2->type == TOKEN_DIVIDE)
+            {
+                // we're doing division, convert both
+
+                // arg2
+                // arg1
+
+                INSTRUCTION_CMT(instr_buffer, "Both argument conversion");
+
+                // convert arg2 on top
+                INSTRUCTION_CONV_ARG2_I2F(instr_buffer);
+
+                // pop, convert arg1 under, push arg2 back
+                INSTRUCTION_CONV_ARG1_I2F(instr_buffer);
+
+                INSTRUCTION_CMT(instr_buffer, "End both argument conversion");
+            }
+        }
+    }
+}
+
 void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
 {
     DEBUG_RULE();
@@ -184,59 +242,7 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
 
             DEBUG("Operator reduction: %s", token_type_to_name(second_next->type));
 
-            // implicit conversions int -> float
-            if (next->value_type == INTEGER && second_arg->value_type == FLOAT)
-            {
-                // convert second arg to float
-                // can do this straight away, the second argument is on top of the stack
-                // arg2
-                // arg1
-
-                INSTRUCTION_CMT(instr_buffer, "Second argument conversion");
-                INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
-                INSTRUCTION_CMT(instr_buffer, "End second argument conversion");
-            }
-            else if (next->value_type == FLOAT && second_arg->value_type == INTEGER)
-            {
-                // convert first arg to float
-                // cannot do this straight away -> pop second arg into temp var, convert, push arg2 back
-                // arg2
-                // arg1
-
-                // Create a new temporary frame
-                INSTRUCTION_CMT(instr_buffer, "First argument conversion");
-                INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
-                INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));
-                INSTRUCTION_OPS(instr_buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));
-                INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
-                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
-                INSTRUCTION_CMT(instr_buffer, "End first argument conversion");
-            }
-            else if (next->value_type == INTEGER && second_arg->value_type == INTEGER)
-            {
-                // both integers
-                if (second_next->type == TOKEN_DIVIDE)
-                {
-                    // we're doing division, convert both
-
-                    // arg2
-                    // arg1
-
-                    INSTRUCTION_CMT(instr_buffer, "Both argument conversion");
-
-                    // convert arg2 on top
-                    INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
-
-                    // pop, convert arg1 under, push arg2 back
-                    INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
-                    INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));
-                    INSTRUCTION_OPS(instr_buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));
-                    INSTRUCTION(instr_buffer, INSTR_INT2FLOATS);
-                    INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
-
-                    INSTRUCTION_CMT(instr_buffer, "End both argument conversion");
-                }
-            }
+            conversion(instr_buffer, next, second_next->type, second_arg);
 
             // Generate instructions for operator
             switch (second_next->type)
@@ -253,6 +259,28 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
             case TOKEN_DIVIDE:
             {
                 INSTRUCTION(instr_buffer, INSTR_DIVS);
+                break;
+            }
+            case TOKEN_EQUAL:
+            {
+                INSTRUCTION_CMT(instr_buffer, "Equal check");
+
+                EXPRESSION_EQS(instr_buffer);
+
+                INSTRUCTION_CMT(instr_buffer, "End equal check");
+                break;
+            }
+            case TOKEN_NOT_EQUAL:
+            {
+                // Type check
+                INSTRUCTION_CMT(instr_buffer, "Not equal check");
+
+                EXPRESSION_EQS(instr_buffer);
+
+                // !(Types match && values match)
+                INSTRUCTION(instr_buffer, INSTR_NOTS);
+
+                INSTRUCTION_CMT(instr_buffer, "End not equal check");
                 break;
             }
             default:
