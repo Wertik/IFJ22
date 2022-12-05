@@ -292,8 +292,9 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
             rule_expression(stack, table, instr);
-
-            assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
+           // assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("if (...)");
 
