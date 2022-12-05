@@ -17,6 +17,9 @@
 // There's no simple min function in std?
 #define SYMTABLE_MIN(a, b) (a > b ? b : a)
 
+// There's no simple max function in std?
+#define SYMTABLE_MAX(a, b) (a > b ? a : b)
+
 typedef struct variable_t
 {
   char *name;

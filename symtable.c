@@ -15,22 +15,7 @@
 
 int compare_keys(char *key1, char *key2)
 {
-    int len = SYMTABLE_MIN(strlen(key1), strlen(key2));
-
-    for (int i = 0; i < len; i++)
-    {
-        if (key1[i] > key2[i])
-        {
-            return 1;
-        }
-        else if (key1[i] < key2[i])
-        {
-            return -1;
-        }
-    }
-
-    // strings are the same
-    return 0;
+    return SYMTABLE_MIN(SYMTABLE_MAX(strcmp(key1, key2), -1), 1);
 }
 
 variable_ptr variable_create(char *name, type_t type, bool type_nullable)
