@@ -1,0 +1,75 @@
+.ifjcode22
+
+CREATEFRAME 
+PUSHFRAME
+
+PUSHS string@
+PUSHS int@0
+PUSHS int@3
+
+CALL substr
+
+POPFRAME
+EXIT int@0
+
+LABEL substr
+
+DEFVAR LF@$buffer           
+DEFVAR LF@$start
+DEFVAR LF@$end
+DEFVAR LF@$substring
+DEFVAR LF@$length
+DEFVAR LF@$compare
+DEFVAR LF@$char
+
+POPS LF@$end
+POPS LF@$start
+POPS LF@$buffer  
+
+strlen LF@$length LF@$buffer
+
+
+#if start < 0
+LT LF@$compare LF@$start int@0
+
+JUMPIFEQ _invalid LF@$compare bool@true
+
+#if end < 0
+LT LF@$compare LF@$end int@0
+
+JUMPIFEQ _invalid LF@$compare bool@true
+
+#if end > start
+LT LF@$compare LF@$end LF@$start
+JUMPIFEQ _invalid LF@$compare bool@true
+
+LT LF@$compare LF@$start LF@$length
+JUMPIFNEQ _invalid LF@$compare bool@true
+
+LT LF@$compare LF@$end LF@$length 
+JUMPIFNEQ _invalid LF@$compare bool@true
+
+
+#correct
+MOVE LF@$substring string@\000
+
+LABEL _substrloop
+GETCHAR LF@$char LF@$buffer LF@$start 
+CONCAT LF@$substring LF@$substring LF@$char
+ADD LF@$start LF@$start int@1
+
+JUMPIFNEQ _substrloop LF@$start LF@$end 
+
+GETCHAR LF@$char LF@$buffer LF@$start
+CONCAT LF@$substring LF@$substring LF@$char
+
+JUMP _end
+
+LABEL _invalid
+
+MOVE LF@$substring string@\000
+LABEL _end
+PUSHS LF@$substring
+
+RETURN
+

@@ -1,0 +1,42 @@
+.ifjcode22
+
+CREATEFRAME
+PUSHFRAME
+PUSHS string@asd
+
+CALL ord 
+DEFVAR LF@$i
+POPS LF@$i
+DPRINT LF@$i
+POPFRAME
+
+EXIT int@0
+
+LABEL ord
+
+CREATEFRAME
+PUSHFRAME
+CREATEFRAME
+
+#--------------------------to .h--------------------
+DEFVAR LF@$char
+DEFVAR LF@$buffer
+DEFVAR LF@$integer
+DEFVAR LF@$length
+POPS LF@$buffer
+
+strlen LF@$length LF@$buffer
+JUMPIFEQ _invalid LF@$length int@0
+
+STRI2INT LF@$integer LF@$buffer int@0
+PUSHS LF@$integer
+
+JUMP _end
+LABEL _invalid
+PUSHS int@0
+
+LABEL _end
+#----------------------to .h end-----------------------
+
+RETURN
+

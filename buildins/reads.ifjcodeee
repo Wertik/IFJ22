@@ -1,0 +1,58 @@
+.ifjcode22
+
+createframe
+pushframe
+
+call reads
+popframe
+
+exit int@0
+
+#reads function
+label reads
+
+createframe
+pushframe
+
+createframe 
+
+defvar TF@_retval
+defvar LF@$buffer
+defvar LF@$count
+defvar LF@$lastchar
+
+
+
+read LF@$buffer string
+
+strlen LF@$count LF@$buffer
+pushs LF@$count
+pushs int@1
+subs
+pops LF@$count
+
+getchar LF@$lastchar LF@$buffer LF@$count
+
+#if last char is a newline remove it
+pushs string@\010
+pushs LF@$lastchar
+jumpifeqs _remove
+
+#end if is new line CR
+pushs string@\013
+pushs LF@$lastchar 
+jumpifeqs _remove
+
+jump _end
+#remove char LF CR
+label _remove
+
+setchar LF@$buffer LF@$count string@\000
+
+
+label _end
+pushs LF@$buffer
+
+POPS TF@_retval
+
+return

@@ -1,0 +1,38 @@
+.ifjcode22
+
+CREATEFRAME
+PUSHFRAME
+PUSHS int@092
+
+CALL ord 
+
+DEFVAR LF@$i
+POPS LF@$i
+DPRINT LF@$i
+POPFRAME
+
+EXIT int@0
+
+LABEL ord
+
+CREATEFRAME
+PUSHFRAME
+CREATEFRAME
+
+#--------------------------to .h--------------------
+
+DEFVAR LF@$buffer
+DEFVAR LF@$char
+
+POPS LF@$buffer
+
+INT2CHAR LF@$char LF@$buffer
+
+
+PUSHS LF@$char
+
+
+#----------------------to .h end-----------------------
+
+RETURN
+

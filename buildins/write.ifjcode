@@ -1,0 +1,48 @@
+.ifjcode22
+
+createframe
+pushframe
+
+# Write builtin function
+
+# Push arguments
+pushs int@10
+pushs int@2
+# Push the count of arguments
+pushs int@2
+call write
+popframe
+
+exit int@1
+
+# Universal write function
+label write
+createframe
+pushframe
+
+# temp var
+defvar LF@$tmp
+
+# Count of arguments
+defvar LF@$argcnt
+pops LF@$argcnt
+
+# Loop through the arguments, print them
+label _writeloop
+
+pops LF@$tmp
+write LF@$tmp
+write string@\010
+
+# decrement count
+pushs LF@$argcnt
+pushs int@1
+subs
+pops LF@$argcnt
+
+# No more arguments
+pushs int@0
+pushs LF@$argcnt
+jumpifneqs _writeloop
+
+return
