@@ -744,29 +744,37 @@ void parse(stack_ptr stack)
 
     function_ptr fn_reads = function_create("reads", TYPE_STRING, true);
     sym_insert_fn(global_table, fn_reads);
+    BUILT_IN_READS(fn_reads->instr_buffer);
 
     function_ptr fn_readi = function_create("readi", TYPE_INT, true);
     sym_insert_fn(global_table, fn_readi);
+    BUILT_IN_READI(fn_readi->instr_buffer);
 
     function_ptr fn_readf = function_create("readf", TYPE_FLOAT, true);
     sym_insert_fn(global_table, fn_readf);
+    BUILT_IN_READF(fn_readf->instr_buffer);
 
     function_ptr fn_chr = function_create("chr", TYPE_STRING, false);
     sym_insert_fn(global_table, fn_chr);
+    append_parameter(fn_chr, "$i", TYPE_INT, false);
     BUILT_IN_CHR(fn_chr->instr_buffer);
 
     function_ptr fn_ord = function_create("ord", TYPE_INT, false);
     sym_insert_fn(global_table, fn_ord);
+    append_parameter(fn_ord, "$c", TYPE_STRING, false);
     BUILT_IN_ORD(fn_ord->instr_buffer);
 
     function_ptr fn_strlen = function_create("strlen", TYPE_INT, false);
     sym_insert_fn(global_table, fn_strlen);
-    BUILT_IN_STRLEN(fn_ord->instr_buffer);
+    append_parameter(fn_strlen, "$s", TYPE_STRING, false);
+    BUILT_IN_STRLEN(fn_strlen->instr_buffer);
 
-    // TODO: does return substring or 0 what should be return type?
     function_ptr fn_substring = function_create("substring", TYPE_STRING, false);
     sym_insert_fn(global_table, fn_substring);
-    BUILT_IN_SUBSTRING(fn_ord->instr_buffer);
+    append_parameter(fn_substring, "$s", TYPE_STRING, false);
+    append_parameter(fn_substring, "$i", TYPE_INT, false);
+    append_parameter(fn_substring, "$j", TYPE_INT, false);
+    BUILT_IN_SUBSTRING(fn_substring->instr_buffer);
 
     DEBUG("Running preparser # parse_function_definitions");
 

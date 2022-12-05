@@ -78,6 +78,8 @@ const char *instruction_to_str(instruction_t instruction)
         return "ANDS";
     case INSTR_ORS:
         return "ORS";
+    case INSTR_GETCHAR:
+        return "GETCHAR";
     case INSTR_NOTS:
         return "NOTS";
     case INSTR_INT2FLOAT:

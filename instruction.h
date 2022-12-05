@@ -124,26 +124,32 @@
     } while (0);
 
 // Generate the built-in write function
-#define BUILT_IN_WRITE(buffer)                                                    \
-    do                                                                            \
-    {                                                                             \
-        FUNCTION_HEADER(buffer, alloc_str("write"))                               \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));        \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));          \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));         \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));         \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));              \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, alloc_str("_writeloop_end")); \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));             \
-        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));            \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));         \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));              \
-        INSTRUCTION(buffer, INSTR_SUBS);                                          \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));          \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_writeloop"));          \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_end"));     \
-        FUNCTION_RETURN(buffer);                                                  \
+#define BUILT_IN_WRITE(buffer)                                                                       \
+    do                                                                                               \
+    {                                                                                                \
+        FUNCTION_HEADER(buffer, alloc_str("write"))                                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));                              \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));                           \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));                             \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, alloc_str("_writeloop_end"));                    \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, "$tmp"));                     \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("nil@nil"));                               \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQS, 1, alloc_str("_writeloop_after_nil"));             \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_LOCAL, "$tmp"), instr_const_str("")); \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_after_nil"));                  \
+        INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));                               \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));                                 \
+        INSTRUCTION(buffer, INSTR_SUBS);                                                             \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));                             \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_writeloop"));                             \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_end"));                        \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                        \
+        FUNCTION_RETURN(buffer);                                                                     \
     } while (0);
 
 #define BUILT_IN_READF(buffer)                                                 \
@@ -153,6 +159,8 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));     \
         INSTRUCTION_OPS(buffer, INSTR_READ, 1, alloc_str("LF@$buffer float")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$buffer"));      \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                  \
+        FUNCTION_RETURN(buffer);                                               \
     } while (0);
 
 #define BUILT_IN_READI(buffer)                                               \
@@ -162,6 +170,8 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));   \
         INSTRUCTION_OPS(buffer, INSTR_READ, 1, alloc_str("LF@$buffer int")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$buffer"));    \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                \
+        FUNCTION_RETURN(buffer);                                             \
     } while (0);
 
 #define BUILT_IN_READS(buffer)                                                  \
@@ -171,12 +181,14 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));      \
         INSTRUCTION_OPS(buffer, INSTR_READ, 1, alloc_str("LF@$buffer string")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$buffer"));       \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                   \
+        FUNCTION_RETURN(buffer);                                                \
     } while (0);
 
 #define BUILT_IN_SUBSTRING(buffer)                                                                   \
     do                                                                                               \
     {                                                                                                \
-        FUNCTION_HEADER(buffer, alloc_str("substr"))                                                 \
+        FUNCTION_HEADER(buffer, alloc_str("substring"))                                              \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                           \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$start"));                            \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$end"));                              \
@@ -184,9 +196,9 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$length"));                           \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$compare"));                          \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$char"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$end"));                                \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$start"));                              \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                             \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$start"));                              \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$end"));                                \
         INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$length LF@$buffer"));                \
         INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$start int@0"));              \
         INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_invalid LF@$compare bool@true"))      \
@@ -203,14 +215,14 @@
         INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$char LF@$buffer LF@$start"));       \
         INSTRUCTION_OPS(buffer, INSTR_CONCAT, 1, alloc_str("LF@$substring LF@$substring LF@$char")); \
         INSTRUCTION_OPS(buffer, INSTR_ADD, 1, alloc_str("LF@$start LF@$start int@1"));               \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 1, alloc_str("_substrloop LF@$start LF@$end"));     \
-        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$char LF@$buffer LF@$start"));       \
-        INSTRUCTION_OPS(buffer, INSTR_CONCAT, 1, alloc_str("LF@$substring LF@$substring LF@$char")); \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_end LF@$start LF@$end"));             \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_substrloop"));                            \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_invalid"));                              \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring string@\000"));              \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring nil@nil"));                  \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                                  \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$substring"));                         \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                        \
+        FUNCTION_RETURN(buffer);                                                                     \
     } while (0);
 
 #define BUILT_IN_CHR(buffer)                                                          \
@@ -222,6 +234,8 @@
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));              \
         INSTRUCTION_OPS(buffer, INSTR_INT2CHAR, 1, alloc_str("LF@$char LF@$buffer")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$char"));               \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                         \
+        FUNCTION_RETURN(buffer);                                                      \
     } while (0);
 
 #define BUILT_IN_ORD(buffer)                                                                   \
@@ -231,7 +245,7 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                     \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$char"));                       \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$integer"));                    \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR 1, alloc_str("LF@$length"));                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$length"));                     \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                       \
         INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$length LF@$buffer"));          \
         INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_invalid LF@$length int@0"));    \
@@ -241,6 +255,8 @@
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_invalid"));                        \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));                           \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                            \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                  \
+        FUNCTION_RETURN(buffer);                                                               \
     } while (0);
 
 #define BUILT_IN_STRLEN(buffer)                                                      \
@@ -252,6 +268,8 @@
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));             \
         INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$count LF@$buffer")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$count"));             \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                        \
+        FUNCTION_RETURN(buffer);                                                     \
     } while (0);
 
 typedef enum
