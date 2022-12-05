@@ -751,6 +751,23 @@ void parse(stack_ptr stack)
     function_ptr fn_readf = function_create("readf", TYPE_FLOAT, true);
     sym_insert_fn(global_table, fn_readf);
 
+    function_ptr fn_chr = function_create("chr", TYPE_STRING, false);
+    sym_insert_fn(global_table, fn_chr);
+    BUILT_IN_CHR(fn_chr->instr_buffer);
+
+    function_ptr fn_ord = function_create("ord", TYPE_INT, false);
+    sym_insert_fn(global_table, fn_ord);
+    BUILT_IN_ORD(fn_ord->instr_buffer);
+
+    function_ptr fn_strlen = function_create("strlen", TYPE_INT, false);
+    sym_insert_fn(global_table, fn_strlen);
+    BUILT_IN_STRLEN(fn_ord->instr_buffer);
+
+    // TODO: does return substring or 0 what should be return type?
+    function_ptr fn_substring = function_create("substring", TYPE_STRING, false);
+    sym_insert_fn(global_table, fn_substring);
+    BUILT_IN_SUBSTRING(fn_ord->instr_buffer);
+
     DEBUG("Running preparser # parse_function_definitions");
 
     parse_function_definitions(stack);

@@ -243,7 +243,16 @@
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                            \
     } while (0);
 
-
+#define BUILT_IN_STRLEN(buffer)                                                      \
+    do                                                                               \
+    {                                                                                \
+        FUNCTION_HEADER(buffer, alloc_str("strlen"))                                 \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$count"));            \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));           \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));             \
+        INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$count LF@$buffer")); \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$count"));             \
+    } while (0);
 
 typedef enum
 {

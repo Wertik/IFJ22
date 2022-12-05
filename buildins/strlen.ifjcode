@@ -19,7 +19,7 @@ CREATEFRAME
 PUSHFRAME
 CREATEFRAME
 
-DEFVAR TF@_retval
+
 
 DEFVAR LF@$count
 DEFVAR LF@$buffer
@@ -30,5 +30,5 @@ POPS LF@$buffer
 strlen LF@$count LF@$buffer
 PUSHS LF@$count
 
-POPS TF@_retval
+
 RETURN
