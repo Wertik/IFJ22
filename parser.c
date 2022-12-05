@@ -558,7 +558,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     }
     case TOKEN_CONST_INT:
     {
-        if (parameter != NULL && parameter->type != TYPE_INT)
+        if (parameter != NULL && parameter->type != TYPE_INT  && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_INT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
@@ -569,7 +569,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     }
     case TOKEN_CONST_DOUBLE:
     {
-        if (parameter != NULL && parameter->type != TYPE_FLOAT)
+        if (parameter != NULL && parameter->type != TYPE_FLOAT && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_FLOAT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
@@ -580,7 +580,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     case TOKEN_STRING_LIT:
     {
 
-        if (parameter != NULL && parameter->type != TYPE_STRING)
+        if (parameter != NULL && parameter->type != TYPE_STRING  && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_STRING");
             exit(FAIL_SEMANTIC_BAD_ARGS);
@@ -780,21 +780,19 @@ void parse(stack_ptr stack)
  
     function_ptr fn_floatval = function_create("floatval", TYPE_FLOAT, false);
     sym_insert_fn(global_table, fn_floatval);
-    //TODO: How to append any type of parameter?
-    append_parameter(fn_floatval, "$s", TYPE_STRING, false);
+
+    append_parameter(fn_floatval, "$s", TYPE_ANY, false);
     BUILT_IN_STRLEN(fn_floatval->instr_buffer);
 
      
     function_ptr fn_intval = function_create("intval", TYPE_INT, false);
     sym_insert_fn(global_table, fn_intval);
-    //TODO: How to append any type of parameter?
-    append_parameter(fn_intval, "$s", TYPE_STRING, false);
+    append_parameter(fn_intval, "$s", TYPE_ANY, false);
     BUILT_IN_STRLEN(fn_intval->instr_buffer);
 
     function_ptr fn_strval = function_create("strval", TYPE_STRING, false);
     sym_insert_fn(global_table, fn_strval);
-    //TODO: How to append any type of parameter?
-    append_parameter(fn_strval, "$s", TYPE_STRING, false);
+    append_parameter(fn_strval, "$s", TYPE_ANY, false);
     BUILT_IN_STRLEN(fn_strval->instr_buffer);
 
     DEBUG("Running preparser # parse_function_definitions");

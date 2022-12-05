@@ -17,6 +17,7 @@ typedef enum
     TYPE_FLOAT,
     TYPE_STRING,
     TYPE_VOID,
+    TYPE_ANY,
 } type_t;
 
 typedef enum
