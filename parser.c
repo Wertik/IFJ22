@@ -104,10 +104,9 @@ void assert_n_tokens(stack_ptr stack, int n, ...)
     va_end(valist);
 }
 
-// treba asi zmenit
-type_t parse_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
+// <expression> -> ... precedence
+void rule_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
 {
-
     stack_ptr push_down_stack = stack_init();
 
     // represents dollar
@@ -116,156 +115,7 @@ type_t parse_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr i
     symbol_ptr symbol = create_terminal(dollar);
     stack_push(push_down_stack, symbol);
 
-    expression_prec(stack, table, push_down_stack);
-    /*
-    DEBUG_RULE();
-
-    type_t result_type;
-    token_ptr next = peek_top(stack);
-
-    switch (next->type)
-    {
-    case TOKEN_L_PAREN:
-        ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
-        result_type = parse_expression(stack, table, instr_buffer);
-        ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
-        break;
-
-    case TOKEN_CONST_DOUBLE:
-        ASSERT_NEXT_TOKEN(stack, TOKEN_CONST_DOUBLE);
-
-        result_type = TYPE_FLOAT;
-        rule_expression_next(stack, table, instr_buffer);
-        break;
-    case TOKEN_CONST_INT:
-        next = assert_next_token_get(stack, TOKEN_CONST_INT);
-        result_type = TYPE_INT;
-
-        // TODO: Remove later, just for demo.
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer));
-
-        rule_expression_next(stack, table, instr_buffer);
-
-        token_dispose(next);
-        break;
-    case TOKEN_STRING_LIT:
-
-        next = assert_next_token_get(stack, TOKEN_STRING_LIT);
-
-        result_type = TYPE_STRING;
-
-        // TODO: Remove later, just for demo.
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
-
-        rule_expression_next(stack, table, instr_buffer);
-
-        token_dispose(next);
-        break;
-    case TOKEN_VAR_ID:
-        ASSERT_NEXT_TOKEN(stack, TOKEN_VAR_ID);
-
-        // TODO: Check if var exists in symtable, get the type.
-
-        // WILL HAVE TO WORK WITH SYMBOL TABLE
-        // value = parse_expression(stack);
-        // value = next->value.string;
-        rule_expression_next(stack, table, instr_buffer);
-        break;
-    // Part of FUNEXP
-    // case TOKEN_ID:
-    //    ASSERT_NEXT_TOKEN(stack, TOKEN_ID);
-//
-    //    // TODO: Check if function exists and get the return type from symtable.
-//
-    //    // value = parse_expression(stack);
-    //    // value = next->value.string;
-   //     ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
-   //     rule_argument_list(stack, table);
-   //     ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
-  //      break; 
-    default:
-        fprintf(stderr, "Not an expression.\n");
-        exit(FAIL_SYNTAX);
-    }
-
-    return result_type;
-    */
-
-
-   // for now
-   return TYPE_STRING ;
-}
-
-void rule_expression_next(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
-{
-    token_ptr next = peek_top(stack);
-    // is it actually necessary?
-    // int value;
-    switch (next->type)
-    {
-    case TOKEN_PLUS:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_PLUS);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_MINUS:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_MINUS);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_MULTIPLE:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_MULTIPLE);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_DIVIDE:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_DIVIDE);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_DOT:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_DOT);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_EQUAL:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_EQUAL);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_NOT_EQUAL:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_NOT_EQUAL);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_MORE:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_MORE);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_MORE_EQUAL:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_MORE_EQUAL);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_LESS:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_LESS);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    case TOKEN_LESS_EQUAL:
-
-        ASSERT_NEXT_TOKEN(stack, TOKEN_LESS_EQUAL);
-        parse_expression(stack, table, instr_buffer);
-        break;
-    default:
-    {
-    }
-        // $x = <10>; -> 10 is a valid expression
-        /* default:
-            fprintf(stderr, "non valid expression\n");
-            exit(FAIL_LEXICAL); */
-    }
+    expression_prec(stack, push_down_stack, table, instr_buffer);
 }
 
 // <statement> -> var_id = <expression>;
@@ -359,10 +209,9 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             // <statement> -> var_id = <expression>;
 
             // parse r-side
-            result_type = parse_expression(stack, table, instr);
+            rule_expression(stack, table, instr);
 
             // Get the expression result from stack
-            // TODO: Runtime type check
             INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var->name));
 
             // TODO: Figure this one out
@@ -442,11 +291,11 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
-            type_t type = parse_expression(stack, table, instr);
+            rule_expression(stack, table, instr);
 
             assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_PSEUDO("if (%s)", type_to_name(type));
+            DEBUG_PSEUDO("if (...)");
 
             rule_statement_list(stack, table, function, instr);
 
@@ -474,11 +323,11 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             // <statement> -> while (<expression>) {<statement-list>}
             ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
-            type_t type = parse_expression(stack, table, instr);
+            rule_expression(stack, table, instr);
 
             assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            DEBUG_PSEUDO("while (%s)", type_to_name(type));
+            DEBUG_PSEUDO("while (...)");
 
             rule_statement_list(stack, table, function, instr);
 
@@ -554,15 +403,13 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 // Can return a value or not.
                 token_ptr next = peek_top(stack);
 
-                type_t result_type = TYPE_VOID;
-
                 // not a semicolon, has to be an expression or constant
                 if (next->type != TOKEN_SEMICOLON)
                 {
-                    result_type = parse_expression(stack, table, instr);
+                    rule_expression(stack, table, instr);
                 }
 
-                DEBUG_PSEUDO("global return %s;", type_to_name(result_type));
+                DEBUG_PSEUDO("global return ...;");
                 ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
             }
             else
@@ -578,9 +425,8 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 else
                 {
                     // The return value should be pushed onto the stack in expression
-                    type_t result_type = parse_expression(stack, table, instr);
-
-                    DEBUG_PSEUDO("return %s;", type_to_name(result_type));
+                    rule_expression(stack, table, instr);
+                    DEBUG_PSEUDO("return ...;");
                 }
                 function->has_return = true;
                 ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
@@ -596,7 +442,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
     else
     {
         // just let it try to parse an expression here
-        parse_expression(stack, table, instr);
+        rule_expression(stack, table, instr);
 
         ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
     }
