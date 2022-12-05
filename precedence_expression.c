@@ -19,9 +19,9 @@ char precedence_table[8][8] = {
     {'>', '<', '<', '>', '<', '>', '>', '>'}, //+-.
     {'>', '>', '<', '>', '<', '>', '>', '>'}, //*/
     {'<', '<', 'n', '=', '<', 'n', '>', '<'}, // ( // maybe worng n for ;
-    {'>', '>', 'n', 'n', 'n', 'n', '>', '>'}, // ) maybe wrong for ;
+    {'>', '>', 'n', 'n', 'n', 'n', '>', '>'}, // ) 
     {'>', '>', 'n', '>', '<', '>', '>', '>'}, // i
-    {'<', '<', '<', 'n', '<', 'n', '<', '<'}, // <? (;)
+    {'<', '<', '<', 's', '<', 'n', '<', '<'}, // <? (;) s is for speacial case replaced < hopefully will work
     {'<', '<', '<', '>', '<', '>', '>', '<'}, //===,!===
     {'<', '<', '<', '>', '<', '>', '>', '>'}, // <><=>=
 };
@@ -103,12 +103,12 @@ int get_pos_in_t(token_ptr token)
         break;
     default:
         DEBUG(" RAN TO END\n");
-        fprintf(stderr, "NON VALID TOKEN");
+        fprintf(stderr, "NON VALID TOKEN\n");
         exit(FAIL_LEXICAL); // proper exit todo
         break;
     }
     DEBUG(" RAN TO END\n");
-    fprintf(stderr, "NON VALID TOKEN");
+    fprintf(stderr, "NON VALID TOKEN\n");
     exit(FAIL_LEXICAL); // proper exit todo
 }
 
@@ -407,6 +407,27 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         // not finnished
         // should prob just pop the brackets
     }
+
+    else if (precedence_table[next_push_idx][next_in_idx] == 's')
+    {
+        DEBUG("SPECIAL CASE ________________________________________\n")
+        token_value_t value;
+        token_ptr skipped = get_next_token(in_stack);
+        if (peek_top(in_stack)->type == TOKEN_LC_BRACKET){
+            DEBUG("I am here \n");
+            symbol_ptr symbol = create_terminal(skipped);
+            stack_push(in_stack, symbol);
+
+            token_ptr E = token_create(TOKEN_SEMICOLON, NONE, value);
+            symbol_ptr sym = create_terminal(E);
+            stack_push(in_stack, sym);
+        }
+        else{
+            fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
+            exit(FAIL_LEXICAL);
+        }
+    }
+
     else if (precedence_table[next_push_idx][next_in_idx] == 'n')
     {
         fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
@@ -417,6 +438,12 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     bool finnish = ((get_first_non_E(push_down_stack)->type == TOKEN_SEMICOLON) && (peek_top(in_stack)->type == TOKEN_SEMICOLON));
     if (finnish == true)
     {
+        token_ptr skipped = get_next_token(in_stack);
+        if (!(peek_top(in_stack)->type == TOKEN_R_PAREN)){
+            DEBUG(" NOT POPPING SEMICOLON\n");
+            symbol_ptr symbol = create_terminal(skipped);
+            stack_push(in_stack, symbol);
+        }
         DEBUG(" I FINNISHED PARSING EXP\n");
     }
     else
