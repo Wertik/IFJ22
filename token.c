@@ -161,6 +161,8 @@ const char *type_to_formal(type_t type)
         return "float";
     case TYPE_VOID:
         return "nil";
+    case TYPE_ANY:
+        return "any";
     default:
         return "#unknown-type";
     }

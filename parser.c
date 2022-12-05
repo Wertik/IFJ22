@@ -292,8 +292,9 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             ASSERT_NEXT_TOKEN(stack, TOKEN_L_PAREN);
 
             rule_expression(stack, table, instr);
-
-            assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
+           // assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("if (...)");
 
@@ -557,7 +558,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     }
     case TOKEN_CONST_INT:
     {
-        if (parameter != NULL && parameter->type != TYPE_INT)
+        if (parameter != NULL && parameter->type != TYPE_INT  && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_INT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
@@ -568,7 +569,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     }
     case TOKEN_CONST_DOUBLE:
     {
-        if (parameter != NULL && parameter->type != TYPE_FLOAT)
+        if (parameter != NULL && parameter->type != TYPE_FLOAT && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_FLOAT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
@@ -579,7 +580,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     case TOKEN_STRING_LIT:
     {
 
-        if (parameter != NULL && parameter->type != TYPE_STRING)
+        if (parameter != NULL && parameter->type != TYPE_STRING  && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_STRING");
             exit(FAIL_SEMANTIC_BAD_ARGS);
@@ -769,12 +770,30 @@ void parse(stack_ptr stack)
     append_parameter(fn_strlen, "$s", TYPE_STRING, false);
     BUILT_IN_STRLEN(fn_strlen->instr_buffer);
 
-    function_ptr fn_substring = function_create("substring", TYPE_STRING, false);
+    function_ptr fn_substring = function_create("substring", TYPE_STRING, true);
     sym_insert_fn(global_table, fn_substring);
     append_parameter(fn_substring, "$s", TYPE_STRING, false);
     append_parameter(fn_substring, "$i", TYPE_INT, false);
     append_parameter(fn_substring, "$j", TYPE_INT, false);
     BUILT_IN_SUBSTRING(fn_substring->instr_buffer);
+
+ 
+    function_ptr fn_floatval = function_create("floatval", TYPE_FLOAT, false);
+    sym_insert_fn(global_table, fn_floatval);
+
+    append_parameter(fn_floatval, "$s", TYPE_ANY, false);
+    BUILT_IN_STRLEN(fn_floatval->instr_buffer);
+
+     
+    function_ptr fn_intval = function_create("intval", TYPE_INT, false);
+    sym_insert_fn(global_table, fn_intval);
+    append_parameter(fn_intval, "$s", TYPE_ANY, false);
+    BUILT_IN_STRLEN(fn_intval->instr_buffer);
+
+    function_ptr fn_strval = function_create("strval", TYPE_STRING, false);
+    sym_insert_fn(global_table, fn_strval);
+    append_parameter(fn_strval, "$s", TYPE_ANY, false);
+    BUILT_IN_STRLEN(fn_strval->instr_buffer);
 
     DEBUG("Running preparser # parse_function_definitions");
 
