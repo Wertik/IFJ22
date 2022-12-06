@@ -148,8 +148,8 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             var = variable_create(var_id->value.string, TYPE_VOID, true);
             sym_insert_var(table, var);
 
-            // defvar
-            INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name));
+            // defvar at the start of body
+            /* INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name)); */
         }
 
         next = peek_top(stack);
@@ -301,7 +301,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             INSTRUCTION_OPS(instr, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_condtype"), instr_var(FRAME_TEMP, "_cond"));
 
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_LABEL(instr, label_cnt, "if", "begin_else"), instr_var(FRAME_TEMP, "_cond"), alloc_str("nil@nil"));
-            
+
             // Compare boolean values
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_condtype"));
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_str("bool"));
@@ -423,9 +423,14 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
 
-            // Generate function begin code
+            // Generate function parameters code
 
-            FUNCTION_BEGIN(function);
+            for (int i = 0; i < function->parameter_count; i++)
+            {
+                parameter_t parameter = function->parameters[i];
+                INSTRUCTION_OPS(function->instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, parameter.name));
+                INSTRUCTION_OPS(function->instr_buffer, INSTR_POPS, 1, instr_var(FRAME_LOCAL, parameter.name));
+            }
 
             // Function statement list
 
@@ -520,7 +525,7 @@ void rule_statement_list(stack_ptr stack, sym_table_ptr table, function_ptr func
                   TOKEN_CONST_INT,
                   TOKEN_CONST_DOUBLE,
                   TOKEN_STRING_LIT,
-                  TOKEN_L_PAREN)) //dont know man
+                  TOKEN_L_PAREN)) // dont know man
     {
         // <statement-list> -> <statement><statement-list>
         rule_statement(stack, table, function, instr);
@@ -604,6 +609,39 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
             exit(FAIL_SEMANTIC_VAR_UNDEFINED);
         }
 
+        // Check if the variable is defined and the type
+        // CREATEFRAME
+        // DEFVAR TF@_type
+        // TYPE TF@_type <var>
+        // JUMPIFNEQ _4_type_check TF@_$x_type string@
+        // # Variable not defined
+        // EXIT int@5
+        // LABEL _4_type_check
+        // JUMPIFEQ _4_definition_check_success TF@_$x_type string@<type_formal>
+        // # Type failure
+        // EXIT int@4
+        // LABEL _4_check_success
+        int label_cnt = instr_buffer->len;
+
+        INSTRUCTION_CMT(instr_buffer, "Argument type check");
+
+        INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
+        INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_var_type"));
+        INSTRUCTION_OPS(instr_buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_var_type"), instr_var(FRAME_LOCAL, var->name));
+        INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check"), instr_var(FRAME_TEMP, "_var_type"), instr_const_str(""));
+        INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_VAR_UNDEFINED));
+        INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check"));
+        INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_type_str(parameter->type));
+        // Allow nullable
+        if (parameter->type_nullable)
+        {
+            INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check_success"), instr_var(FRAME_TEMP, "_var_type"), alloc_str("nil@nil"));
+        }
+        INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
+        INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check_success"));
+        INSTRUCTION_CMT(instr_buffer, "End argument type check");
+
+        // Push the variable onto the stack
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, next->value.string));
         break;
     }
@@ -625,7 +663,7 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_FLOAT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
-        
+
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_float(next->value.float_value));
         break;
     }
@@ -764,11 +802,6 @@ void rule_prog(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr instr)
     // Prolog
     ASSERT_NEXT_TOKEN(stack, TOKEN_OPENING_TAG);
     ASSERT_NEXT_TOKEN(stack, TOKEN_DECLARE);
-
-    // Main frame body
-    INSTRUCTION(instr, INSTR_CREATE_FRAME);
-    INSTRUCTION(instr, INSTR_PUSH_FRAME);
-
     // Start parsing the main program body.
     rule_statement_list(stack, table, NULL, instr);
 
@@ -791,38 +824,45 @@ void parse(stack_ptr stack)
 
     function_ptr fn_write = function_create("write", TYPE_VOID, false);
     fn_write->variadic = true;
+    fn_write->builtin = true;
     sym_insert_fn(global_table, fn_write);
-
     BUILT_IN_WRITE(fn_write->instr_buffer);
 
     function_ptr fn_reads = function_create("reads", TYPE_STRING, true);
+    fn_reads->builtin = true;
     sym_insert_fn(global_table, fn_reads);
     BUILT_IN_READS(fn_reads->instr_buffer);
 
     function_ptr fn_readi = function_create("readi", TYPE_INT, true);
+    fn_readi->builtin = true;
     sym_insert_fn(global_table, fn_readi);
     BUILT_IN_READI(fn_readi->instr_buffer);
 
     function_ptr fn_readf = function_create("readf", TYPE_FLOAT, true);
+    fn_readf->builtin = true;
     sym_insert_fn(global_table, fn_readf);
     BUILT_IN_READF(fn_readf->instr_buffer);
 
     function_ptr fn_chr = function_create("chr", TYPE_STRING, false);
+    fn_chr->builtin = true;
     sym_insert_fn(global_table, fn_chr);
     append_parameter(fn_chr, "$i", TYPE_INT, false);
     BUILT_IN_CHR(fn_chr->instr_buffer);
 
     function_ptr fn_ord = function_create("ord", TYPE_INT, false);
+    fn_ord->builtin = true;
     sym_insert_fn(global_table, fn_ord);
     append_parameter(fn_ord, "$c", TYPE_STRING, false);
     BUILT_IN_ORD(fn_ord->instr_buffer);
 
     function_ptr fn_strlen = function_create("strlen", TYPE_INT, false);
+    fn_strlen->builtin = true;
     sym_insert_fn(global_table, fn_strlen);
     append_parameter(fn_strlen, "$s", TYPE_STRING, false);
     BUILT_IN_STRLEN(fn_strlen->instr_buffer);
 
     function_ptr fn_substring = function_create("substring", TYPE_STRING, true);
+    fn_substring->builtin = true;
     sym_insert_fn(global_table, fn_substring);
     append_parameter(fn_substring, "$s", TYPE_STRING, false);
     append_parameter(fn_substring, "$i", TYPE_INT, false);
@@ -830,16 +870,19 @@ void parse(stack_ptr stack)
     BUILT_IN_SUBSTRING(fn_substring->instr_buffer);
 
     function_ptr fn_floatval = function_create("floatval", TYPE_FLOAT, false);
+    fn_floatval->builtin = true;
     sym_insert_fn(global_table, fn_floatval);
     append_parameter(fn_floatval, "$s", TYPE_ANY, false);
     BUILT_IN_FLOATVAL(fn_floatval->instr_buffer);
 
     function_ptr fn_intval = function_create("intval", TYPE_INT, false);
+    fn_intval->builtin = true;
     sym_insert_fn(global_table, fn_intval);
     append_parameter(fn_intval, "$s", TYPE_ANY, false);
     BUILT_IN_INTVAL(fn_intval->instr_buffer);
 
     function_ptr fn_strval = function_create("strval", TYPE_STRING, false);
+    fn_strval->builtin = true;
     sym_insert_fn(global_table, fn_strval);
     append_parameter(fn_strval, "$s", TYPE_ANY, false);
     BUILT_IN_STRVAL(fn_strval->instr_buffer);
@@ -872,8 +915,6 @@ void parse(stack_ptr stack)
 
     instr_buffer_ptr instr_buffer = instr_buffer_init(NULL);
 
-    instr_buffer_append(instr_buffer, alloc_str(".ifjcode22"));
-
     rule_prog(stack, table, instr_buffer);
 
     if (stack_size(stack) != 0)
@@ -888,6 +929,23 @@ void parse(stack_ptr stack)
         sym_print(global_table);
     }
 
+    // generate defvars for all the variables in main body at the start of the code
+    int var_count = 0;
+    variable_ptr *variables = sym_get_variables(table, &var_count);
+
+    for (int i = 0; i < var_count; i++)
+    {
+        variable_ptr var = variables[i];
+
+        // prepend it before all other instructions
+        instr_buffer_prepend(instr_buffer, generate_instruction_ops(INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name)));
+    }
+
+    // prepend file header
+    instr_buffer_prepend(instr_buffer, generate_instruction(INSTR_PUSH_FRAME));
+    instr_buffer_prepend(instr_buffer, generate_instruction(INSTR_CREATE_FRAME));
+    instr_buffer_prepend(instr_buffer, alloc_str(".ifjcode22"));
+
     // Add exit instr
     INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, alloc_str("int@0"));
 
@@ -897,8 +955,6 @@ void parse(stack_ptr stack)
 
     // Output function code
 
-    // TODO: Add comments to generated code
-
     int count = 0;
     function_ptr *functions = sym_get_functions(global_table, &count);
 
@@ -906,10 +962,33 @@ void parse(stack_ptr stack)
     {
         function_ptr function = functions[i];
 
-        if (function->called)
+        if (function->called == false)
         {
-            instr_buffer_out(function->instr_buffer);
+            instr_buffer_dispose(function->instr_buffer);
+            continue;
         }
+
+        // only do this for non-built in functions
+        if (function->builtin == false)
+        {
+            // generate defvars for all the variables in main body at the start of the code
+            var_count = 0;
+            variables = sym_get_variables(table, &var_count);
+
+            for (int i = 0; i < var_count; i++)
+            {
+                variable_ptr var = variables[i];
+
+                // prepend it before all other instructions
+                instr_buffer_prepend(function->instr_buffer, generate_instruction_ops(INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name)));
+            }
+
+            instr_buffer_prepend(function->instr_buffer, generate_instruction(INSTR_PUSH_FRAME));
+            instr_buffer_prepend(function->instr_buffer, generate_instruction(INSTR_CREATE_FRAME));
+            instr_buffer_prepend(function->instr_buffer, generate_instruction_ops(INSTR_LABEL, 1, alloc_str(function->name)));
+        }
+
+        instr_buffer_out(function->instr_buffer);
         instr_buffer_dispose(function->instr_buffer);
     }
 

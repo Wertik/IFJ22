@@ -567,6 +567,10 @@ instr_buffer_ptr instr_buffer_init(char *prefix);
 // instr has to be an alloc'd string, it's free'd when isntruction buffer gets disposed
 void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr);
 
+// Prepend an instruction to the buffer
+// instr has to be an alloc'd string, it's free'd when isntruction buffer gets disposed
+void instr_buffer_prepend(instr_buffer_ptr instr_buffer, char *instr);
+
 // Print the instruction buffer in an array fashion.
 // instr_buffer(size)[instr1, ..., instrN]
 void instr_buffer_print(instr_buffer_ptr instr_buffer);

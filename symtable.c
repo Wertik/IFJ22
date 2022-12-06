@@ -118,6 +118,7 @@ function_ptr function_create(char *name, type_t return_type, bool return_type_nu
     function->has_return = false;
     function->called = false;
     function->defined = false;
+    function->builtin = false;
 
     function->parameter_count = 0;
     function->parameters = malloc(0);
@@ -143,9 +144,11 @@ void sym_get_variables_rec(sym_node_ptr root, variable_ptr **vars, int *count)
     if (root->variable != NULL)
     {
         *count += 1;
-        *vars = realloc(*vars, sizeof(variable_ptr) * *count);
+        *vars = realloc(*vars, sizeof(variable_ptr) * (*count));
 
         MALLOC_CHECK(*vars);
+
+        (*vars)[*count - 1] = root->variable;
     }
 }
 
@@ -153,9 +156,10 @@ void sym_get_variables_rec(sym_node_ptr root, variable_ptr **vars, int *count)
 variable_ptr *sym_get_variables(sym_table_ptr table, int *count)
 {
     variable_ptr *vars = malloc(sizeof(variable_ptr) * 0);
-    *count = 0;
 
     MALLOC_CHECK(vars);
+
+    *count = 0;
 
     sym_get_variables_rec(table->root, &vars, count);
 
