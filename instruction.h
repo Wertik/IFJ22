@@ -135,23 +135,23 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$tmp"));                              \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$argcnt"));                           \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_write_loop"));                           \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));                            \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, alloc_str("_writeloop_end"));                    \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, alloc_str("_write_loop_end"));                   \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$tmp"));                                \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, "$tmp"));                     \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("nil@nil"));                               \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQS, 1, alloc_str("_writeloop_after_nil"));             \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQS, 1, alloc_str("_write_loop_after_nil"));            \
         INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_LOCAL, "$tmp"), instr_const_str("")); \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_after_nil"));                  \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_write_loop_after_nil"));                 \
         INSTRUCTION_OPS(buffer, INSTR_WRITE, 1, alloc_str("LF@$tmp"));                               \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$argcnt"));                            \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@1"));                                 \
         INSTRUCTION(buffer, INSTR_SUBS);                                                             \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_writeloop"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_writeloop_end"));                        \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_write_loop"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_write_loop_end"));                       \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                        \
         FUNCTION_RETURN(buffer);                                                                     \
     } while (0);
@@ -189,44 +189,44 @@
         FUNCTION_RETURN(buffer);                                                \
     } while (0);
 
-#define BUILT_IN_SUBSTRING(buffer)                                                                   \
-    do                                                                                               \
-    {                                                                                                \
-        FUNCTION_HEADER(buffer, alloc_str("substring"))                                              \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$start"));                            \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$end"));                              \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$substring"));                        \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$length"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$compare"));                          \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$char"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$start"));                              \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$end"));                                \
-        INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$length LF@$buffer"));                \
-        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$start int@0"));              \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_invalid LF@$compare bool@true"))      \
-        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$end int@0"));                \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_invalid LF@$compare bool@true"))      \
-        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$end LF@$start"));            \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_invalid LF@$compare bool@true"))      \
-        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$start LF@$length"));         \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 1, alloc_str("_invalid LF@$compare bool@true"))     \
-        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$end LF@$length"));           \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 1, alloc_str("_invalid LF@$compare bool@true"));    \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring string@\000"));              \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_substrloop"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$char LF@$buffer LF@$start"));       \
-        INSTRUCTION_OPS(buffer, INSTR_CONCAT, 1, alloc_str("LF@$substring LF@$substring LF@$char")); \
-        INSTRUCTION_OPS(buffer, INSTR_ADD, 1, alloc_str("LF@$start LF@$start int@1"));               \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_end LF@$start LF@$end"));             \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_substrloop"));                            \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_invalid"));                              \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring nil@nil"));                  \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                                  \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$substring"));                         \
-        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                        \
-        FUNCTION_RETURN(buffer);                                                                     \
+#define BUILT_IN_SUBSTRING(buffer)                                                                          \
+    do                                                                                                      \
+    {                                                                                                       \
+        FUNCTION_HEADER(buffer, alloc_str("substring"))                                                     \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$start"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$end"));                                     \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$substring"));                               \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$length"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$compare"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$char"));                                    \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                                    \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$start"));                                     \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$end"));                                       \
+        INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$length LF@$buffer"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$start int@0"));                     \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_substring_invalid LF@$compare bool@true"))   \
+        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$end int@0"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_substring_invalid LF@$compare bool@true"))   \
+        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$end LF@$start"));                   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_substring_invalid LF@$compare bool@true"))   \
+        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$start LF@$length"));                \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 1, alloc_str("_substring_invalid LF@$compare bool@true"))  \
+        INSTRUCTION_OPS(buffer, INSTR_LT, 1, alloc_str("LF@$compare LF@$end LF@$length"));                  \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 1, alloc_str("_substring_invalid LF@$compare bool@true")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring string@\000"));                     \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_substring_substrloop"));                        \
+        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$char LF@$buffer LF@$start"));              \
+        INSTRUCTION_OPS(buffer, INSTR_CONCAT, 1, alloc_str("LF@$substring LF@$substring LF@$char"));        \
+        INSTRUCTION_OPS(buffer, INSTR_ADD, 1, alloc_str("LF@$start LF@$start int@1"));                      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_substring_end LF@$start LF@$end"));          \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_substring_substrloop"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_substring_invalid"));                           \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring nil@nil"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_substring_end"));                               \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$substring"));                                \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                               \
+        FUNCTION_RETURN(buffer);                                                                            \
     } while (0);
 
 #define BUILT_IN_CHR(buffer)                                                          \
@@ -242,25 +242,25 @@
         FUNCTION_RETURN(buffer);                                                      \
     } while (0);
 
-#define BUILT_IN_ORD(buffer)                                                                   \
-    do                                                                                         \
-    {                                                                                          \
-        FUNCTION_HEADER(buffer, alloc_str("ord"))                                              \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                     \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$char"));                       \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$integer"));                    \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$length"));                     \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                       \
-        INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$length LF@$buffer"));          \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_invalid LF@$length int@0"));    \
-        INSTRUCTION_OPS(buffer, INSTR_STRI2INT, 1, alloc_str("LF@$integer LF@$buffer int@0")); \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$integer"));                     \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_invalid"));                        \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                            \
-        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                  \
-        FUNCTION_RETURN(buffer);                                                               \
+#define BUILT_IN_ORD(buffer)                                                                    \
+    do                                                                                          \
+    {                                                                                           \
+        FUNCTION_HEADER(buffer, alloc_str("ord"))                                               \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$char"));                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$integer"));                     \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$length"));                      \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                        \
+        INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$length LF@$buffer"));           \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_ord_invalid LF@$length int@0")); \
+        INSTRUCTION_OPS(buffer, INSTR_STRI2INT, 1, alloc_str("LF@$integer LF@$buffer int@0"));  \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$integer"));                      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_ord_end"));                          \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_ord_invalid"));                     \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_ord_end"));                         \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                   \
+        FUNCTION_RETURN(buffer);                                                                \
     } while (0);
 
 #define BUILT_IN_STRLEN(buffer)                                                      \
@@ -276,97 +276,97 @@
         FUNCTION_RETURN(buffer);                                                     \
     } while (0);
 
-#define BUILT_IN_FLOATVAL(buffer)                                                                  \
-    do                                                                                             \
-    {                                                                                              \
-        FUNCTION_HEADER(buffer, alloc_str("floatval"))                                             \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                  \
-        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));         \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intfloat LF@$actual string@i"));    \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatfloat LF@$actual string@f"));  \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolfloat LF@$actual string@b"));   \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolfalse LF@$actual string@n"));   \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intfloat"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 1, alloc_str("LF@$return LF@$buffer"));           \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatfloat"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_boolfloat"));                          \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolfalse LF@$buffer bool@false")); \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE 1, alloc_str("LF@$return float@0x1p+0"));               \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_boolfalse"));                          \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE 1, alloc_str("LF@$return float@0x0p+0"));               \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                                \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                          \
-        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                      \
-        FUNCTION_RETURN(buffer);                                                                   \
+#define BUILT_IN_FLOATVAL(buffer)                                                                           \
+    do                                                                                                      \
+    {                                                                                                       \
+        FUNCTION_HEADER(buffer, alloc_str("floatval"))                                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                                    \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                                    \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                           \
+        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));                  \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatval_intfloat LF@$actual string@i"));    \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatval_floatfloat LF@$actual string@f"));  \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatval_boolfloat LF@$actual string@b"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatval_boolfalse LF@$actual string@n"));   \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatval_intfloat"));                           \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 1, alloc_str("LF@$return LF@$buffer"));                    \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_floatval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatval_floatfloat"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_floatval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatval_boolfloat"));                          \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatval_boolfalse LF@$buffer bool@false")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return float@0x1p+0"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_floatval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatval_boolfalse"));                          \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return float@0x0p+0"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatval_end"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                                   \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                               \
+        FUNCTION_RETURN(buffer);                                                                            \
     } while (0);
 
-#define BUILT_IN_INTVAL(buffer)                                                                    \
-    do                                                                                             \
-    {                                                                                              \
-        FUNCTION_HEADER(buffer, alloc_str("floatval"))                                             \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                  \
-        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));         \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intint LF@$actual string@i"));      \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_floatint LF@$actual string@f"));    \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolint LF@$actual string@b"));     \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolint LF@$actual string@n"));     \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intint"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatint"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_FLOAT2INT, 1, alloc_str("LF@$return LF@$buffer"));           \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_boolint"));                            \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolfalse LF@$buffer bool@false")); \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE 1, alloc_str("LF@$return int@1"));                      \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_boolfalse"));                          \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE 1, alloc_str("LF@$return int@0"));                      \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                                \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                          \
-        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                      \
-        FUNCTION_RETURN(buffer);                                                                   \
+#define BUILT_IN_INTVAL(buffer)                                                                           \
+    do                                                                                                    \
+    {                                                                                                     \
+        FUNCTION_HEADER(buffer, alloc_str("intval"))                                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));                \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_intint LF@$actual string@i"));      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_floatint LF@$actual string@f"));    \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolint LF@$actual string@b"));     \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolint LF@$actual string@n"));     \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_intint"));                             \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_intval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_floatint"));                           \
+        INSTRUCTION_OPS(buffer, INSTR_FLOAT2INT, 1, alloc_str("LF@$return LF@$buffer"));                  \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_intval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_boolint"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolfalse LF@$buffer bool@false")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return int@1"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_intval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_boolfalse"));                          \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return int@0"));                            \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_end"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                                 \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                             \
+        FUNCTION_RETURN(buffer);                                                                          \
     } while (0);
 
-#define BUILT_IN_STRVAL(buffer)                                                                    \
-    do                                                                                             \
-    {                                                                                              \
-        FUNCTION_HEADER(buffer, alloc_str("strval"))                                               \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                           \
-        INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                  \
-        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));         \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolfalse LF@$actual string@n"));   \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_strstr LF@$actual string@s"));      \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_boolfalse LF@$buffer bool@false")); \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return string@1"));                  \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_boolfalse"));                          \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return string@\000"));               \
-        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_end"));                                 \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_strstr"));                             \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_end"));                                \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                          \
-        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                      \
-        FUNCTION_RETURN(buffer);                                                                   \
+#define BUILT_IN_STRVAL(buffer)                                                                           \
+    do                                                                                                    \
+    {                                                                                                     \
+        FUNCTION_HEADER(buffer, alloc_str("strval"))                                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));                \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_strval_boolfalse LF@$actual string@n"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_strval_strstr LF@$actual string@s"));      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_strval_boolfalse LF@$buffer bool@false")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return string@1"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_strval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_strval_boolfalse"));                          \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return string@\000"));                      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_strval_end"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_strval_strstr"));                             \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_strval_end"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                                 \
+        INSTRUCTION(buffer, INSTR_POP_FRAME);                                                             \
+        FUNCTION_RETURN(buffer);                                                                          \
     } while (0);
 
 typedef enum

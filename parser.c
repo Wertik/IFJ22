@@ -843,17 +843,17 @@ void parse(stack_ptr stack)
     function_ptr fn_floatval = function_create("floatval", TYPE_FLOAT, false);
     sym_insert_fn(global_table, fn_floatval);
     append_parameter(fn_floatval, "$s", TYPE_ANY, false);
-    BUILT_IN_STRLEN(fn_floatval->instr_buffer);
+    BUILT_IN_FLOATVAL(fn_floatval->instr_buffer);
 
     function_ptr fn_intval = function_create("intval", TYPE_INT, false);
     sym_insert_fn(global_table, fn_intval);
     append_parameter(fn_intval, "$s", TYPE_ANY, false);
-    BUILT_IN_STRLEN(fn_intval->instr_buffer);
+    BUILT_IN_INTVAL(fn_intval->instr_buffer);
 
     function_ptr fn_strval = function_create("strval", TYPE_STRING, false);
     sym_insert_fn(global_table, fn_strval);
     append_parameter(fn_strval, "$s", TYPE_ANY, false);
-    BUILT_IN_STRLEN(fn_strval->instr_buffer);
+    BUILT_IN_STRVAL(fn_strval->instr_buffer);
 
     DEBUG("Running preparser # parse_function_definitions");
 
