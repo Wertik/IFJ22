@@ -3,8 +3,11 @@
 make main
 cat "$1" | ./main > prog.out
 
-if [ "$?" == 0 ]; then
+EXIT_CODE="$?"
+
+if [ "$EXIT_CODE" == "0" ]; then
     ./ic22int_2022-11-14 prog.out
+    echo "Interpreter exit code: $?"
 else
-    echo "Compiler exited with errors."
+    echo "Compiler exited with errors, code: $EXIT_CODE"
 fi
