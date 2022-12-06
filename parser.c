@@ -982,7 +982,7 @@ void parse(stack_ptr stack)
         {
             // generate defvars for all the variables in main body at the start of the code
             var_count = 0;
-            variables = sym_get_variables(table, &var_count);
+            variables = sym_get_variables(function->symtable, &var_count);
 
             for (int i = 0; i < var_count; i++)
             {

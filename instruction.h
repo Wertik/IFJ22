@@ -59,23 +59,25 @@
 #define INSTRUCTION_GEN_LABEL(buffer, buffer_cnt, prefix, label) \
     (dyn_str("_%s_%d_%s", prefix, buffer_cnt, label))
 
-#define FUNCTION_RETURN_TYPE_CHECK(buffer, function_scope, called_function)                                                                \
-    do                                                                                                                                     \
-    {                                                                                                                                      \
-        int label_cnt = buffer->len;                                                                                                       \
-        INSTRUCTION_CMT(buffer, "Function return type check");                                                                             \
-        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                                           \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval"));                                                        \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                   \
-        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_retval"));                                                          \
-        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_retval_type"), instr_var(FRAME_TEMP, "_retval"));                   \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                    \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_type_str(called_function->return_type));                                             \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQS, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt)); \
-        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_INVALID_RETURN_TYPE));                                        \
-        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt));     \
-        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval"));                                                         \
-        INSTRUCTION_CMT(buffer, "End function return type check");                                                                         \
+#define FUNCTION_RETURN_TYPE_CHECK(buffer, function_scope, called_function)                                                                                                                                                    \
+    do                                                                                                                                                                                                                         \
+    {                                                                                                                                                                                                                          \
+        int label_cnt = buffer->len;                                                                                                                                                                                           \
+        INSTRUCTION_CMT(buffer, "Function return type check");                                                                                                                                                                 \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                                                                                                                               \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval"));                                                                                                                                            \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_retval_type"));                                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_retval"));                                                                                                                                              \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_retval_type"), instr_var(FRAME_TEMP, "_retval"));                                                                                                       \
+        if (called_function->return_type_nullable == true)                                                                                                                                                                     \
+        {                                                                                                                                                                                                                      \
+            INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt), alloc_str("string@nil"), instr_var(FRAME_TEMP, "_retval_type"));                     \
+        }                                                                                                                                                                                                                      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt), instr_type_str(called_function->return_type), instr_var(FRAME_TEMP, "_retval_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_INVALID_RETURN_TYPE));                                                                                                                            \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt));                                                                                         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_retval"));                                                                                                                                             \
+        INSTRUCTION_CMT(buffer, "End function return type check");                                                                                                                                                             \
     } while (0);
 
 // Generate a function header
