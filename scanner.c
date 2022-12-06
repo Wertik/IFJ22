@@ -18,6 +18,19 @@
 #include <string.h>
 #include <ctype.h>
 
+void whitespaceBeforeProlog(int *scanner_state, char c)
+{
+    if (c != '<')
+    {
+        fprintf(stderr, "Unexpected characters before prolog\n");
+        exit(FAIL_SYNTAX);
+    }
+    else
+    {
+        CHANGE_STATE(SCANNER_LESS_THAN);
+    }
+}
+
 bool attempt_keyword(stack_ptr stack, buffer_ptr buffer, char *keyword_str, keyword_t keyword)
 {
     if (strcmp(buffer->data, keyword_str) == 0)
@@ -777,6 +790,7 @@ stack_ptr tokenize()
     stack_ptr stack = stack_init();
     int line = 1;
     int character = 1;
+    whitespaceBeforeProlog(&scanner_state, (c = fgetc(stdin)));
     while (!parse_character(stack, buffer, &scanner_state, (c = fgetc(stdin)), line, character))
     {
         // Line count may not optimalized for ios

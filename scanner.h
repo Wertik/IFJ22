@@ -131,4 +131,8 @@ bool attempt_null(stack_ptr stack, buffer_ptr buffer);
 // Returns true if successful.
 bool attempt_greedy(char *rest, bool ignore_whitespace);
 
+// Checks for characters before prolog
+// Returns SYNTAX error (2) if found, if not sets SCANNER_STATE to SCANNER_LESS_THAN
+void whitespaceBeforeProlog(int *scanner_state, char c);
+
 #endif
