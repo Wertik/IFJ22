@@ -454,14 +454,13 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     bool finnish = ((get_first_non_E(push_down_stack)->type == TOKEN_SEMICOLON) && (peek_top(in_stack)->type == TOKEN_SEMICOLON));
     if (finnish == true)
     {
-        DEBUG(" IN FINNISH");
         token_ptr skipped = get_next_token(in_stack);
 
         if (!added_semicol){
-            DEBUG(" NOT POPPING SEMICOLON\n");
             symbol_ptr symbol = create_terminal(skipped);
             stack_push(in_stack, symbol);
         }
+        added_semicol = 0;
         DEBUG(" I FINNISHED PARSING EXP\n");
     }
     else
