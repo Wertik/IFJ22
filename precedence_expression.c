@@ -461,6 +461,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
             stack_push(in_stack, symbol);
         }
         added_semicol = 0;
+        illegal_type = -1;
         DEBUG(" I FINNISHED PARSING EXP\n");
     }
     else
