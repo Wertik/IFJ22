@@ -146,6 +146,8 @@ const char *type_to_name(type_t type)
         return "TYPE_FLOAT";
     case TYPE_VOID:
         return "TYPE_VOID";
+    case TYPE_ANY:
+        return "TYPE_ANY";
     default:
         return "#unknown-type";
     }
@@ -218,6 +220,8 @@ const char *value_type_to_name(token_value_type_t value_type)
         return "INTEGER";
     case KEYWORD:
         return "KEYWORD";
+    case FLOAT:
+        return "FLOAT";
     case TYPE:
         return "TYPE";
     default:
@@ -235,12 +239,11 @@ const char *value_type_to_format(token_value_type_t value_type)
     {
     case NONE:
         return "Token (%s)";
+    // All of these get parsed into a string
     case INTEGER:
-        return "Token (%s, %s, %s)";
+    case FLOAT:
     case STRING:
-        return "Token (%s, %s, %s)";
     case KEYWORD:
-        return "Token (%s, %s, %s)";
     case TYPE:
         return "Token (%s, %s, %s)";
     default:
@@ -285,6 +288,14 @@ char *value_to_string(token_value_type_t type, token_value_t value)
         char *s = malloc(sizeof(char) * (len + 1));
         MALLOC_CHECK(s);
         sprintf(s, "%s", type_to_name(value.type));
+        return s;
+    }
+    case FLOAT:
+    {
+        size_t len = snprintf(NULL, 0, "%f", value.float_value);
+        char *s = malloc(sizeof(char) * (len + 1));
+        MALLOC_CHECK(s);
+        sprintf(s, "%f", value.float_value);
         return s;
     }
     default:
