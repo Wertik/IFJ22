@@ -842,7 +842,6 @@ void parse(stack_ptr stack)
 
     function_ptr fn_floatval = function_create("floatval", TYPE_FLOAT, false);
     sym_insert_fn(global_table, fn_floatval);
-
     append_parameter(fn_floatval, "$s", TYPE_ANY, false);
     BUILT_IN_STRLEN(fn_floatval->instr_buffer);
 

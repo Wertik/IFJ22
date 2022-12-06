@@ -12,7 +12,7 @@
 
 int main()
 {
-    instr_buffer_ptr instr_buffer = instr_buffer_init();
+    instr_buffer_ptr instr_buffer = instr_buffer_init(NULL);
 
     instr_buffer_append(instr_buffer, alloc_str(".ifjcode22"));
 

@@ -536,7 +536,7 @@ char *instr_const_float(double val);
 
 // Replace a target character in str with given replacement.
 // Used to replace control characters inside strings with ifjcode22 escape sequences.
-char *str_rep(char *str, char target, char *replacement);
+char *str_rep(char *str, char target, char *replacement, bool rec);
 
 // Create a valid string literal string for ifjcode22
 // Replaces control characters with correct escape senquences.

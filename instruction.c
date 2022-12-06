@@ -167,7 +167,7 @@ char *instr_const_float(double val)
 }
 
 // Replace a character by a series of characters
-char *str_rep(char *str, char target, char *replacement)
+char *str_rep(char *str, char target, char *replacement, bool rec)
 {
     for (int i = 0; str[i] != '\0'; i++)
     {
@@ -184,7 +184,7 @@ char *str_rep(char *str, char target, char *replacement)
             memcpy(s + i + strlen(replacement), str + i + 1, strlen(str) - i);
             s[size] = '\0';
 
-            return str_rep(s, target, replacement);
+            return rec ? str_rep(s, target, replacement, rec) : s;
         }
     }
     return str;
@@ -194,9 +194,11 @@ char *instr_const_str(char *str)
 {
     char *s = dyn_str("string@%s", str);
 
-    s = str_rep(s, ' ', "\\032");
-    s = str_rep(s, '\r', "\\013");
-    s = str_rep(s, '\n', "\\010");
+    s = str_rep(s, '\\', "\\092", false);
+    s = str_rep(s, ' ', "\\032", true);
+    s = str_rep(s, '\r', "\\013", true);
+    s = str_rep(s, '\t', "\\009", true);
+    s = str_rep(s, '\n', "\\010", true);
 
     return s;
 }
