@@ -23,9 +23,6 @@
 typedef struct variable_t
 {
   char *name;
-
-  type_t type;
-  bool type_nullable;
 } * variable_ptr;
 
 typedef struct

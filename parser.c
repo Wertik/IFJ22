@@ -154,9 +154,6 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         next = peek_top(stack);
 
-        type_t result_type;
-        bool result_type_nullable;
-
         if (next->type == TOKEN_ID)
         {
             // <statement> -> var_id = id(<arg-list>);
@@ -175,9 +172,6 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             }
 
             DEBUG_PSEUDO("%s = %s(...)", var_id->value.string, func_id->value.string);
-
-            result_type = called_function->return_type;
-            result_type_nullable = called_function->return_type_nullable;
 
             called_function->called = true;
 
@@ -213,15 +207,9 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
             // Get the expression result from stack
             INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var->name));
-
-            // TODO: Figure this one out
-            result_type_nullable = true;
         }
 
-        var->type = result_type;
-        var->type_nullable = result_type_nullable;
-
-        DEBUG_PSEUDO("%s <- %s%s", var_id->value.string, result_type_nullable ? "?" : "", type_to_name(result_type));
+        DEBUG_PSEUDO("Assign to %s", var_id->value.string);
 
         ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
         token_dispose(var_id);

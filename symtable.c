@@ -30,9 +30,6 @@ variable_ptr variable_create(char *name, type_t type, bool type_nullable)
 
     strcpy(variable->name, name);
 
-    variable->type = TYPE_INT;
-    variable->type_nullable = false;
-
     return variable;
 }
 
@@ -94,12 +91,12 @@ char *function_to_string(function_ptr function)
 
 char *variable_to_string(variable_ptr variable)
 {
-    size_t len = snprintf(NULL, 0, "%s%s %s", variable->type_nullable == true ? "?" : "", type_to_name(variable->type), variable->name);
+    size_t len = snprintf(NULL, 0, "%s", variable->name);
     char *s = malloc(sizeof(char) * (len + 1));
 
     MALLOC_CHECK(s);
 
-    sprintf(s, "%s%s %s", variable->type_nullable == true ? "?" : "", type_to_name(variable->type), variable->name);
+    sprintf(s, "%s", variable->name);
     return s;
 }
 
