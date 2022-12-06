@@ -90,6 +90,7 @@ int get_pos_in_t(token_ptr token)
         DEBUG("6\n");
         return 6;
         break;
+    case TOKEN_CONST_NULL: // maybe wrong
     case TOKEN_VAR_ID:
     case TOKEN_STRING_LIT:
     case TOKEN_CONST_INT:
@@ -104,6 +105,7 @@ int get_pos_in_t(token_ptr token)
         break;
     default:
         DEBUG(" RAN TO END\n");
+        fprintf(stderr,"%d\n" ,token->type);
         fprintf(stderr, "NON VALID TOKEN\n");
         exit(FAIL_LEXICAL); // proper exit todo
         break;
