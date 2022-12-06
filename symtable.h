@@ -59,6 +59,8 @@ typedef struct function_t
   // Function has variadic arguments
   bool variadic;
 
+  bool builtin;
+
   // Instruction buffer for function code
   // Allows for functions to be generated after main body.
   instr_buffer_ptr instr_buffer;

@@ -307,7 +307,9 @@ instr_buffer_ptr instr_buffer_init(char *prefix)
         MALLOC_CHECK(instr_buffer->prefix);
 
         strcpy(instr_buffer->prefix, prefix);
-    } else {
+    }
+    else
+    {
         instr_buffer->prefix = NULL;
     }
 
@@ -322,6 +324,23 @@ void instr_buffer_append(instr_buffer_ptr instr_buffer, char *instr)
     MALLOC_CHECK(instr_buffer->instructions);
 
     instr_buffer->instructions[instr_buffer->len - 1] = instr;
+}
+
+void instr_buffer_prepend(instr_buffer_ptr instr_buffer, char *instr)
+{
+    instr_buffer->len += 1;
+
+    // make space
+    instr_buffer->instructions = realloc(instr_buffer->instructions, sizeof(char *) * instr_buffer->len);
+    MALLOC_CHECK(instr_buffer->instructions);
+
+    // move all instructions by one
+    for (int i = instr_buffer->len - 1; i > 0; i--)
+    {
+        instr_buffer->instructions[i] = instr_buffer->instructions[i - 1];
+    }
+
+    instr_buffer->instructions[0] = instr;
 }
 
 void instr_buffer_print(instr_buffer_ptr instr_buffer)

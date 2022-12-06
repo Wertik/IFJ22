@@ -151,7 +151,7 @@ void conversion(instr_buffer_ptr instr_buffer, token_ptr arg1, token_type_t oper
         {
             // both integers
             // int / int -> float / float
-            if (arg2->type == TOKEN_DIVIDE)
+            if (operator == TOKEN_DIVIDE)
             {
                 // we're doing division, convert both
 
@@ -238,6 +238,31 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
+
+        // Check if the variable is defined and the type
+        // CREATEFRAME
+        // DEFVAR TF@_type
+        // TYPE TF@_type <var>
+        // JUMPIFNEQ _4_type_check TF@_$x_type string@
+        // # Variable not defined
+        // EXIT int@5
+        // LABEL _4_type_check
+        // JUMPIFEQ _4_definition_check_success TF@_$x_type string@<type_formal>
+        // # Type failure
+        // EXIT int@4
+        // LABEL _4_check_success
+        int label_cnt = instr_buffer->len;
+
+        INSTRUCTION_CMT(instr_buffer, "Variable definition check");
+
+        INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
+        INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_var_type"));
+        INSTRUCTION_OPS(instr_buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_var_type"), instr_var(FRAME_LOCAL, next->value.string));
+        INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_def_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_const_str(""));
+        INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_VAR_UNDEFINED));
+        INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_def_check_success"));
+
+        INSTRUCTION_CMT(instr_buffer, "End variable definition check");
 
         // Push the value onto the stack
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, next->value.string));
