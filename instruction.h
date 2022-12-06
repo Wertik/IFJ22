@@ -55,6 +55,10 @@
 #define INSTRUCTION_GEN_CTX_LABEL(buffer, buffer_cnt, label) \
     (dyn_str("%s%s_%d_%s", buffer->prefix == NULL ? "" : "_", buffer->prefix == NULL ? "" : buffer->prefix, buffer_cnt, label))
 
+// Generate a unique label with a set prefix
+#define INSTRUCTION_GEN_LABEL(buffer, buffer_cnt, prefix, label) \
+    (dyn_str("_%s_%d_%s", prefix, buffer_cnt, label))
+
 #define FUNCTION_RETURN_TYPE_CHECK(buffer, function_scope, called_function)                                                                \
     do                                                                                                                                     \
     {                                                                                                                                      \
