@@ -526,12 +526,13 @@ void rule_statement_list(stack_ptr stack, sym_table_ptr table, function_ptr func
         return;
     }
 
-    if (is_one_of(next, 6, TOKEN_KEYWORD,
+    if (is_one_of(next, 7, TOKEN_KEYWORD,
                   TOKEN_VAR_ID,
                   TOKEN_ID,
                   TOKEN_CONST_INT,
                   TOKEN_CONST_DOUBLE,
-                  TOKEN_STRING_LIT))
+                  TOKEN_STRING_LIT,
+                  TOKEN_L_PAREN)) //dont know man
     {
         // <statement-list> -> <statement><statement-list>
         rule_statement(stack, table, function, instr);
