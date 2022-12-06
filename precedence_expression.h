@@ -8,6 +8,7 @@
 #ifndef _EXPRESSION_H
 #define _EXPRESSION_H
 
+//#include "array.h"
 #include "symtable.h"
 #include "stack.h"
 #include "token.h"
