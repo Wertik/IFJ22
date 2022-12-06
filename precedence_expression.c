@@ -101,18 +101,18 @@ int get_pos_in_t(token_ptr token)
     case TOKEN_CONST_EXP:
         DEBUG(" FAILED\n");
         fprintf(stderr, "EXP SHOULD NOT END UP HERE");
-        exit(FAIL_LEXICAL); // proper exit todo
+        exit(FAIL_SYNTAX); // proper exit todo
         break;
     default:
         DEBUG(" RAN TO END\n");
         fprintf(stderr,"%d\n" ,token->type);
         fprintf(stderr, "NON VALID TOKEN\n");
-        exit(FAIL_LEXICAL); // proper exit todo
+        exit(FAIL_SYNTAX); // proper exit todo
         break;
     }
     DEBUG(" RAN TO END\n");
     fprintf(stderr, "NON VALID TOKEN\n");
-    exit(FAIL_LEXICAL); // proper exit todo
+    exit(FAIL_SYNTAX); // proper exit todo
 }
 
 void conversion(instr_buffer_ptr instr_buffer, token_ptr arg1, token_type_t operator, token_ptr arg2)
@@ -452,7 +452,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     }
 
     // not finnished
-    DEBUG("AT FINNISH");
+    DEBUG("AT FINNISH\n");
     bool finnish = ((get_first_non_E(push_down_stack)->type == TOKEN_SEMICOLON) && (peek_top(in_stack)->type == TOKEN_SEMICOLON));
     if (finnish == true)
     {
