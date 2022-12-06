@@ -181,7 +181,6 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
     if (next->type == TOKEN_CONST_INT)
     {
         // Perform const_int -> E
-
         // am not sure about different types int string float
         token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, next->value);
         symbol_ptr symbol = create_terminal(E);
@@ -335,7 +334,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
 
     DEBUG_STACK_TOP(push_down_stack, 5);
     DEBUG_STACK_TOP(in_stack, 5);
-
+    static int added_semicol = false;
     static int illegal_type = -1;
 
     // Next tokens
@@ -436,6 +435,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
             token_ptr E = token_create(TOKEN_SEMICOLON, NONE, value);
             symbol_ptr sym = create_terminal(E);
             stack_push(in_stack, sym);
+            added_semicol = true;
         }
         else{
             fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
@@ -450,11 +450,14 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     }
 
     // not finnished
+    DEBUG("AT FINNISH");
     bool finnish = ((get_first_non_E(push_down_stack)->type == TOKEN_SEMICOLON) && (peek_top(in_stack)->type == TOKEN_SEMICOLON));
     if (finnish == true)
     {
+        DEBUG(" IN FINNISH");
         token_ptr skipped = get_next_token(in_stack);
-        if (!(peek_top(in_stack)->type == TOKEN_R_PAREN)){
+
+        if (!added_semicol){
             DEBUG(" NOT POPPING SEMICOLON\n");
             symbol_ptr symbol = create_terminal(skipped);
             stack_push(in_stack, symbol);
