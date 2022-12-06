@@ -90,6 +90,7 @@ int get_pos_in_t(token_ptr token)
         DEBUG("6\n");
         return 6;
         break;
+    case TOKEN_VAR_ID:
     case TOKEN_STRING_LIT:
     case TOKEN_CONST_INT:
     case TOKEN_CONST_DOUBLE:
