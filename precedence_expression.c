@@ -151,7 +151,7 @@ void conversion(instr_buffer_ptr instr_buffer, token_ptr arg1, token_type_t oper
         {
             // both integers
             // int / int -> float / float
-            if (arg2->type == TOKEN_DIVIDE)
+            if (operator == TOKEN_DIVIDE)
             {
                 // we're doing division, convert both
 
@@ -261,7 +261,7 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_def_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_const_str(""));
         INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_VAR_UNDEFINED));
         INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_def_check_success"));
-        
+
         INSTRUCTION_CMT(instr_buffer, "End variable definition check");
 
         // Push the value onto the stack

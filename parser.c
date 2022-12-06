@@ -628,17 +628,26 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
         INSTRUCTION(instr_buffer, INSTR_CREATE_FRAME);
         INSTRUCTION_OPS(instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_var_type"));
         INSTRUCTION_OPS(instr_buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_var_type"), instr_var(FRAME_LOCAL, var->name));
-        INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check"), instr_var(FRAME_TEMP, "_var_type"), instr_const_str(""));
+        INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "def_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_const_str(""));
         INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_VAR_UNDEFINED));
-        INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check"));
-        INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_type_str(parameter->type));
-        // Allow nullable
-        if (parameter->type_nullable)
+        INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "def_check_success"));
+
+        // don't do type checks for variadic arguments
+        if (parameter != NULL)
         {
-            INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check_success"), instr_var(FRAME_TEMP, "_var_type"), alloc_str("nil@nil"));
+            INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_type_str(parameter->type));
+            // Allow nullable
+            if (parameter->type_nullable)
+            {
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_check_success"), instr_var(FRAME_TEMP, "_var_type"), alloc_str("nil@nil"));
+            }
+            INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
+            INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_check_success"));
         }
-        INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
-        INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "_type_check_success"));
+        else
+        {
+            INSTRUCTION_CMT(instr_buffer, "Variadic, no type check");
+        }
         INSTRUCTION_CMT(instr_buffer, "End argument type check");
 
         // Push the variable onto the stack
