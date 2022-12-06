@@ -763,11 +763,10 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
     }
     case (SCANNER_EPILOG):
     {
-        if (c != EOF && c != '\n' && c != CR)
+        if (c != EOF)
         {
-            fprintf(stderr, "Character %d (%c) after epilog.\n", c, c);
-            fprintf(stderr, "Error on line %d character %d \n", line, character);
-            exit(FAIL_LEXICAL);
+            fprintf(stderr, "Unexpected characters after epilog\n");
+            exit(FAIL_SYNTAX);
         }
         break;
     }
