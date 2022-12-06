@@ -636,7 +636,8 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_FLOAT");
             exit(FAIL_SEMANTIC_BAD_ARGS);
         }
-        // TODO: Push float value on stack (hex format)
+        
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_float(next->value.float_value));
         break;
     }
     case TOKEN_STRING_LIT:
