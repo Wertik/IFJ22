@@ -195,7 +195,8 @@
         INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                       \
                                                                                                                        \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_type"));                                  \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_res"));                                  \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_res"));                                   \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1"));                                      \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1_type"));                                 \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg1"));                                        \
@@ -240,6 +241,45 @@
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "end")); \
     } while (0);
 
+
+#define EXPRESSION_DOT(buffer)                                                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        int label_cnt = buffer->len;                                                                                   \
+                                                                                                                       \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                       \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_type"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_res"));                                  \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg1"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));                                        \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_type_str(STRING));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_string"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg1"), instr_const_str(""));                                       \
+                                                                                                                           \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_string")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_string"), instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg2"), instr_const_str(""));                                       \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_string")); \
+                                                                                                                        \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal")); \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_CONCAT, 3, instr_var(FRAME_TEMP, "_arg_res"), instr_var(FRAME_TEMP, "_arg2"),instr_var(FRAME_TEMP, "_arg1"))            \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg_res"));                                      \
+    } while (0);
 
 void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_ptr table, instr_buffer_ptr instr);
 
