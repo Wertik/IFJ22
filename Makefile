@@ -34,7 +34,7 @@ valgrind: $(OUT)
 # Pack for submission
 pack: all
 	@rm $(LEADER).tgz -f
-	tar -cvzf $(LEADER).tgz rozdeleni *.c Makefile *.h
+	tar -cvzf $(LEADER).tgz rozdeleni *.c Makefile *.h dokumentace.pdf
 	make clean
 
 clean:
