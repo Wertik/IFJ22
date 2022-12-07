@@ -240,6 +240,7 @@ void variable_dispose(variable_ptr variable)
     if (variable == NULL)
         return;
 
+    free(variable->name);
     free(variable);
 }
 

@@ -96,6 +96,7 @@ bool attempt_greedy(char *rest, bool ignore_whitespace)
     if (whole)
     {
         DEBUG("Ate it, nom.");
+        buffer_dispose(read);
         return true;
     }
     else

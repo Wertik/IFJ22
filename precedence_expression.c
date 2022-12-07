@@ -30,16 +30,10 @@ token_ptr get_first_non_E(stack_ptr stack)
 {
     DEBUG("GET FIRST NON E: ");
     token_ptr next = peek_top(stack);
-    // token_value_t value;
     if (next->type == TOKEN_CONST_EXP)
     {
-        DEBUG("CONST_EXP\n");
-
         token_ptr skipped = get_next_token(stack);
         next = peek_top(stack);
-
-        // token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
-        // symbol_ptr symbol = create_terminal(E);
 
         symbol_ptr symbol = create_terminal(skipped);
         stack_push(stack, symbol);
@@ -119,7 +113,6 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
 {
     DEBUG_RULE();
 
-    // TODO: Dispose of this token
     token_ptr next = get_next_token(push_down_stack);
     token_value_t value;
 
@@ -127,58 +120,54 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
     {
         // Perform const_int -> E
         // am not sure about different types int string float
-        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, next->value);
+        token_ptr E = token_create(TOKEN_CONST_EXP, NONE, next->value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
 
         // Push the value onto the stack
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer));
-        return;
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_int(next->value.integer))
     }
-    if (next->type == TOKEN_CONST_DOUBLE)
+    else if (next->type == TOKEN_CONST_DOUBLE)
     {
         // const_float -> E
 
         // am not sure about different types int string float
-        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+        token_ptr E = token_create(TOKEN_CONST_EXP, NONE, value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
 
         // Push the value onto the stack
         instr_buffer_append(instr_buffer, dyn_str("# Float value: %lf", next->value.float_value));
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_float(next->value.float_value));
-        return;
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_float(next->value.float_value))
     }
-    if (next->type == TOKEN_STRING_LIT)
+    else if (next->type == TOKEN_STRING_LIT)
     {
         // string_lit -> E
 
         // am not sure about different types int string float
-        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+        token_ptr E = token_create(TOKEN_CONST_EXP, NONE, value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
 
         // Push the value onto the stack
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
-        return;
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string))
     }
-    if (next->type == TOKEN_CONST_NULL)
+    else if (next->type == TOKEN_CONST_NULL)
     {
         // null -> E
 
-        token_ptr E = token_create(TOKEN_CONST_EXP, INTEGER, value);
+        token_ptr E = token_create(TOKEN_CONST_EXP, NONE, value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
 
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, alloc_str("nil@nil"));
-        return;
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, alloc_str("nil@nil"))
     }
-    if (next->type == TOKEN_VAR_ID)
+    else if (next->type == TOKEN_VAR_ID)
     {
         // var_id -> E
 
         // am not sure about different types int string float
-        token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
+        token_ptr E = token_create(TOKEN_CONST_EXP, NONE, value);
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
 
@@ -218,18 +207,16 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         INSTRUCTION_CMT(instr_buffer, "End variable definition check");
 
         // Push the value onto the stack
-        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, next->value.string));
-        return;
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_LOCAL, next->value.string))
     }
-    if (next->type == TOKEN_CONST_EXP)
+    else if (next->type == TOKEN_CONST_EXP)
     {
-        // TODO: Dispose
         token_ptr second_next = get_next_token(push_down_stack);
 
         // not a $
         if (second_next->type != TOKEN_SEMICOLON)
         {
-            stack_pop(push_down_stack);
+            STACK_THROW(push_down_stack);
 
             DEBUG("Operator reduction: %s", token_type_to_name(second_next->type));
 
@@ -442,12 +429,16 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
             token_ptr E = token_create(TOKEN_CONST_EXP, next->value_type, value);
             symbol_ptr symbol = create_terminal(E);
             stack_push(push_down_stack, symbol);
-            return;
+
+            token_dispose(second_next);
         }
     }
-
-    fprintf(stderr, "Invalid expression. No reductions possible.\n");
-    exit(FAIL_SYNTAX); // changed err code
+    else
+    {
+        fprintf(stderr, "Invalid expression. No reductions possible.\n");
+        exit(FAIL_SYNTAX); // changed err code
+    }
+    token_dispose(next);
 }
 
 void perform_addition(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_ptr table, instr_buffer_ptr instr)
@@ -542,21 +533,22 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         token_ptr top = get_next_token(push_down_stack);
         if (top->type == TOKEN_L_PAREN)
         {
-            stack_pop(push_down_stack);
+            STACK_THROW(push_down_stack);
+            token_dispose(top);
         }
         else if (peek_top(push_down_stack)->type == TOKEN_L_PAREN)
         {
-            stack_pop(push_down_stack);
+            STACK_THROW(push_down_stack);
             symbol_ptr symbol = create_terminal(top);
             stack_push(push_down_stack, symbol);
         }
         else
         {
-            fprintf(stderr, "ERROR IN PAREN PARSING");
+            fprintf(stderr, "ERROR IN PAREN PARSING\n");
             exit(1226); // finnish exit code
         }
 
-        stack_pop(in_stack);
+        STACK_THROW(in_stack);
         // not finnished
         // should prob just pop the brackets
     }
@@ -601,6 +593,8 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         {
             symbol_ptr symbol = create_terminal(skipped);
             stack_push(in_stack, symbol);
+        } else {
+            token_dispose(skipped);
         }
         added_semicol = 0;
         illegal_type = -1;

@@ -184,6 +184,7 @@ char *str_rep(char *str, char target, char *replacement, bool rec)
             memcpy(s + i + strlen(replacement), str + i + 1, strlen(str) - i);
             s[size] = '\0';
 
+            free(str);
             return rec ? str_rep(s, target, replacement, rec) : s;
         }
     }

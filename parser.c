@@ -116,6 +116,8 @@ void rule_expression(stack_ptr stack, sym_table_ptr table, instr_buffer_ptr inst
     stack_push(push_down_stack, symbol);
 
     expression_prec(stack, push_down_stack, table, instr_buffer);
+
+    stack_dispose(push_down_stack);
 }
 
 // <statement> -> var_id = <expression>;
@@ -230,6 +232,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             INSTRUCTION_CMT(instr, "End function call with assignment");
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
+            token_dispose(func_id);
         }
         else
         {
@@ -325,6 +328,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
 
         ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
         ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
+
         token_dispose(func_id);
     }
     else if (next->type == TOKEN_KEYWORD)
@@ -846,7 +850,6 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
     }
     case TOKEN_STRING_LIT:
     {
-
         if (parameter != NULL && parameter->type != TYPE_STRING && parameter->type != TYPE_ANY)
         {
             fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_STRING");
@@ -939,6 +942,7 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     }
 
     // only free certain parts to retain instructions
+    free(arg_buffer->instructions);
     free(arg_buffer->prefix);
     free(arg_buffer);
 
@@ -1006,6 +1010,8 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     {
         instr_buffer_append(instr_buffer, arg_buffer->instructions[i]);
     }
+    free(arg_buffer->instructions);
+    free(arg_buffer->prefix);
     free(arg_buffer);
 
     return argument_count;
@@ -1157,6 +1163,7 @@ void parse(stack_ptr stack)
         // prepend it before all other instructions
         instr_buffer_prepend(instr_buffer, generate_instruction_ops(INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name)));
     }
+    free(variables);
 
     // prepend file header
     instr_buffer_prepend(instr_buffer, generate_instruction(INSTR_PUSH_FRAME));
@@ -1203,11 +1210,14 @@ void parse(stack_ptr stack)
             instr_buffer_prepend(function->instr_buffer, generate_instruction(INSTR_PUSH_FRAME));
             instr_buffer_prepend(function->instr_buffer, generate_instruction(INSTR_CREATE_FRAME));
             instr_buffer_prepend(function->instr_buffer, generate_instruction_ops(INSTR_LABEL, 1, alloc_str(function->name)));
+
+            free(variables);
         }
 
         instr_buffer_out(function->instr_buffer);
         instr_buffer_dispose(function->instr_buffer);
     }
+    free(functions);
 
     sym_dispose(table);
     sym_dispose(global_table);
