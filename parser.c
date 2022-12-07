@@ -373,8 +373,10 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_LABEL(instr, label_cnt, "while", "exit"));
             // condition generation
             rule_expression(stack, table, instr);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
+            ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
+            //assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
-            assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
             DEBUG_PSEUDO("while (...)");
 
             INSTRUCTION_CMT(instr, "While condition check");
