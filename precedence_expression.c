@@ -321,6 +321,38 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
                 INSTRUCTION_CMT(instr_buffer, "End not equal check");
                 break;
             }
+            case TOKEN_MORE:
+                DEBUG("EXCUSE ME");
+                INSTRUCTION_CMT(instr_buffer, "MORE");
+
+                EXPRESSION_MORE(instr_buffer);
+
+                INSTRUCTION_CMT(instr_buffer, "END MORE CHECK");
+                break;
+             case TOKEN_MORE_EQUAL:
+                DEBUG("EXCUSE ME");
+                INSTRUCTION_CMT(instr_buffer, "MORE_EQUAL");
+
+                EXPRESSION_MORE_EQUAL(instr_buffer);
+
+                INSTRUCTION_CMT(instr_buffer, "END MORE_EQUAL CHECK");
+                break;
+             case TOKEN_LESS:
+                DEBUG("EXCUSE ME");
+                INSTRUCTION_CMT(instr_buffer, "LESS");
+
+                EXPRESSION_LESS(instr_buffer);
+
+                INSTRUCTION_CMT(instr_buffer, "END LESS CHECK");
+                break;
+             case TOKEN_LESS_EQUAL:
+                DEBUG("EXCUSE ME");
+                INSTRUCTION_CMT(instr_buffer, "LESS_EQUAL");
+
+                EXPRESSION_LESS_EQUAL(instr_buffer);
+
+                INSTRUCTION_CMT(instr_buffer, "END LESS_EQUAL CHECK");
+                break;
             default:
                 fprintf(stderr, "Operator %s not supported in expresions.\n", token_type_to_name(second_next->type));
                 exit(FAIL_INTERNAL);
