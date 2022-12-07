@@ -639,7 +639,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         else
         {
             fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
-            exit(FAIL_LEXICAL); // correct codde?
+            exit(FAIL_SYNTAX); // correct codde?
         }
     }
 
