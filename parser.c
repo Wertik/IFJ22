@@ -599,7 +599,8 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 if (function->return_type == TYPE_VOID)
                 {
 
-                    if (next->type != TOKEN_SEMICOLON) {
+                    if (next->type != TOKEN_SEMICOLON)
+                    {
                         fprintf(stderr, "Void function %s shouldn't return a value.\n", function->name);
                         exit(FAIL_SEMANTIC_INVALID_RETURN_COUNT);
                     }
@@ -839,6 +840,16 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
         INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_const_str(next->value.string));
         break;
     }
+    case TOKEN_CONST_NULL:
+    {
+        if (parameter != NULL && parameter->type != TYPE_ANY && parameter->type_nullable == false)
+        {
+            fprintf(stderr, "Bad argument type for %s. Expected %s but got %s.\n", parameter->name, type_to_name(parameter->type), "TYPE_STRING");
+            exit(FAIL_SEMANTIC_BAD_ARGS);
+        }
+        INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, alloc_str("nil@nil"));
+        break;
+    }
     default:
         fprintf(stderr, "Invalid token %s in function argument.\n", token_type_to_name(next->type));
         exit(FAIL_SYNTAX);
@@ -858,7 +869,7 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // Ignore argument count checks with variadic functions
 
     // <arg-list> -> eps
-    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    if (!is_one_of(next, 5, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT, TOKEN_CONST_NULL))
     {
         // expected more than zero argumnets
         if (!variadic && function->parameter_count > 0)
@@ -928,7 +939,7 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
 
     next = peek_top(stack);
 
-    if (!is_one_of(next, 4, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT))
+    if (!is_one_of(next, 5, TOKEN_VAR_ID, TOKEN_CONST_INT, TOKEN_CONST_DOUBLE, TOKEN_STRING_LIT, TOKEN_CONST_NULL))
     {
         fprintf(stderr, "Expected an argument.\n");
         exit(FAIL_SYNTAX);
