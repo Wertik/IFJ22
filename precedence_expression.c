@@ -296,13 +296,13 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
             switch (second_next->type)
             {
             case TOKEN_PLUS:
-                INSTRUCTION(instr_buffer, INSTR_ADDS);
+                EXPRESSION_PLUS(instr_buffer);
                 break;
             case TOKEN_MINUS:
-                INSTRUCTION(instr_buffer, INSTR_SUBS);
+                EXPRESSION_MINUS(instr_buffer);
                 break;
             case TOKEN_MULTIPLE:
-                INSTRUCTION(instr_buffer, INSTR_MULS);
+                EXPRESSION_TIMES(instr_buffer);
                 break;
             case TOKEN_DIVIDE:
             {
@@ -441,14 +441,14 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         illegal_type = 1; // num operators not allowed not allowed
     }
 
-    // Don't allow arithmetic operators with strings
-    // if ((next_in->type == TOKEN_PLUS || next_in->type == TOKEN_MINUS || next_in->type == TOKEN_MULTIPLE || next_in->type == TOKEN_DIVIDE) && illegal_type == 1)
-    //{
-    //     fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
-    //
-    //      // finnish exit number
-    //     exit(100);
-    //  }
+     //Don't allow arithmetic operators with strings
+     if ((next_in->type == TOKEN_PLUS || next_in->type == TOKEN_MINUS || next_in->type == TOKEN_MULTIPLE || next_in->type == TOKEN_DIVIDE) && illegal_type == 1)
+    {
+         fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED 1");
+    
+          // finnish exit number
+         exit(FAIL_SEMANTIC_EXPRE);
+      }
 
     // Don't allow arithmetic operators with strings?
     if ((next_in->type == TOKEN_CONST_DOUBLE || next_in->type == TOKEN_CONST_INT) && illegal_type == 1)
