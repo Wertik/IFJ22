@@ -71,7 +71,7 @@
         INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_retval_type"), instr_var(FRAME_TEMP, "_retval"));                                                                                                       \
         if (called_function->return_type_nullable == true)                                                                                                                                                                     \
         {                                                                                                                                                                                                                      \
-            INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt), alloc_str("string@nil"), instr_var(FRAME_TEMP, "_retval_type"));                     \
+            INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt), alloc_str("string@nil"), instr_var(FRAME_TEMP, "_retval_type"));                  \
         }                                                                                                                                                                                                                      \
         INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, FUNCTION_RETURN_TYPE_CHECK_LABEL(buffer, function_scope, called_function, label_cnt), instr_type_str(called_function->return_type), instr_var(FRAME_TEMP, "_retval_type")); \
         INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_INVALID_RETURN_TYPE));                                                                                                                            \
@@ -154,6 +154,7 @@
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$argcnt"));                             \
         INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_write_loop"));                            \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_write_loop_end"));                       \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(false));                            \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                        \
         FUNCTION_RETURN(buffer);                                                                     \
     } while (0);
@@ -165,6 +166,7 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));     \
         INSTRUCTION_OPS(buffer, INSTR_READ, 1, alloc_str("LF@$buffer float")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$buffer"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));       \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                  \
         FUNCTION_RETURN(buffer);                                               \
     } while (0);
@@ -176,6 +178,7 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));   \
         INSTRUCTION_OPS(buffer, INSTR_READ, 1, alloc_str("LF@$buffer int")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$buffer"));    \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));     \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                \
         FUNCTION_RETURN(buffer);                                             \
     } while (0);
@@ -187,6 +190,7 @@
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));      \
         INSTRUCTION_OPS(buffer, INSTR_READ, 1, alloc_str("LF@$buffer string")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$buffer"));       \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));        \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                   \
         FUNCTION_RETURN(buffer);                                                \
     } while (0);
@@ -227,6 +231,7 @@
         INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$substring nil@nil"));                         \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_substring_end"));                               \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$substring"));                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));                                    \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                               \
         FUNCTION_RETURN(buffer);                                                                            \
     } while (0);
@@ -240,6 +245,7 @@
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));              \
         INSTRUCTION_OPS(buffer, INSTR_INT2CHAR, 1, alloc_str("LF@$char LF@$buffer")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$char"));               \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));              \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                         \
         FUNCTION_RETURN(buffer);                                                      \
     } while (0);
@@ -261,6 +267,7 @@
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_ord_invalid"));                     \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("int@0"));                            \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_ord_end"));                         \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));                        \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                   \
         FUNCTION_RETURN(buffer);                                                                \
     } while (0);
@@ -274,6 +281,7 @@
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));             \
         INSTRUCTION_OPS(buffer, INSTR_STRLEN, 1, alloc_str("LF@$count LF@$buffer")); \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$count"));             \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));             \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                        \
         FUNCTION_RETURN(buffer);                                                     \
     } while (0);
@@ -307,6 +315,7 @@
         INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return float@0x0p+0"));                       \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_floatval_end"));                                \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));                                    \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                               \
         FUNCTION_RETURN(buffer);                                                                            \
     } while (0);
@@ -340,6 +349,7 @@
         INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return int@0"));                            \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_end"));                                \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));                                  \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                             \
         FUNCTION_RETURN(buffer);                                                                          \
     } while (0);
@@ -367,6 +377,7 @@
         INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                       \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_strval_end"));                                \
         INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, alloc_str("LF@$return"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_const_bool(true));                                  \
         INSTRUCTION(buffer, INSTR_POP_FRAME);                                                             \
         FUNCTION_RETURN(buffer);                                                                          \
     } while (0);

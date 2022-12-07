@@ -187,8 +187,42 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             // Call the function
             INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
 
-            // TODO: Nullable
-            FUNCTION_RETURN_TYPE_CHECK(instr, function, called_function);
+            INSTRUCTION_CMT(instr, "Function return value check");
+
+            if (called_function->return_type != TYPE_VOID)
+            {
+                int label_cnt = instr->len;
+
+                // if non-void, check that the function has returned something
+                INSTRUCTION(instr, INSTR_CREATE_FRAME);
+                INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_has_retval"));
+                INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_has_retval"));
+                INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"), instr_var(FRAME_TEMP, "_has_retval"), instr_const_bool(true));
+
+                // Throw error 4
+                INSTRUCTION_OPS(instr, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
+
+                INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"));
+
+                FUNCTION_RETURN_TYPE_CHECK(instr, function, called_function);
+            }
+            else
+            {
+                int label_cnt = instr->len;
+
+                // if void, check that the function hasn't returned anything
+                INSTRUCTION(instr, INSTR_CREATE_FRAME);
+                INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_has_retval"));
+                INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_has_retval"));
+                INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"), instr_var(FRAME_TEMP, "_has_retval"), instr_const_bool(false));
+
+                // Throw error 4
+                INSTRUCTION_OPS(instr, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
+
+                INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"));
+            }
+
+            INSTRUCTION_CMT(instr, "End function return value check");
 
             // Pop the return value from the stack into the variable
             INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_LOCAL, var_id->value.string));
@@ -247,11 +281,42 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
         // Function call code
         INSTRUCTION_OPS(instr, INSTR_CALL, 1, alloc_str(called_function->name));
 
+        INSTRUCTION_CMT(instr, "Function return value check");
+
         if (called_function->return_type != TYPE_VOID)
         {
-            // TODO: Nullable
+            int label_cnt = instr->len;
+
+            // if non-void, check that the function has returned something
+            INSTRUCTION(instr, INSTR_CREATE_FRAME);
+            INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_has_retval"));
+            INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_has_retval"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"), instr_var(FRAME_TEMP, "_has_retval"), instr_const_bool(true));
+
+            // Throw error 4
+            INSTRUCTION_OPS(instr, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
+
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"));
+
             FUNCTION_RETURN_TYPE_CHECK(instr, function, called_function);
         }
+        else
+        {
+            int label_cnt = instr->len;
+
+            // if void, check that the function hasn't returned anything
+            INSTRUCTION(instr, INSTR_CREATE_FRAME);
+            INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_has_retval"));
+            INSTRUCTION_OPS(instr, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_has_retval"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"), instr_var(FRAME_TEMP, "_has_retval"), instr_const_bool(false));
+
+            // Throw error 4
+            INSTRUCTION_OPS(instr, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
+
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "_has_retval_success"));
+        }
+
+        INSTRUCTION_CMT(instr, "End function return value check");
 
         // Clear the stack after a function call in case the function returned a value to the stack.
         INSTRUCTION(instr, INSTR_CLEARS);
@@ -375,7 +440,7 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             rule_expression(stack, table, instr);
             ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
             ASSERT_NEXT_TOKEN(stack, TOKEN_LC_BRACKET);
-            //assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
+            // assert_n_tokens(stack, 2, TOKEN_R_PAREN, TOKEN_LC_BRACKET);
 
             DEBUG_PSEUDO("while (...)");
 
@@ -494,7 +559,12 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 exit(FAIL_SEMANTIC_BAD_ARGS);
             }
 
-            FUNCTION_END(function);
+            // Generate implicit return
+
+            // Returns nothing
+            INSTRUCTION_OPS(function->instr_buffer, INSTR_PUSHS, 1, instr_const_bool(false));
+            INSTRUCTION(function->instr_buffer, INSTR_POP_FRAME);
+            FUNCTION_RETURN(function->instr_buffer);
 
             ASSERT_NEXT_TOKEN(stack, TOKEN_RC_BRACKET);
 
@@ -522,22 +592,46 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             }
             else
             {
+                token_ptr next = peek_top(stack);
+
                 // Function return
 
                 if (function->return_type == TYPE_VOID)
                 {
+
+                    if (next->type != TOKEN_SEMICOLON) {
+                        fprintf(stderr, "Void function %s shouldn't return a value.\n", function->name);
+                        exit(FAIL_SEMANTIC_INVALID_RETURN_COUNT);
+                    }
+
                     // Push null as the result of a void function
                     INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, alloc_str("nil@nil"));
+
+                    // Indicates that no value has been returned
+                    INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_bool(false));
+
                     DEBUG_PSEUDO("return;");
                 }
                 else
                 {
+
+                    if (next->type == TOKEN_SEMICOLON)
+                    {
+                        fprintf(stderr, "Missing return value in non-void function %s.\n", function->name);
+                        exit(FAIL_SEMANTIC_INVALID_RETURN_COUNT);
+                    }
+
                     // The return value should be pushed onto the stack in expression
                     rule_expression(stack, table, instr);
+
+                    // Indicates that a value has been returned
+                    INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_bool(true));
+
                     DEBUG_PSEUDO("return ...;");
                 }
                 function->has_return = true;
                 ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
+
                 INSTRUCTION(instr, INSTR_POP_FRAME);
                 INSTRUCTION(instr, INSTR_RETURN);
             }
@@ -596,7 +690,8 @@ void rule_statement_list(stack_ptr stack, sym_table_ptr table, function_ptr func
 // <par> -> type var_id
 void rule_parameter(stack_ptr stack, function_ptr function)
 {
-    if (peek_top(stack)->type == TOKEN_NULLABLE) {
+    if (peek_top(stack)->type == TOKEN_NULLABLE)
+    {
         STACK_THROW(stack);
     }
 
