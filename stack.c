@@ -2,7 +2,7 @@
  * Project: IFJ22 language compiler
  *
  * @author xotrad00 Martin Otradovec
- * @author xbalek01 Miroslav Bálek
+ * @author xbalek02 Miroslav Bálek
  */
 
 #include <stdio.h>
