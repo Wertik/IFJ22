@@ -484,6 +484,14 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), instr_const_str("0"));
             INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
 
+            // Compare float values
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_cond_float"));
+            INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_condtype"));
+            INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_str("float"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFNEQS, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), instr_const_float(0.0));
+            INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
+
             INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
 
             // ){
