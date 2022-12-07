@@ -900,8 +900,19 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // Create a side buffer, save push instruction there, append after the recursive call.
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
+
     // Prefix the buffer so no collisions occur on multiple arguments
-    char *prefix = expected_parameter == NULL ? dyn_str("call_%d_arg_%d", instr_buffer->len, 0) : dyn_str("call_%d_arg_%s", instr_buffer->len, expected_parameter->name);
+    // This is ugly, running out of time.
+    char *prefix = expected_parameter == NULL ? dyn_str("%s_call_%s_%d_arg_%d",
+                                                        instr_buffer->prefix == NULL ? "main" : instr_buffer->prefix,
+                                                        function->name,
+                                                        instr_buffer->len,
+                                                        0)
+                                              : dyn_str("%s_call_%s_%d_arg_%s",
+                                                        instr_buffer->prefix == NULL ? "main" : instr_buffer->prefix,
+                                                        function->name,
+                                                        instr_buffer->len,
+                                                        expected_parameter->name);
     instr_buffer_ptr arg_buffer = instr_buffer_init(prefix);
     free(prefix);
 
@@ -971,7 +982,18 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // Create a side buffer, save push instruction there, append after the recursive call.
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
-    char *prefix = expected_parameter == NULL ? dyn_str("call_%d_arg_%d", instr_buffer->len, argument_count - 1) : dyn_str("call_%d_arg_%s", instr_buffer->len, expected_parameter->name);
+
+    // Create a unique prefix...
+    char *prefix = expected_parameter == NULL ? dyn_str("%s_call_%s_%d_arg_%d",
+                                                        instr_buffer->prefix == NULL ? "main" : instr_buffer->prefix,
+                                                        function->name,
+                                                        instr_buffer->len,
+                                                        argument_count - 1)
+                                              : dyn_str("%s_call_%s_%d_arg_%s",
+                                                        instr_buffer->prefix == NULL ? "main" : instr_buffer->prefix,
+                                                        function->name,
+                                                        instr_buffer->len,
+                                                        expected_parameter->name);
     instr_buffer_ptr arg_buffer = instr_buffer_init(prefix);
     free(prefix);
 
