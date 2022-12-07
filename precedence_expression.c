@@ -456,22 +456,42 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
                 INSTRUCTION_CMT(instr_buffer, "END LESS_EQUAL CHECK");
                 break;
             case TOKEN_DOT:
-                DEBUG("EXCUSE ME");
-                // token_ptr third_next =peek_top(push_down_stack);
-                // fprintf(stderr,"%d, %d dddkkkkkkkkkkkkkkkkkkkddd\n", next->value_type,third_next->value_type);
-                // if (next->value_type == STRING && third_next->value_type == STRING){
+            {
+                int label_cnt = instr_buffer->len;
+
                 INSTRUCTION_CMT(instr_buffer, "CONCATENATE");
 
-                EXPRESSION_DOT(instr_buffer);
+                EXPRESSION_TEMP(instr_buffer);
+
+                // don't allow anything other than a string
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_not_allowed"), instr_var(FRAME_TEMP, "_arg1_type"), instr_type_str(TYPE_INT));
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_not_allowed"), instr_var(FRAME_TEMP, "_arg2_type"), instr_type_str(TYPE_INT));
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_not_allowed"), instr_var(FRAME_TEMP, "_arg1_type"), instr_type_str(TYPE_FLOAT));
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_not_allowed"), instr_var(FRAME_TEMP, "_arg2_type"), instr_type_str(TYPE_FLOAT));
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_allowed"));
+
+                // throw a semantic error when not string
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_not_allowed"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_EXPRE));
+
+                // convert arg1 -> str
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_allowed"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "arg2_conv"), instr_var(FRAME_TEMP, "_arg1_type"), instr_const_str("nil"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg1"), instr_const_str(""));
+
+                // convert arg2 -> str
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "arg2_conv"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "do_concat"), instr_var(FRAME_TEMP, "_arg2_type"), instr_const_str("nil"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg2"), instr_const_str(""));
+
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "do_concat"));
+
+                INSTRUCTION_OPS(instr_buffer, INSTR_CONCAT, 3, instr_var(FRAME_TEMP, "_arg1"), instr_var(FRAME_TEMP, "_arg2"), instr_var(FRAME_TEMP, "_arg1"))
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));
 
                 INSTRUCTION_CMT(instr_buffer, "END CONCATENATE");
-                //}
-                // else{
-                //    fprintf(stderr,"%d, %d ddddddddddddddd\n", next->value_type,third_next->value_type);
-                //    fprintf(stderr, "CONCATENATING WRONG TYPE OF EXPRESSION\n");
-                //   exit(FAIL_SYNTAX); // correct exit code ?
-                //}
                 break;
+            }
             default:
                 fprintf(stderr, "Operator %s not supported in expresions.\n", token_type_to_name(second_next->type));
                 exit(FAIL_INTERNAL);
