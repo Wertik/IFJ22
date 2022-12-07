@@ -115,63 +115,6 @@ int get_pos_in_t(token_ptr token)
     exit(FAIL_SYNTAX); // proper exit todo
 }
 
-void conversion(instr_buffer_ptr instr_buffer, token_ptr arg1, token_type_t operator, token_ptr arg2)
-{
-    // Arithmetic conversions
-    // int + int -> nothing
-    // float + int -> float + float
-    // int + float -> float + float
-    // float + float -> nothing
-    if (is_arithmetic(operator))
-    {
-        // implicit conversions int -> float
-        if (arg1->value_type == INTEGER && arg2->value_type == FLOAT)
-        {
-            // convert second arg to float
-            // can do this straight away, the second argument is on top of the stack
-            // arg2
-            // arg1
-
-            INSTRUCTION_CMT(instr_buffer, "Second argument conversion");
-            INSTRUCTION_CONV_ARG2_I2F(instr_buffer);
-            INSTRUCTION_CMT(instr_buffer, "End second argument conversion");
-        }
-        else if (arg1->value_type == FLOAT && arg2->value_type == INTEGER)
-        {
-            // convert first arg to float
-            // cannot do this straight away -> pop second arg into temp var, convert, push arg2 back
-            // arg2
-            // arg1
-
-            INSTRUCTION_CMT(instr_buffer, "First argument conversion");
-            INSTRUCTION_CONV_ARG1_I2F(instr_buffer);
-            INSTRUCTION_CMT(instr_buffer, "End first argument conversion");
-        }
-        else if (arg1->value_type == INTEGER && arg2->value_type == INTEGER)
-        {
-            // both integers
-            // int / int -> float / float
-            if (operator== TOKEN_DIVIDE)
-            {
-                // we're doing division, convert both
-
-                // arg2
-                // arg1
-
-                INSTRUCTION_CMT(instr_buffer, "Both argument conversion");
-
-                // convert arg2 on top
-                INSTRUCTION_CONV_ARG2_I2F(instr_buffer);
-
-                // pop, convert arg1 under, push arg2 back
-                INSTRUCTION_CONV_ARG1_I2F(instr_buffer);
-
-                INSTRUCTION_CMT(instr_buffer, "End both argument conversion");
-            }
-        }
-    }
-}
-
 void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buffer_ptr instr_buffer)
 {
     DEBUG_RULE();
@@ -289,8 +232,6 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
             stack_pop(push_down_stack);
 
             DEBUG("Operator reduction: %s", token_type_to_name(second_next->type));
-
-            /* conversion(instr_buffer, next, second_next->type, second_arg); */
 
             // Generate instructions for operator
             switch (second_next->type)
