@@ -211,14 +211,7 @@ char *instr_const_bool(bool val)
 char *instr_type_str(type_t type)
 {
     const char *type_str = type_to_formal(type);
-
-    size_t len = snprintf(NULL, 0, "string@%s", type_str);
-    char *s = malloc(sizeof(char) * (len + 1));
-
-    MALLOC_CHECK(s);
-
-    sprintf(s, "string@%s", type_str);
-    return s;
+    return dyn_str("string@%s", type_str);
 }
 
 char *dyn_str(const char *fmt, ...)
