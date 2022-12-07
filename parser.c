@@ -907,7 +907,7 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
                                                         instr_buffer->prefix == NULL ? "main" : instr_buffer->prefix,
                                                         function->name,
                                                         instr_buffer->len,
-                                                        argument_count - 1)
+                                                        0)
                                               : dyn_str("%s_call_%s_%d_arg_%s",
                                                         instr_buffer->prefix == NULL ? "main" : instr_buffer->prefix,
                                                         function->name,
