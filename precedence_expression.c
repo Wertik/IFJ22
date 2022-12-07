@@ -359,6 +359,23 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
 
                 INSTRUCTION_CMT(instr_buffer, "END LESS_EQUAL CHECK");
                 break;
+            case TOKEN_DOT:
+                DEBUG("EXCUSE ME");
+                //token_ptr third_next =peek_top(push_down_stack);
+                //fprintf(stderr,"%d, %d dddkkkkkkkkkkkkkkkkkkkddd\n", next->value_type,third_next->value_type);
+                //if (next->value_type == STRING && third_next->value_type == STRING){
+                    INSTRUCTION_CMT(instr_buffer, "CONCATENATE");
+
+                    EXPRESSION_DOT(instr_buffer);
+
+                    INSTRUCTION_CMT(instr_buffer, "END CONCATENATE");
+                //} 
+                //else{
+                //    fprintf(stderr,"%d, %d ddddddddddddddd\n", next->value_type,third_next->value_type);
+                //    fprintf(stderr, "CONCATENATING WRONG TYPE OF EXPRESSION\n");
+                 //   exit(FAIL_SYNTAX); // correct exit code ?
+                //}
+                break;
             default:
                 fprintf(stderr, "Operator %s not supported in expresions.\n", token_type_to_name(second_next->type));
                 exit(FAIL_INTERNAL);
@@ -439,7 +456,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
 
         // finnish exit number
-        exit(100);
+        exit(FAIL_SYNTAX); 
     }
 
     // Don't allow arithmetic operators with strings?
@@ -448,7 +465,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
 
         // finnish exit number
-        exit(100);
+        exit(FAIL_SYNTAX);
     }
 
     // Precedence table indexes
