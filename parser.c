@@ -799,14 +799,17 @@ void rule_argument(stack_ptr stack, sym_table_ptr table, parameter_t *parameter,
         INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "def_check_success"));
 
         // don't do type checks for variadic arguments
-        if (parameter != NULL)
+        // don't do type checks for TYPE_ANY parameters
+        if (parameter != NULL && parameter->type != TYPE_ANY)
         {
             INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_check_success"), instr_var(FRAME_TEMP, "_var_type"), instr_type_str(parameter->type));
+
             // Allow nullable
             if (parameter->type_nullable)
             {
                 INSTRUCTION_OPS(instr_buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_check_success"), instr_var(FRAME_TEMP, "_var_type"), alloc_str("nil@nil"));
             }
+
             INSTRUCTION_OPS(instr_buffer, INSTR_EXIT, 1, instr_const_int(FAIL_SEMANTIC_BAD_ARGS));
             INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "type_check_success"));
         }

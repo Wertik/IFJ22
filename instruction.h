@@ -326,15 +326,13 @@
         FUNCTION_HEADER(buffer, alloc_str("intval"))                                                      \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$buffer"));                                \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$type"));                                  \
-        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$actual"));                                \
         INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, alloc_str("LF@$return"));                                \
         INSTRUCTION_OPS(buffer, INSTR_POPS, 1, alloc_str("LF@$buffer"));                                  \
         INSTRUCTION_OPS(buffer, INSTR_TYPE, 1, alloc_str("LF@$type LF@$buffer"));                         \
-        INSTRUCTION_OPS(buffer, INSTR_GETCHAR, 1, alloc_str("LF@$actual LF@$type int@0"));                \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_intint LF@$actual string@i"));      \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_floatint LF@$actual string@f"));    \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolint LF@$actual string@b"));     \
-        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolint LF@$actual string@n"));     \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_intint LF@$type string@int"));      \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_floatint LF@$type string@float"));  \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolint LF@$type string@bool"));    \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 1, alloc_str("_intval_boolfalse LF@$type string@nil"));   \
         INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, alloc_str("_intval_intint"));                             \
         INSTRUCTION_OPS(buffer, INSTR_MOVE, 1, alloc_str("LF@$return LF@$buffer"));                       \
         INSTRUCTION_OPS(buffer, INSTR_JUMP, 1, alloc_str("_intval_end"));                                 \
