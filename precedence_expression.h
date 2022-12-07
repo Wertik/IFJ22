@@ -194,7 +194,7 @@
         INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));   \
         INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
          \
-        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("string"));   \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_string("string"));   \
         INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
         INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
         INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
