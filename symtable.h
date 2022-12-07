@@ -90,7 +90,7 @@ typedef struct sym_table_t
 int compare_keys(char *key1, char *key2);
 
 // Create a variable
-variable_ptr variable_create(char *name, type_t type, bool type_nullable);
+variable_ptr variable_create(char *name);
 // Convert variable to a string with fashion
 char *variable_to_string(variable_ptr variable);
 // Dispose of a variable

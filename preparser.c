@@ -144,7 +144,7 @@ void parse_function(item_ptr *item)
         }
 
         // Insert as variables into function local symtable
-        variable_ptr parameter_var = variable_create(parameter.name, parameter.type, parameter.type_nullable);
+        variable_ptr parameter_var = variable_create(parameter.name);
         sym_insert_var(function->symtable, parameter_var);
     }
 

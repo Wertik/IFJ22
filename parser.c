@@ -145,11 +145,10 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
         if (var == NULL)
         {
             // default values for type, gets filled in later
-            var = variable_create(var_id->value.string, TYPE_VOID, true);
+            var = variable_create(var_id->value.string);
             sym_insert_var(table, var);
 
-            // defvar at the start of body
-            /* INSTRUCTION_OPS(instr, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, var->name)); */
+            // variable DEFVARs get generated at the end of parsing. We insert them at the start of the current buffer.
         }
 
         next = peek_top(stack);

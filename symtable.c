@@ -18,7 +18,7 @@ int compare_keys(char *key1, char *key2)
     return SYMTABLE_MIN(SYMTABLE_MAX(strcmp(key1, key2), -1), 1);
 }
 
-variable_ptr variable_create(char *name, type_t type, bool type_nullable)
+variable_ptr variable_create(char *name)
 {
     variable_ptr variable = malloc(sizeof(struct variable_t));
 

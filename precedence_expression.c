@@ -19,7 +19,7 @@ char precedence_table[8][8] = {
     {'>', '<', '<', '>', '<', '>', '>', '>'}, //+-.
     {'>', '>', '<', '>', '<', '>', '>', '>'}, //*/
     {'<', '<', 'n', '=', '<', 'n', '>', '<'}, // ( // maybe worng n for ;
-    {'>', '>', 'n', 'n', 'n', 'n', '>', '>'}, // ) 
+    {'>', '>', 'n', 'n', 'n', 'n', '>', '>'}, // )
     {'>', '>', 'n', '>', 'n', '>', '>', '>'}, // i // changed < to n for i i
     {'<', '<', '<', 's', '<', 'n', '<', '<'}, // <? (;) s is for speacial case replaced < hopefully will work
     {'<', '<', '<', '>', '<', '>', '>', '<'}, //===,!===
@@ -105,7 +105,7 @@ int get_pos_in_t(token_ptr token)
         break;
     default:
         DEBUG(" RAN TO END\n");
-        fprintf(stderr,"%d\n" ,token->type);
+        fprintf(stderr, "%d\n", token->type);
         fprintf(stderr, "NON VALID TOKEN\n");
         exit(FAIL_SYNTAX); // proper exit todo
         break;
@@ -151,7 +151,7 @@ void conversion(instr_buffer_ptr instr_buffer, token_ptr arg1, token_type_t oper
         {
             // both integers
             // int / int -> float / float
-            if (operator == TOKEN_DIVIDE)
+            if (operator== TOKEN_DIVIDE)
             {
                 // we're doing division, convert both
 
@@ -239,6 +239,16 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         symbol_ptr symbol = create_terminal(E);
         stack_push(push_down_stack, symbol);
 
+        // Add variable to symtable, so we generate a DEFVAR instruction
+
+        variable_ptr var = sym_get_variable(table, next->value.string);
+
+        if (var == NULL)
+        {
+            variable_ptr var = variable_create(next->value.string);
+            sym_insert_var(table, var);
+        }
+
         // Check if the variable is defined and the type
         // CREATEFRAME
         // DEFVAR TF@_type
@@ -322,31 +332,27 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
                 break;
             }
             case TOKEN_MORE:
-                DEBUG("EXCUSE ME");
                 INSTRUCTION_CMT(instr_buffer, "MORE");
 
                 EXPRESSION_MORE(instr_buffer);
 
                 INSTRUCTION_CMT(instr_buffer, "END MORE CHECK");
                 break;
-             case TOKEN_MORE_EQUAL:
-                DEBUG("EXCUSE ME");
+            case TOKEN_MORE_EQUAL:
                 INSTRUCTION_CMT(instr_buffer, "MORE_EQUAL");
 
                 EXPRESSION_MORE_EQUAL(instr_buffer);
 
                 INSTRUCTION_CMT(instr_buffer, "END MORE_EQUAL CHECK");
                 break;
-             case TOKEN_LESS:
-                DEBUG("EXCUSE ME");
+            case TOKEN_LESS:
                 INSTRUCTION_CMT(instr_buffer, "LESS");
 
                 EXPRESSION_LESS(instr_buffer);
 
                 INSTRUCTION_CMT(instr_buffer, "END LESS CHECK");
                 break;
-             case TOKEN_LESS_EQUAL:
-                DEBUG("EXCUSE ME");
+            case TOKEN_LESS_EQUAL:
                 INSTRUCTION_CMT(instr_buffer, "LESS_EQUAL");
 
                 EXPRESSION_LESS_EQUAL(instr_buffer);
@@ -433,7 +439,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
 
         // finnish exit number
-        exit(100); 
+        exit(100);
     }
 
     // Don't allow arithmetic operators with strings?
@@ -486,7 +492,8 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         DEBUG("SPECIAL CASE ________________________________________\n")
         token_value_t value;
         token_ptr skipped = get_next_token(in_stack);
-        if (peek_top(in_stack)->type == TOKEN_LC_BRACKET){
+        if (peek_top(in_stack)->type == TOKEN_LC_BRACKET)
+        {
             DEBUG("I am here \n");
             symbol_ptr symbol = create_terminal(skipped);
             stack_push(in_stack, symbol);
@@ -496,7 +503,8 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
             stack_push(in_stack, sym);
             added_semicol = true;
         }
-        else{
+        else
+        {
             fprintf(stderr, "ERROR EXPRESSION NOT IN CORRECT ORDER");
             exit(FAIL_LEXICAL); // correct codde?
         }
@@ -515,7 +523,8 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     {
         token_ptr skipped = get_next_token(in_stack);
 
-        if (!added_semicol){
+        if (!added_semicol)
+        {
             symbol_ptr symbol = create_terminal(skipped);
             stack_push(in_stack, symbol);
         }
