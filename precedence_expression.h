@@ -14,6 +14,233 @@
 #include "token.h"
 #include "instruction.h"
 
+
+#define EXPRESSION_PLUS(buffer)                                                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        int label_cnt = buffer->len;                                                                                   \
+                                                                                                                       \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                       \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_type"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg1"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("string"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"));                                                                                                               \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("nil"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg1"), instr_const_int(0));   \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"));      \
+                                                                                                                    \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg2"), instr_const_int(0));   \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));      \
+        INSTRUCTION(instr_buffer, INSTR_ADDS); \
+    } while (0);
+
+#define EXPRESSION_MINUS(buffer)                                                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        int label_cnt = buffer->len;                                                                                   \
+                                                                                                                       \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                       \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_type"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg1"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("string"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"));           \
+        \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("nil"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg1"), instr_const_int(0));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"));      \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg2"), instr_const_int(0));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"));      \
+        \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+                                                                                                                \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_type_str(INTEGER));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_float"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 2, instr_var(FRAME_TEMP, "_arg1"), instr_var(FRAME_TEMP, "_arg1"));                                     \
+                                                                                                                           \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_float")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_float"), instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 2, instr_var(FRAME_TEMP, "_arg2"), instr_var(FRAME_TEMP, "_arg2"));                                     \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_float")); \
+                                                                                                                        \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal")); \
+        \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));      \
+        INSTRUCTION(instr_buffer, INSTR_SUBS); \
+    } while (0);
+
+#define EXPRESSION_TIMES(buffer)                                                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        int label_cnt = buffer->len;                                                                                   \
+                                                                                                                       \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                       \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_type"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg1"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
+         \
+         INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("string"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"));    \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("nil"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg1"), instr_const_int(0));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"));      \
+                                                                                                                    \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg2"), instr_const_int(0));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"));      \
+                                                                                                                \
+                                                                                                                    \
+                                                                                                                \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+                                                                                                                \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_type_str(INTEGER));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_float"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 2, instr_var(FRAME_TEMP, "_arg1"), instr_var(FRAME_TEMP, "_arg1"));                                     \
+                                                                                                                           \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_float")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_float"), instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 2, instr_var(FRAME_TEMP, "_arg2"), instr_var(FRAME_TEMP, "_arg2"));                                     \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_float")); \
+                                                                                                                        \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal")); \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));      \
+        INSTRUCTION(instr_buffer, INSTR_MULS); \
+    } while (0);
+
+
+
+#define EXPRESSION_DIVISION(buffer)                                                                                         \
+    do                                                                                                                 \
+    {                                                                                                                  \
+        int label_cnt = buffer->len;                                                                                   \
+                                                                                                                       \
+        INSTRUCTION(buffer, INSTR_CREATE_FRAME);                                                                       \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg_type"));                                   \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg1_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg1"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2"));                                      \
+        INSTRUCTION_OPS(buffer, INSTR_DEFVAR, 1, instr_var(FRAME_TEMP, "_arg2_type"));                                 \
+        INSTRUCTION_OPS(buffer, INSTR_POPS, 1, instr_var(FRAME_TEMP, "_arg2"));                                        \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));   \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("string"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_EXIT, 1, instr_const_int(7)); \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "no_err"));    \
+                                                                                                                       \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_const_str("nil"));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg1_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg1"), instr_const_string(""));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg1"));        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ1"));      \
+                                                                                                                    \
+         \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFNEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"), instr_var(FRAME_TEMP, "_arg_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg2"), instr_const_string(""));   \
+        INSTRUCTION_OPS(buffer, INSTR_TYPE, 2, instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg2"));        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_check_succ2"));      \
+                                                                                                                \
+                                                                                                                    \
+                                                                                                                \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg2_type")); \
+                                                                                                                \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_MOVE, 2, instr_var(FRAME_TEMP, "_arg_type"), instr_type_str(INTEGER));   \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_float"), instr_var(FRAME_TEMP, "_arg1_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 2, instr_var(FRAME_TEMP, "_arg1"), instr_var(FRAME_TEMP, "_arg1"));                                     \
+                                                                                                                           \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg1_float")); \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_float"), instr_var(FRAME_TEMP, "_arg2_type"), instr_var(FRAME_TEMP, "_arg_type")); \
+                                                                                                                    \
+        INSTRUCTION_OPS(buffer, INSTR_INT2FLOAT, 2, instr_var(FRAME_TEMP, "_arg2"), instr_var(FRAME_TEMP, "_arg2"));                                     \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "type_arg2_float")); \
+                                                                                                                        \
+                                                                                                                        \
+        INSTRUCTION_OPS(buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(buffer, label_cnt, "types_equal")); \
+                                                                                                                \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));      \
+        INSTRUCTION_OPS(buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));      \
+        INSTRUCTION(instr_buffer, INSTR_DIV); \
+    } while (0);
+
+
 #define EXPRESSION_EQS(buffer)                                                                                         \
     do                                                                                                                 \
     {                                                                                                                  \
