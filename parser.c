@@ -760,13 +760,16 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
         return 0;
     }
 
+    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[0]);
+
     // Create a side buffer, save push instruction there, append after the recursive call.
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
+    // Prefix the buffer so no collisions occur on multiple arguments
+    char *prefix = expected_parameter == NULL ? dyn_str("arg_%d", 0) : alloc_str(expected_parameter->name);
+    instr_buffer_ptr arg_buffer = instr_buffer_init(prefix);
+    free(prefix);
 
-    instr_buffer_ptr arg_buffer = instr_buffer_init(NULL);
-
-    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[0]);
     rule_argument(stack, table, expected_parameter, arg_buffer);
 
     int argument_count = rule_argument_next(stack, table, function, instr_buffer, 1, variadic);
@@ -788,6 +791,9 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     {
         instr_buffer_append(instr_buffer, arg_buffer->instructions[i]);
     }
+    
+    // only free certain parts to retain instructions
+    free(arg_buffer->prefix);
     free(arg_buffer);
 
     return argument_count;
@@ -825,23 +831,25 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
         exit(FAIL_SEMANTIC_BAD_ARGS);
     }
 
+    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[argument_count - 1]);
+
     // Create a side buffer, save push instruction there, append after the recursive call.
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
+    char *prefix = expected_parameter == NULL ? dyn_str("arg_%d", argument_count - 1) : alloc_str(expected_parameter->name);
+    instr_buffer_ptr arg_buffer = instr_buffer_init(prefix);
+    free(prefix);
 
-    instr_buffer_ptr param_buffer = instr_buffer_init(NULL);
-
-    parameter_t *expected_parameter = variadic ? NULL : &(function->parameters[argument_count - 1]);
-    rule_argument(stack, table, expected_parameter, param_buffer);
+    rule_argument(stack, table, expected_parameter, arg_buffer);
 
     argument_count = rule_argument_next(stack, table, function, instr_buffer, argument_count, variadic);
 
     // append argument instructions
-    for (int i = 0; i < param_buffer->len; i++)
+    for (int i = 0; i < arg_buffer->len; i++)
     {
-        instr_buffer_append(instr_buffer, param_buffer->instructions[i]);
+        instr_buffer_append(instr_buffer, arg_buffer->instructions[i]);
     }
-    free(param_buffer);
+    free(arg_buffer);
 
     return argument_count;
 }
