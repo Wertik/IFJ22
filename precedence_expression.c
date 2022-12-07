@@ -286,27 +286,123 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
         // not a $
         if (second_next->type != TOKEN_SEMICOLON)
         {
-            token_ptr second_arg = get_next_token(push_down_stack);
+            stack_pop(push_down_stack);
 
             DEBUG("Operator reduction: %s", token_type_to_name(second_next->type));
 
-            conversion(instr_buffer, next, second_next->type, second_arg);
+            /* conversion(instr_buffer, next, second_next->type, second_arg); */
 
             // Generate instructions for operator
             switch (second_next->type)
             {
             case TOKEN_PLUS:
+            {
+                int label_cnt = instr_buffer->len;
+
+                // temp frame help vars
+                INSTRUCTION_CMT(instr_buffer, "Plus");
+                EXPRESSION_TEMP(instr_buffer);
+
+                // strings not allowed here
+                EXPRESSION_STR_CHECK(instr_buffer, label_cnt);
+
+                // Convert nil -> int
+                EXPRESSION_ARGS_NIL2INT(instr_buffer, label_cnt);
+
+                // Do a float conversion
+                EXPRESSION_ARGS_INT2FLOAT(instr_buffer, label_cnt, "do_a_plus");
+
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "do_a_plus"));
+
+                // do a +
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
                 INSTRUCTION(instr_buffer, INSTR_ADDS);
+
+                INSTRUCTION_CMT(instr_buffer, "End plus");
                 break;
+            }
             case TOKEN_MINUS:
+            {
+                int label_cnt = instr_buffer->len;
+
+                // temp frame help vars
+                INSTRUCTION_CMT(instr_buffer, "Minus");
+                EXPRESSION_TEMP(instr_buffer);
+
+                // strings not allowed here
+                EXPRESSION_STR_CHECK(instr_buffer, label_cnt);
+
+                // Convert nil -> int
+                EXPRESSION_ARGS_NIL2INT(instr_buffer, label_cnt);
+
+                // Do a float conversion
+                EXPRESSION_ARGS_INT2FLOAT(instr_buffer, label_cnt, "do_a_minus");
+
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "do_a_minus"));
+
+                // do a +
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));
                 INSTRUCTION(instr_buffer, INSTR_SUBS);
+
+                INSTRUCTION_CMT(instr_buffer, "End minus");
                 break;
+            }
             case TOKEN_MULTIPLE:
+            {
+                int label_cnt = instr_buffer->len;
+
+                // temp frame help vars
+                INSTRUCTION_CMT(instr_buffer, "Times");
+                EXPRESSION_TEMP(instr_buffer);
+
+                // strings not allowed here
+                EXPRESSION_STR_CHECK(instr_buffer, label_cnt);
+
+                // Convert nil -> int
+                EXPRESSION_ARGS_NIL2INT(instr_buffer, label_cnt);
+
+                // Do a float conversion
+                EXPRESSION_ARGS_INT2FLOAT(instr_buffer, label_cnt, "do_a_times");
+
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "do_a_times"));
+
+                // do a +
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
                 INSTRUCTION(instr_buffer, INSTR_MULS);
+
+                INSTRUCTION_CMT(instr_buffer, "End times");
                 break;
+            }
             case TOKEN_DIVIDE:
             {
+                // for division, always convert both arguments to float
+
+                int label_cnt = instr_buffer->len;
+
+                // temp frame help vars
+                INSTRUCTION_CMT(instr_buffer, "Division");
+                EXPRESSION_TEMP(instr_buffer);
+
+                // strings not allowed here
+                EXPRESSION_STR_CHECK(instr_buffer, label_cnt);
+
+                // Convert nil -> int
+                EXPRESSION_ARGS_NIL2INT(instr_buffer, label_cnt);
+
+                // Convert both to floats
+                EXPRESSION_ARGS_2FLOAT(instr_buffer, label_cnt, "do_a_division");
+
+                INSTRUCTION_OPS(instr_buffer, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr_buffer, label_cnt, "do_a_division"));
+
+                // do a +
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg2"));
+                INSTRUCTION_OPS(instr_buffer, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_arg1"));
                 INSTRUCTION(instr_buffer, INSTR_DIVS);
+
+                INSTRUCTION_CMT(instr_buffer, "End division");
                 break;
             }
             case TOKEN_EQUAL:
@@ -361,19 +457,19 @@ void perform_reduction(stack_ptr push_down_stack, sym_table_ptr table, instr_buf
                 break;
             case TOKEN_DOT:
                 DEBUG("EXCUSE ME");
-                //token_ptr third_next =peek_top(push_down_stack);
-                //fprintf(stderr,"%d, %d dddkkkkkkkkkkkkkkkkkkkddd\n", next->value_type,third_next->value_type);
-                //if (next->value_type == STRING && third_next->value_type == STRING){
-                    INSTRUCTION_CMT(instr_buffer, "CONCATENATE");
+                // token_ptr third_next =peek_top(push_down_stack);
+                // fprintf(stderr,"%d, %d dddkkkkkkkkkkkkkkkkkkkddd\n", next->value_type,third_next->value_type);
+                // if (next->value_type == STRING && third_next->value_type == STRING){
+                INSTRUCTION_CMT(instr_buffer, "CONCATENATE");
 
-                    EXPRESSION_DOT(instr_buffer);
+                EXPRESSION_DOT(instr_buffer);
 
-                    INSTRUCTION_CMT(instr_buffer, "END CONCATENATE");
-                //} 
-                //else{
+                INSTRUCTION_CMT(instr_buffer, "END CONCATENATE");
+                //}
+                // else{
                 //    fprintf(stderr,"%d, %d ddddddddddddddd\n", next->value_type,third_next->value_type);
                 //    fprintf(stderr, "CONCATENATING WRONG TYPE OF EXPRESSION\n");
-                 //   exit(FAIL_SYNTAX); // correct exit code ?
+                //   exit(FAIL_SYNTAX); // correct exit code ?
                 //}
                 break;
             default:
@@ -442,13 +538,13 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
     }
 
     // Don't allow arithmetic operators with strings
-    // if ((next_in->type == TOKEN_PLUS || next_in->type == TOKEN_MINUS || next_in->type == TOKEN_MULTIPLE || next_in->type == TOKEN_DIVIDE) && illegal_type == 1)
-    //{
-    //     fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
-    //
-    //      // finnish exit number
-    //     exit(100);
-    //  }
+    if ((next_in->type == TOKEN_PLUS || next_in->type == TOKEN_MINUS || next_in->type == TOKEN_MULTIPLE || next_in->type == TOKEN_DIVIDE) && illegal_type == 1)
+    {
+        fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED 1");
+
+        // finnish exit number
+        exit(FAIL_SEMANTIC_EXPRE);
+    }
 
     // Don't allow arithmetic operators with strings?
     if ((next_in->type == TOKEN_CONST_DOUBLE || next_in->type == TOKEN_CONST_INT) && illegal_type == 1)
@@ -456,7 +552,7 @@ void expression_prec(stack_ptr in_stack, stack_ptr push_down_stack, sym_table_pt
         fprintf(stderr, "NUM OPERATORS WITH STRINGS NOT ALLOWED");
 
         // finnish exit number
-        exit(FAIL_SYNTAX); 
+        exit(FAIL_SYNTAX);
     }
 
     // Don't allow arithmetic operators with strings?
