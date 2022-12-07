@@ -370,7 +370,8 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             INSTRUCTION(instr, INSTR_CREATE_FRAME);
 
             // label to check condition
-            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"));
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_condition"));
+
             // condition generation
             rule_expression(stack, table, instr);
             ASSERT_NEXT_TOKEN(stack, TOKEN_R_PAREN);
@@ -391,27 +392,39 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), alloc_str("nil@nil"));
 
             // Compare boolean values
+            // Compare boolean values
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_condtype"));
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_str("bool"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFNEQS, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_cond_int"));
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), instr_const_bool(false));
+            INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
 
             // Compare int values
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_cond_int"));
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_condtype"));
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_str("int"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFNEQS, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_cond_string"));
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), instr_const_int(0));
+            INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
 
             // Compare string values
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_cond_string"));
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_var(FRAME_TEMP, "_condtype"));
             INSTRUCTION_OPS(instr, INSTR_PUSHS, 1, instr_const_str("string"));
+            INSTRUCTION_OPS(instr, INSTR_JUMPIFNEQS, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_cond_float"));
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), instr_const_str(""));
             INSTRUCTION_OPS(instr, INSTR_JUMPIFEQ, 3, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"), instr_var(FRAME_TEMP, "_cond"), instr_const_str("0"));
+            INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
+
+            INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_begin"));
+
             // ){
             INSTRUCTION_CMT(instr, "While body");
             rule_statement_list(stack, table, function, instr);
             INSTRUCTION_CMT(instr, "End while body");
             // }
             INSTRUCTION_CMT(instr, "Jump to start to check condition");
-            INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_after_else"));
+            INSTRUCTION_OPS(instr, INSTR_JUMP, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_condition"));
             INSTRUCTION_CMT(instr, "Condition is false leave the cycle");
             INSTRUCTION_OPS(instr, INSTR_LABEL, 1, INSTRUCTION_GEN_CTX_LABEL(instr, label_cnt, "while_exit"));
 
