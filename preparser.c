@@ -38,6 +38,15 @@ token_ptr passert_next_token_get(item_ptr *item, token_type_t token_type)
 // <par> -> type var_id
 void parse_parameter(item_ptr *item, function_ptr function)
 {
+    token_ptr optional_nullable = (*item)->next->symbol->token;
+
+    bool par_nullable = false;
+
+    if (optional_nullable->type == TOKEN_NULLABLE) {
+        par_nullable = true;
+        move(item);
+    }
+
     token_ptr par_type = passert_next_token_get(item, TOKEN_TYPE);
     token_ptr par_id = passert_next_token_get(item, TOKEN_VAR_ID);
 
@@ -49,8 +58,7 @@ void parse_parameter(item_ptr *item, function_ptr function)
     }
 
     // Append parameter
-    // TODO: Nullable?
-    append_parameter(function, par_id->value.string, par_type->value.type, false);
+    append_parameter(function, par_id->value.string, par_type->value.type, par_nullable);
 }
 
 // <par-list> -> eps
@@ -61,7 +69,7 @@ void parse_parameter_list(item_ptr *item, function_ptr function)
 
     token_ptr next = (*item)->next->symbol->token;
 
-    if (next->type == TOKEN_TYPE)
+    if (next->type == TOKEN_TYPE || next->type == TOKEN_NULLABLE)
     {
         // <par-list> -> <par> <par-next>
         parse_parameter(item, function);

@@ -469,7 +469,6 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
             for (int i = 0; i < function->parameter_count; i++)
             {
                 parameter_t parameter = function->parameters[i];
-                INSTRUCTION_OPS(function->instr_buffer, INSTR_DEFVAR, 1, instr_var(FRAME_LOCAL, parameter.name));
                 INSTRUCTION_OPS(function->instr_buffer, INSTR_POPS, 1, instr_var(FRAME_LOCAL, parameter.name));
             }
 
@@ -583,6 +582,10 @@ void rule_statement_list(stack_ptr stack, sym_table_ptr table, function_ptr func
 // <par> -> type var_id
 void rule_parameter(stack_ptr stack, function_ptr function)
 {
+    if (peek_top(stack)->type == TOKEN_NULLABLE) {
+        STACK_THROW(stack);
+    }
+
     ASSERT_NEXT_TOKEN(stack, TOKEN_TYPE);
     ASSERT_NEXT_TOKEN(stack, TOKEN_VAR_ID);
 }
@@ -595,7 +598,7 @@ void rule_parameter_list(stack_ptr stack, function_ptr function)
 
     token_ptr next = peek_top(stack);
 
-    if (next->type == TOKEN_TYPE)
+    if (next->type == TOKEN_TYPE || next->type == TOKEN_NULLABLE)
     {
         // <par-list> -> <par> <par-next>
         rule_parameter(stack, function);
