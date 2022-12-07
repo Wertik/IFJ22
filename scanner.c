@@ -208,7 +208,7 @@ bool parse_character(stack_ptr stack, buffer_ptr buffer, int *scanner_state, cha
             CHANGE_STATE(SCANNER_VAR_ID_START);
             buffer_append(buffer, c);
         }
-        else if (c == EOF || c == '\n' || c == ' ' || c == CR)
+        else if (c == EOF || c == '\n' || c == ' ' || c == CR || c == '\t')
         {
             break;
         }
