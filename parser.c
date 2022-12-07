@@ -766,7 +766,7 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
     // Prefix the buffer so no collisions occur on multiple arguments
-    char *prefix = expected_parameter == NULL ? dyn_str("arg_%d", 0) : alloc_str(expected_parameter->name);
+    char *prefix = expected_parameter == NULL ? dyn_str("call_%d_arg_%d", instr_buffer->len, 0) : dyn_str("call_%d_arg_%s", instr_buffer->len, expected_parameter->name);
     instr_buffer_ptr arg_buffer = instr_buffer_init(prefix);
     free(prefix);
 
@@ -791,7 +791,7 @@ int rule_argument_list(stack_ptr stack, sym_table_ptr table, function_ptr functi
     {
         instr_buffer_append(instr_buffer, arg_buffer->instructions[i]);
     }
-    
+
     // only free certain parts to retain instructions
     free(arg_buffer->prefix);
     free(arg_buffer);
@@ -836,7 +836,7 @@ int rule_argument_next(stack_ptr stack, sym_table_ptr table, function_ptr functi
     // Create a side buffer, save push instruction there, append after the recursive call.
     // We do this to push arguments from last to first.
     // hello(1, 2) -> PUSHS 2, PUSHS 1
-    char *prefix = expected_parameter == NULL ? dyn_str("arg_%d", argument_count - 1) : alloc_str(expected_parameter->name);
+    char *prefix = expected_parameter == NULL ? dyn_str("call_%d_arg_%d", instr_buffer->len, argument_count - 1) : dyn_str("call_%d_arg_%s", instr_buffer->len, expected_parameter->name);
     instr_buffer_ptr arg_buffer = instr_buffer_init(prefix);
     free(prefix);
 
