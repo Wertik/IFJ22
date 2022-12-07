@@ -539,6 +539,8 @@ void rule_statement(stack_ptr stack, sym_table_ptr table, function_ptr function,
                 }
                 function->has_return = true;
                 ASSERT_NEXT_TOKEN(stack, TOKEN_SEMICOLON);
+                INSTRUCTION(instr, INSTR_POP_FRAME);
+                INSTRUCTION(instr, INSTR_RETURN);
             }
             break;
         }
